@@ -26,9 +26,19 @@ inline Vec3 Cross(Vec3 a, Vec3 b)
 	return { a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x };
 }
 
+inline Vec3 Add(Vec3 a, Vec3 b)
+{
+	return { a.x + b.x, a.y + b.y, a.z + b.z };
+}
+
 inline Vec3 Sub(Vec3 a, Vec3 b)
 {
 	return { a.x - b.x, a.y - b.y, a.z - b.z };
+}
+
+inline Vec3 Scale(Vec3 a, float s)
+{
+	return { a.x * s, a.y * s, a.z * s };
 }
 
 inline Vec3 Normalize(Vec3 v)
@@ -96,6 +106,7 @@ inline Mat4 PerspectiveFovRH(float fovY, float aspect, float zn, float zf)
 
 struct Camera
 {
+	Vec3 target = { 0.0f, 0.0f, 0.0f };
 	float yaw = 0.55f;
 	float pitch = 0.38f;
 	float distance = 145.0f;
@@ -103,10 +114,14 @@ struct Camera
 	float nearZ = 0.4f;
 	float farZ = 2500.0f;
 
+	// Signs match EO-Map's three.js OrbitControls (default mouse orbit, no invert):
+	// _rotateLeft(+dx) => spherical.theta -= angle
+	// _rotateUp(+dy)   => spherical.phi   -= angle
+	// Our pitch is elevation (horizon=0), so phi -= dy means pitch += dy.
 	void Orbit(float dxPixels, float dyPixels)
 	{
 		const float sens = 0.005f;
-		yaw += dxPixels * sens;
+		yaw -= dxPixels * sens;
 		pitch += dyPixels * sens;
 		const float limit = 1.35f;
 		if (pitch > limit)
@@ -117,6 +132,24 @@ struct Camera
 		{
 			pitch = -limit;
 		}
+	}
+
+	// Screen-space pan of the orbit target. Matches OrbitControls
+	// screenSpacePanning=true: drag right/down moves the map with the cursor.
+	void Pan(float dxPixels, float dyPixels, uint32_t viewportHeight)
+	{
+		if (viewportHeight == 0)
+		{
+			return;
+		}
+		const Vec3 eye = Eye();
+		const Vec3 back = Normalize(Sub(eye, target));
+		const Vec3 worldUp = { 0.0f, 1.0f, 0.0f };
+		const Vec3 right = Normalize(Cross(worldUp, back));
+		const Vec3 up = Cross(back, right);
+		const float targetDistance = distance * tanf(fovY * 0.5f);
+		const float scale = 2.0f * targetDistance / float(viewportHeight);
+		target = Add(target, Scale(Add(Scale(right, -dxPixels), Scale(up, dyPixels)), scale));
 	}
 
 	void Zoom(int wheelDelta)
@@ -133,7 +166,7 @@ struct Camera
 		}
 	}
 
-	Vec3 Eye() const
+	Vec3 OffsetFromTarget() const
 	{
 		const float cp = cosf(pitch);
 		const float sp = sinf(pitch);
@@ -142,12 +175,15 @@ struct Camera
 		return { distance * cp * sy, distance * sp, distance * cp * cy };
 	}
 
+	Vec3 Eye() const
+	{
+		return Add(target, OffsetFromTarget());
+	}
+
 	Mat4 ViewProjection(float aspect) const
 	{
-		const Vec3 eye = Eye();
-		const Vec3 at = { 0.0f, 0.0f, 0.0f };
 		const Vec3 up = { 0.0f, 1.0f, 0.0f };
-		return Mul(LookAtRH(eye, at, up), PerspectiveFovRH(fovY, aspect, nearZ, farZ));
+		return Mul(LookAtRH(Eye(), target, up), PerspectiveFovRH(fovY, aspect, nearZ, farZ));
 	}
 };
 }

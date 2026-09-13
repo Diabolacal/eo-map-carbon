@@ -51,10 +51,17 @@ struct ViewProjConstants
 	orbit::Mat4 viewProj;
 };
 
+enum class DragMode
+{
+	None,
+	Orbit,
+	Pan,
+};
+
 struct HostState
 {
 	orbit::Camera camera;
-	bool dragging = false;
+	DragMode drag = DragMode::None;
 	int lastMouseX = 0;
 	int lastMouseY = 0;
 	uint32_t width = kDefaultWidth;
@@ -135,25 +142,65 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_LBUTTONDOWN:
 		if (state)
 		{
-			state->dragging = true;
+			state->drag = DragMode::Orbit;
+			state->lastMouseX = GET_X_LPARAM(lParam);
+			state->lastMouseY = GET_Y_LPARAM(lParam);
+			SetCapture(hwnd);
+		}
+		return 0;
+	case WM_RBUTTONDOWN:
+		if (state)
+		{
+			state->drag = DragMode::Pan;
 			state->lastMouseX = GET_X_LPARAM(lParam);
 			state->lastMouseY = GET_Y_LPARAM(lParam);
 			SetCapture(hwnd);
 		}
 		return 0;
 	case WM_LBUTTONUP:
+	case WM_RBUTTONUP:
 		if (state)
 		{
-			state->dragging = false;
-			ReleaseCapture();
+			const bool left = (GetKeyState(VK_LBUTTON) & 0x8000) != 0;
+			const bool right = (GetKeyState(VK_RBUTTON) & 0x8000) != 0;
+			if (right)
+			{
+				state->drag = DragMode::Pan;
+			}
+			else if (left)
+			{
+				state->drag = DragMode::Orbit;
+			}
+			else
+			{
+				state->drag = DragMode::None;
+				ReleaseCapture();
+			}
 		}
 		return 0;
+	case WM_CAPTURECHANGED:
+		if (state && reinterpret_cast<HWND>(lParam) != hwnd)
+		{
+			state->drag = DragMode::None;
+		}
+		return 0;
+	case WM_CONTEXTMENU:
+		return 0;
 	case WM_MOUSEMOVE:
-		if (state && state->dragging)
+		if (state && state->drag != DragMode::None)
 		{
 			const int x = GET_X_LPARAM(lParam);
 			const int y = GET_Y_LPARAM(lParam);
-			state->camera.Orbit(float(x - state->lastMouseX), float(y - state->lastMouseY));
+			const float dx = float(x - state->lastMouseX);
+			const float dy = float(y - state->lastMouseY);
+			if (state->drag == DragMode::Orbit)
+			{
+				state->camera.Orbit(dx, dy);
+			}
+			else if (state->drag == DragMode::Pan)
+			{
+				state->camera.Pan(dx, dy, state->height);
+			}
 			state->lastMouseX = x;
 			state->lastMouseY = y;
 		}
@@ -482,7 +529,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 		return 1;
 	}
 
-	Log(stdout, "Rendering %u synthetic stars via TOP_POINTS. Left-drag orbits, wheel zooms. Close the window to exit.\n", kStarCount);
+	Log(stdout, "Rendering %u synthetic stars via TOP_POINTS. Left-drag orbits, right-drag pans, wheel zooms. Close the window to exit.\n", kStarCount);
 
 	LARGE_INTEGER qpcFreq = {};
 	QueryPerformanceFrequency(&qpcFreq);
@@ -601,7 +648,14 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 		{
 			Log(stdout, "first Present completed\n");
 			const orbit::Vec3 eye = state.camera.Eye();
-			Log(stdout, "camera eye=%.1f,%.1f,%.1f distance=%.1f\n", eye.x, eye.y, eye.z, state.camera.distance);
+			Log(stdout, "camera eye=%.1f,%.1f,%.1f target=%.1f,%.1f,%.1f distance=%.1f\n",
+				eye.x,
+				eye.y,
+				eye.z,
+				state.camera.target.x,
+				state.camera.target.y,
+				state.camera.target.z,
+				state.camera.distance);
 		}
 		if (fpsWindowMs >= 1000.0)
 		{

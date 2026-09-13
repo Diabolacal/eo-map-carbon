@@ -130,7 +130,7 @@ Milestone 1A (primary):
 .\scripts\run-starfield.ps1
 ```
 
-Win32 window titled **EO-Map Carbon starfield (TrinityAL DX11)**. Thousands of white/grey stars on a near-black background. Left-drag orbits around the origin. Mouse wheel changes camera distance. Close the window to exit.
+Win32 window titled **EO-Map Carbon starfield (TrinityAL DX11)**. Thousands of white/grey stars on a near-black background. Left-drag orbits the current target (same direction as EO-Map). Right-drag pans that target. Mouse wheel zooms toward it. Close the window to exit.
 
 A console/log line `first Present completed` means `Present` returned success. It does not by itself prove pixels.
 

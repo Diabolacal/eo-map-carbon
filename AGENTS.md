@@ -80,6 +80,7 @@ Build trees, binaries, logs, and generated shader headers stay untracked.
 - `CreateDevice` does not create a depth buffer. `Tr2PresentParametersAL` has no depth field. Depth is a `Tr2TextureAL` with `PIXEL_FORMAT_D24_UNORM_S8_UINT` and `Tr2GpuUsage::DEPTH_STENCIL`, then `SetDepthStencil`.
 - Resize with `SetPresentParameters`. TrinityAL `CreateBackBuffers` resets the D3D viewport and unbinds depth. Recreate the depth texture after a resize.
 - There is no TrinityAL camera, input helper, or `SetShaderConstant`. Matrices go through `Tr2ConstantBufferAL` (`Lock` / write / `Unlock`) + `SetConstants(..., VERTEX_SHADER, register)`. The VS signature must `Add(Tr2ShaderRegisterAL::CONSTANT_BUFFER, register)`. Mouse input is raw Win32.
+- Starfield camera is host-side and must keep EO-Map drag semantics (three.js `OrbitControls`, no mouse-orbit invert): left-drag orbit uses `yaw -= dx`, `pitch += dy`; right-drag pans the orbit target in screen space (`target += -right*dx + up*dy`); wheel zooms toward the current target. Do not flip orbit signs back to a "turntable" feel.
 - `TOP_POINTS` exists and is DX11 `POINTLIST`. `DrawPrimitive(start, count)` count is the number of points. No TrinityAL test draws it. `RS_POINTSIZE` / point sprites are ignored on DX11 (1-pixel points only). Metal marks `TOP_POINTS` `validType=false`; this repo is DX11-only.
 - Full Trinity's sized-sprite path is instanced triangles (`EveSpriteSet` / `Tr2QuadRenderer`), not a TrinityAL primitive. Use that later if stars need size. Do not invent point-sprite state.
 
@@ -119,6 +120,6 @@ Starfield:
 .\scripts\run-starfield.ps1
 ```
 
-Expect a Win32 window titled **EO-Map Carbon starfield (TrinityAL DX11)** with thousands of white/grey stars on a near-black background. Left-drag orbits. Mouse wheel zooms. Close the window to exit.
+Expect a Win32 window titled **EO-Map Carbon starfield (TrinityAL DX11)** with thousands of white/grey stars on a near-black background. Left-drag orbits the current target (EO-Map direction). Right-drag pans the target. Mouse wheel zooms toward the target. Close the window to exit.
 
 Automated `--smoke` builds the full 25k starfield, presents 60 frames, and exits non-zero on setup/draw failure. It still cannot claim pixels.

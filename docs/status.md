@@ -1,12 +1,12 @@
 # Current status
 
-Last updated 2026-09-13 after configure/build/smoke on this machine.
+Last updated 2026-09-13 after a camera-control acceptance pass.
 
 ## Outcome
 
 **PROVEN PENDING HUMAN VISUAL**
 
-Milestone 0 (red triangle) is human-verified and still builds. Milestone 1A adds a second TrinityAL DX11 host that creates 25,000 deterministic synthetic stars and draws them in one `TOP_POINTS` call with an orbit/zoom camera. Automated smoke initialises the renderer, builds the full starfield, presents 60 frames, and exits 0. Pixel contents of the starfield have not been captured; a human still has to look at the window.
+Milestone 0 is human-verified. Milestone 1A rendering (25k `TOP_POINTS` stars, depth, one draw call, ~240 FPS interactive) is human-verified. A follow-up camera pass flipped orbit to match EO-Map's three.js `OrbitControls` and added right-drag pan of an explicit orbit target. Automated smoke still passes. The revised controls have not been human-checked.
 
 ## Milestone 0 — triangle
 
@@ -26,7 +26,7 @@ Upstream `Rendering.CanRenderASingleTriangle` still **PASSED** (3 ms) after this
 
 ## Milestone 1A — synthetic starfield
 
-**PROVEN PENDING HUMAN VISUAL**
+**Rendering: PROVEN (human).** Camera revision: **pending human smoke.**
 
 | Gate | Result | Evidence |
 | --- | --- | --- |
@@ -36,8 +36,9 @@ Upstream `Rendering.CanRenderASingleTriangle` still **PASSED** (3 ms) after this
 | D. launch | **pass** | `--smoke` created `HWND`, process exit 0 |
 | E. renderer init | **pass** | `adapter count: 3` then `TrinityAL CreateDevice succeeded` |
 | F. starfield construct | **pass** | `star count: 25000`; vertex buffer create succeeded (otherwise smoke exits 1) |
-| G. present | **API pass / pixels unverified** | `first Present completed`; `smoke test reached 60 frames, exiting` |
-| H. pixels / orbit / zoom | **unverified** | human must run `.\scripts\run-starfield.ps1` |
+| G. present | **pass** | `first Present completed`; 60-frame smoke exit 0 |
+| H. pixels / depth / 1 draw | **pass (human)** | ~25k stars visible, clearly 3D, ~240 FPS / ~4.16 ms, 1 draw/frame, clean close |
+| I. revised orbit / pan | **unverified** | orbit sign now matches EO-Map `OrbitControls`; right-drag pans the target |
 
 ### Starfield smoke log
 
@@ -69,16 +70,16 @@ The 0.27 ms / 3762 fps figure is QPC around BeginScene through Present with `PRE
 - Same Win32 + TrinityAL DX11 bootstrap as the triangle.
 - Stars: 25,000 deterministic `float3` + intensity vertices in one immutable `Tr2BufferAL`.
 - Draw: `SetTopology(TOP_POINTS)` then `DrawPrimitive(0, 25000)`. One call per frame.
-- Camera: host orbit math (RH look-at + perspective) written into `Tr2ConstantBufferAL` and bound with `SetConstants(..., VERTEX_SHADER, 0)`.
+- Camera: host orbit around an explicit target (RH look-at + perspective) written into `Tr2ConstantBufferAL` and bound with `SetConstants(..., VERTEX_SHADER, 0)`.
 - Depth: `Tr2TextureAL` `PIXEL_FORMAT_D24_UNORM_S8_UINT` + `SetDepthStencil`. `CreateDevice` does not create a depth surface.
 - Resize: `SetPresentParameters` (same as `SwapChainResizing` tests) then recreate the depth texture. Viewport is reset inside TrinityAL `CreateBackBuffers`.
-- Input: raw Win32 (`WM_LBUTTON*`, `WM_MOUSEMOVE`, `WM_MOUSEWHEEL`). TrinityAL has no input helper.
+- Input: raw Win32. Left-drag orbit signs match EO-Map's three.js `OrbitControls` (`yaw -= dx`, `pitch += dy`). Right-drag pans the target in screen space. Wheel zooms toward the target.
 
 `TOP_POINTS` is a real TrinityAL topology (DX11 `POINTLIST`). `DrawPrimitive` primitive count is the point count. `RS_POINTSIZE` / point sprites are stored and ignored on DX11, so stars are hardware 1-pixel points. That is acceptable for this smoke. Full Trinity's later many-object path for sized sprites is instanced triangles (`EveSpriteSet` / `Tr2QuadRenderer`); that is not TrinityAL-only and was not used here.
 
 ## Known gaps
 
-- No GPU readback / screenshot, so starfield pixels, orbit, and zoom are not proven until a human looks.
+- Revised orbit direction and right-drag pan have not been human-checked yet. Rendering already was.
 - Point size is not controllable through TrinityAL on DX11. Later New Eden stars that need size should move to the verified instanced-triangle path, not `RS_POINTSIZE`.
 - Metal marks `TOP_POINTS` `validType=false`. This host is DX11-only.
 - No TrinityAL test draws `TOP_POINTS`. Behaviour is taken from the enum, the DX11 topology table, `ComputeVertexCount`, and Trinity's debug point-cloud submit.
@@ -95,7 +96,7 @@ cd C:\dev\eo-map-carbon
 .\scripts\run-starfield.ps1
 ```
 
-Expect a Win32 window titled **EO-Map Carbon starfield (TrinityAL DX11)** filled with thousands of white/grey stars on a near-black background. Left-drag should orbit around the origin. Mouse wheel should change camera distance. Closing the window should exit cleanly.
+Expect the same proven starfield. Check the camera pass: left-drag orbit should match EO-Map, right-drag should pan the target, further left-drag should orbit the new target, wheel zoom should still work.
 
 Triangle diagnostic (still valid):
 
