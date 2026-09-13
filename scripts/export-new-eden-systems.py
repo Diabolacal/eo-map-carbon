@@ -11,6 +11,8 @@ handoffs for the Carbon host:
   data/new_eden_stargates.bin
   data/new_eden_stargates.manifest.json
   src/new_eden_gates_expect.h
+  data/new_eden_star_visuals.bin
+  data/new_eden_star_visuals.manifest.json
 
 Runtime Carbon never opens SQLite, never talks to ESI, and never loads the
 EO-Map web app.
@@ -87,6 +89,18 @@ GATE_RECORD_STRUCT = struct.Struct("<II")
 EXPECTED_GATE_HEADER_SIZE = 64
 EXPECTED_GATE_RECORD_SIZE = 8
 
+STAR_MAGIC = b"NESTAR1\0"
+STAR_VERSION = 1
+STAR_RECORD_SIZE = 12
+STAR_HEADER_STRUCT = struct.Struct("<8sHHIII32s8s")
+STAR_RECORD_STRUCT = struct.Struct("<IfB3x")
+EXPECTED_STAR_HEADER_SIZE = 64
+EXPECTED_STAR_RECORD_SIZE = 12
+EXPECTED_TEMP_MIN_K = 2010.0
+EXPECTED_TEMP_MAX_K = 7496.0
+EXPECTED_JITA_TEMP_K = 7305.0
+EXPECTED_JITA_SPECTRAL = "F"
+
 JITA_ID = 30000142
 AMARR_ID = 30002187
 NIARJA_ID = 30003504  # Pochven; EO-Map marks it unreachable from the main graph
@@ -137,6 +151,124 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def load_star_visuals(db_path: Path) -> list[tuple[int, str, float]]:
+    connection = sqlite3.connect(f"file:{db_path.as_posix()}?mode=ro", uri=True)
+    try:
+        rows = list(
+            connection.execute(
+                "SELECT id, star_class, star_temperature FROM systems "
+                "WHERE hidden = 0 AND id BETWEEN ? AND ? ORDER BY id ASC",
+                (NEW_EDEN_SYSTEM_MIN, NEW_EDEN_SYSTEM_MAX),
+            )
+        )
+    finally:
+        connection.close()
+    if len(rows) != EXPECTED_KNOWN_SPACE:
+        raise RuntimeError(f"star visual row count {len(rows)} != {EXPECTED_KNOWN_SPACE}")
+    temps = [float(temp) for _sid, _cls, temp in rows]
+    if min(temps) != EXPECTED_TEMP_MIN_K or max(temps) != EXPECTED_TEMP_MAX_K:
+        raise RuntimeError(f"temperature window {min(temps)}-{max(temps)} != {EXPECTED_TEMP_MIN_K}-{EXPECTED_TEMP_MAX_K}")
+    by_id = {int(sid): (cls, float(temp)) for sid, cls, temp in rows}
+    jita_cls, jita_temp = by_id[JITA_ID]
+    if float(jita_temp) != EXPECTED_JITA_TEMP_K:
+        raise RuntimeError(f"Jita temperature {jita_temp} != {EXPECTED_JITA_TEMP_K}")
+    if not str(jita_cls).startswith(EXPECTED_JITA_SPECTRAL):
+        raise RuntimeError(f"Jita star_class {jita_cls!r} does not start with {EXPECTED_JITA_SPECTRAL}")
+    for sid, cls, temp in rows:
+        if not math.isfinite(float(temp)) or float(temp) <= 0:
+            raise RuntimeError(f"system {sid} has a non-finite temperature")
+        if not cls:
+            raise RuntimeError(f"system {sid} has an empty star_class")
+    return [(int(sid), str(cls), float(temp)) for sid, cls, temp in rows]
+
+
+def write_star_binary(rows: list[tuple[int, str, float]], source_sha: bytes, dest: Path) -> bytes:
+    records = bytearray()
+    for system_id, star_class, temperature in rows:
+        letter = star_class.strip()[:1].upper().encode("ascii")
+        if not letter:
+            raise RuntimeError(f"system {system_id} has no spectral letter")
+        records.extend(STAR_RECORD_STRUCT.pack(system_id, float(temperature), letter[0]))
+    header = STAR_HEADER_STRUCT.pack(
+        STAR_MAGIC,
+        STAR_VERSION,
+        STAR_RECORD_SIZE,
+        len(rows),
+        PINNED_SDE_BUILD,
+        0,
+        source_sha,
+        b"\0" * 8,
+    )
+    if STAR_HEADER_STRUCT.size != EXPECTED_STAR_HEADER_SIZE or STAR_RECORD_STRUCT.size != EXPECTED_STAR_RECORD_SIZE:
+        raise RuntimeError("star visual binary layout drift")
+    blob = header + bytes(records)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(blob)
+    return blob
+
+
+def write_star_manifest(
+    dest: Path,
+    *,
+    source_sha: str,
+    metadata: dict[str, str],
+    rows: list[tuple[int, str, float]],
+    binary_sha: str,
+    binary_bytes: int,
+) -> dict:
+    letters: dict[str, int] = collections.Counter()
+    for _sid, star_class, _temp in rows:
+        letters[star_class.strip()[:1].upper()] += 1
+    temps = [temp for _sid, _cls, temp in rows]
+    by_id = {sid: (cls, temp) for sid, cls, temp in rows}
+    anchors = []
+    for system_id in ANCHOR_IDS:
+        star_class, temperature = by_id[system_id]
+        anchors.append(
+            {
+                "id": system_id,
+                "star_class": star_class,
+                "star_temperature": temperature,
+            }
+        )
+    document = {
+        "artifact": {
+            "filename": "new_eden_star_visuals.bin",
+            "bytes": binary_bytes,
+            "sha256": binary_sha,
+            "format": "NESTAR1",
+            "version": STAR_VERSION,
+            "record": "system_id u32, temperature_k f32, spectral_letter u8, pad 3",
+        },
+        "source": {
+            "kind": "EO-Map Contract A systems.star_temperature / star_class (raw metadata)",
+            "sibling_path": "../eo-map/eve-frontier-map/public/map_data_eo_3464040.db",
+            "filename": PINNED_DB_NAME,
+            "sha256": source_sha,
+            "builder_version": metadata.get("builder_version", PINNED_BUILDER_VERSION),
+            "sde_build": int(metadata.get("sde_build", PINNED_SDE_BUILD)),
+            "sde_fields": ["mapStars.statistics.temperature", "mapStars.statistics.spectralClass"],
+        },
+        "selection": {
+            "space": "new-eden-known-space",
+            "system_count": len(rows),
+            "temperature_min_k": min(temps),
+            "temperature_max_k": max(temps),
+            "spectral_letter_counts": dict(sorted(letters.items())),
+        },
+        "presentation": {
+            "colour": "runtime blackbody from temperature (EO-Map getStellarTemperatureColor)",
+            "emissive": "runtime 1+5*log10-lerp(T,2300,7496)^3",
+            "size": "runtime heuristic aSize from system id; not SDE radius/luminosity",
+            "not_used_for_universe_map": ["radius", "luminosity_sde", "security_status"],
+        },
+        "anchors": anchors,
+        "generator": "scripts/export-new-eden-systems.py",
+    }
+    dest.write_text(json.dumps(document, indent=2, sort_keys=False) + "\n", encoding="utf-8")
+    return document
 
 
 def load_rows(db_path: Path) -> tuple[list[tuple[int, str, float, float, float]], dict[str, str], int, int]:
@@ -624,6 +756,8 @@ def main() -> int:
     parser.add_argument("--out-gates-bin", type=Path, default=repo_root / "data" / "new_eden_stargates.bin")
     parser.add_argument("--out-gates-manifest", type=Path, default=repo_root / "data" / "new_eden_stargates.manifest.json")
     parser.add_argument("--out-gates-header", type=Path, default=repo_root / "src" / "new_eden_gates_expect.h")
+    parser.add_argument("--out-star-bin", type=Path, default=repo_root / "data" / "new_eden_star_visuals.bin")
+    parser.add_argument("--out-star-manifest", type=Path, default=repo_root / "data" / "new_eden_star_visuals.manifest.json")
     parser.add_argument("--allow-db-mismatch", action="store_true")
     args = parser.parse_args()
 
@@ -635,6 +769,11 @@ def main() -> int:
         raise RuntimeError(
             f"gate struct sizes {GATE_HEADER_STRUCT.size}/{GATE_RECORD_STRUCT.size} != "
             f"{EXPECTED_GATE_HEADER_SIZE}/{EXPECTED_GATE_RECORD_SIZE}"
+        )
+    if STAR_HEADER_STRUCT.size != EXPECTED_STAR_HEADER_SIZE or STAR_RECORD_STRUCT.size != EXPECTED_STAR_RECORD_SIZE:
+        raise RuntimeError(
+            f"star struct sizes {STAR_HEADER_STRUCT.size}/{STAR_RECORD_STRUCT.size} != "
+            f"{EXPECTED_STAR_HEADER_SIZE}/{EXPECTED_STAR_RECORD_SIZE}"
         )
     if not args.db.is_file():
         raise SystemExit(f"Contract A database not found: {args.db}")
@@ -684,6 +823,22 @@ def main() -> int:
     )
     write_gates_header(args.out_gates_header, gate_document)
 
+    star_rows = load_star_visuals(args.db)
+    system_ids = [int(row[0]) for row in rows]
+    star_ids = [int(row[0]) for row in star_rows]
+    if star_ids != system_ids:
+        raise RuntimeError("star visual ids are not in the same order as the systems export")
+    star_blob = write_star_binary(star_rows, source_sha_bytes, args.out_star_bin)
+    star_sha = hashlib.sha256(star_blob).hexdigest()
+    star_document = write_star_manifest(
+        args.out_star_manifest,
+        source_sha=source_sha,
+        metadata=metadata,
+        rows=star_rows,
+        binary_sha=star_sha,
+        binary_bytes=len(star_blob),
+    )
+
     centre = document["scene_aabb"]["centre"]
     print(f"source db       : {args.db}")
     print(f"source sha256   : {source_sha}")
@@ -701,6 +856,12 @@ def main() -> int:
     print(f"gates binary    : {args.out_gates_bin} ({len(gate_blob)} bytes, {gate_sha})")
     print(f"gates manifest  : {args.out_gates_manifest}")
     print(f"gates header    : {args.out_gates_header}")
+    print(f"star visuals    : {args.out_star_bin} ({len(star_blob)} bytes, {star_sha})")
+    print(f"star manifest   : {args.out_star_manifest}")
+    print(
+        f"star temps      : {star_document['selection']['temperature_min_k']}-"
+        f"{star_document['selection']['temperature_max_k']} K"
+    )
     return 0
 
 

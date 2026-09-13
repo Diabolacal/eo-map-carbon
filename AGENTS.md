@@ -42,9 +42,17 @@ W-space (2,604 Anoikis systems in Contract A) is a separate ~1,300 LY cluster an
 
 Human-verified. Do not redo it.
 
-`eo-map-carbon-neweden` also loads `data/new_eden_stargates.bin`: 6,989 unique undirected known-space connections from the same Contract A `stargates` table (13,978 directed rows, already k-space only). The host draws them as one static `TOP_LINES` buffer (`DrawPrimitive(0, 6989)` — count is the number of segments). Systems stay on the unchanged 1B `TOP_POINTS` path. Two draw calls per frame. A human confirmed the network is the real New Eden graph and stays attached through orbit / pan / zoom.
+`eo-map-carbon-neweden` also loads `data/new_eden_stargates.bin`: 6,989 unique undirected known-space connections from the same Contract A `stargates` table (13,978 directed rows, already k-space only). The host draws them as one static `TOP_LINES` buffer (`DrawPrimitive(0, 6989)` — count is the number of segments). A human confirmed the network is the real New Eden graph and stays attached through orbit / pan / zoom.
 
-Do not re-interpret the SDE. Regenerate both artefacts with `scripts/export-new-eden-systems.py`. Do not fold later map features into this host. Do not add W-space, wormholes, jump bridges, security colours, or route highlighting here.
+Do not re-interpret the SDE. Regenerate artefacts with `scripts/export-new-eden-systems.py`. Do not add W-space, wormholes, jump bridges, security colours, or route highlighting here.
+
+## Visual rendering lab
+
+Not aesthetically proven. Human tuning is the next step.
+
+The same New Eden host now draws systems as one instanced camera-facing quad batch (`DrawIndexedInstanced`, 5485 instances), colours them from Contract A `star_temperature` (`data/new_eden_star_visuals.bin`), fades gates with view-depth, and runs a togglable TrinityAL HDR bloom. `TOP_POINTS` remains as `--points` / F7. Live sliders are a Win32 tool window, not product UI.
+
+Do not replace TrinityAL with raw DirectX. Do not pull in `EveSpriteSet` / `Tr2PPBloomEffect`. See `docs/visual-rendering-plan.md`.
 
 ## Upstream Trinity
 
@@ -73,7 +81,7 @@ Three WIN32 hosts, one CMake project, one vcpkg prefix:
 
 - `eo-map-carbon-triangle` — frozen Milestone 0 diagnostic.
 - `eo-map-carbon-starfield` — frozen Milestone 1A synthetic 3D starfield.
-- `eo-map-carbon-neweden` — frozen Milestone 1B point cloud plus proven Milestone 1C static stargate graph.
+- `eo-map-carbon-neweden` — proven 1B/1C geometry, plus the visual rendering lab (instanced stars, bloom, Win32 sliders). Aesthetics are not proven.
 
 Do not fold camera/depth/starfield/New Eden changes into `triangle_main.cpp`.
 Do not replace the synthetic 1A generator with New Eden data.
@@ -94,6 +102,7 @@ From a Developer PowerShell (x64) in this repo, after the machine-local Trinity/
 .\scripts\build-neweden.ps1
 .\scripts\run-neweden.ps1
 .\scripts\run-neweden.ps1 -Smoke
+.\scripts\run-visual-lab.ps1
 ```
 
 Our CMake consumes Trinity's already-installed vcpkg prefix (`VCPKG_MANIFEST_MODE=OFF`). Do not add a second vcpkg manifest for this host.
@@ -116,7 +125,10 @@ Build trees, binaries, logs, and generated shader headers stay untracked.
 - Starfield camera is host-side and must keep EO-Map drag semantics (three.js `OrbitControls`, no mouse-orbit invert): left-drag orbit uses `yaw -= dx`, `pitch += dy`; right-drag pans the orbit target in screen space (`target += -right*dx + up*dy`); wheel zooms toward the current target. Do not flip orbit signs back to a "turntable" feel.
 - `TOP_POINTS` exists and is DX11 `POINTLIST`. `DrawPrimitive(start, count)` count is the number of points. No TrinityAL test draws it. `RS_POINTSIZE` / point sprites are ignored on DX11 (1-pixel points only). Metal marks `TOP_POINTS` `validType=false`; this repo is DX11-only.
 - `TOP_LINES` exists and is DX11 `LINELIST`. `DrawPrimitive(start, count)` count is the number of segments; the vertex buffer holds `2 * count` endpoints. No TrinityAL test draws it. There is no line-width API. `RS_ANTIALIASEDLINEENABLE` is enum-only on DX11 and is not applied. Metal marks `TOP_LINES` valid. This host is still DX11-only.
-- Full Trinity's sized-sprite path is instanced triangles (`EveSpriteSet` / `Tr2QuadRenderer`), not a TrinityAL primitive. Use that later if stars need size. Do not invent point-sprite state.
+- Full Trinity's sized-sprite path is instanced triangles (`EveSpriteSet` / `Tr2QuadRenderer`), not a TrinityAL primitive. This host reproduces that batching with TrinityAL `DrawIndexedInstanced` (verified by `CanDoInstancedRendering`). Do not instantiate Eve/Blue types. Do not invent point-sprite state.
+- `Tr2PPBloomEffect` / `Tr2PostProcessRenderer` need Blue, `Tr2Effect`, and `res:/` FX files that are not in the public tree. Bloom here is a host TrinityAL HDR RT → extract → blur H/V → composite.
+- `Tr2ResourceSetAL` is immutable after `Create`. Default/empty resource sets do not unbind SRVs; bind a dummy set before drawing into a texture that was sampled last frame.
+- Constant-buffer `Create` size must be a multiple of 16. TrinityAL does not pad.
 
 ## Milestone discipline
 
@@ -164,4 +176,8 @@ New Eden:
 .\scripts\run-neweden.ps1
 ```
 
-Milestone 1B geometry and Milestone 1C stargate topology are already human-verified. Re-run only if the host or Carbon changes. Expect a Win32 window titled **EO-Map Carbon New Eden (TrinityAL DX11)** with the recognisable New Eden cluster plus a subdued grey network of straight 3D gate lines that stay attached while orbiting. Same orbit / pan / zoom as the starfield. Automated `--smoke` loads the pinned Contract A systems and undirected gates, checks 5485 systems, 6989 connections, hub adjacency, Jita→Amarr = 11 hops, presents 60 frames, and still cannot claim pixels.
+Milestone 1B geometry and Milestone 1C stargate topology are already human-verified. Re-run only if the host or Carbon changes. Expect a Win32 window titled **EO-Map Carbon New Eden visual lab (TrinityAL DX11)** with sized temperature-coloured stars, faded gate lines, optional bloom, and a developer slider panel. Same orbit / pan / zoom as the starfield. Automated `--smoke` loads the pinned Contract A systems, undirected gates, and star temperatures, checks 5485 / 6989 / Jita 7305 K, presents 40 bloom-on + 20 bloom-off frames, and still cannot claim pixels or aesthetics.
+
+```powershell
+.\scripts\run-visual-lab.ps1
+```

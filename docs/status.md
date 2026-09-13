@@ -1,12 +1,48 @@
 # Current status
 
-Last updated 2026-09-13 after human visual verification of Milestone 1C.
+Last updated 2026-09-13 after the visual rendering lab landed on `feat/visual-rendering-lab`.
 
 ## Outcome
 
-**PROVEN**
+Milestones 0 / 1A / 1B / 1C remain **PROVEN** (human pixel verification).
 
-Milestone 0 (red triangle) is human-verified. Milestone 1A (synthetic TrinityAL starfield plus EO-Map-matching orbit/pan/zoom) is human-verified. Milestone 1B (real New Eden known-space geometry on the same TrinityAL path) is human-verified. Milestone 1C (real New Eden stargate graph on that same host) is human-verified.
+The visual rendering lab is **READY FOR HUMAN TUNING**. Automated smoke proves init, instanced star draws, bloom on/off, Present, and a clean exit. It cannot claim pixels or aesthetics.
+
+## Visual rendering lab
+
+**READY FOR HUMAN TUNING.** Not aesthetically proven.
+
+Same `eo-map-carbon-neweden` host. Geometry and camera are unchanged. Systems are instanced camera-facing discs coloured from Contract A `star_temperature`. Gates stay `TOP_LINES` with distance fade. Bloom is a host TrinityAL HDR extract/blur/composite, independently togglable. A Win32 slider panel is created only in interactive mode.
+
+| Gate | Result | Evidence |
+| --- | --- | --- |
+| A. configure | **pass** | `.\scripts\build-neweden.ps1` |
+| B. compile | **pass** | new shaders + `neweden_main.cpp`; C5030 ATL warning only |
+| C. link | **pass** | `.cmake-build-triangle-debug\bin\eo-map-carbon-neweden.exe` |
+| D. catalogues | **pass** | 5485 systems + 6989 edges + 5485 temperatures (2010–7496 K); Jita F / 7305 K |
+| E. renderer init | **pass** | `TrinityAL CreateDevice succeeded` |
+| F. present + bloom | **pass** | first Present; 40 bloom-on frames (6 draws / 4 PP) then 20 bloom-off (3 / 1) |
+| G. pixels / look | **not claimed** | human must tune and look |
+
+### Visual lab smoke log
+
+```
+system count: 5485 (known-space 5485, other-space 0)
+connection count: 6989
+star temperature window: 2010-7496 K (Jita=7305 K F)
+first Present completed
+smoke: frames=60 ... bloom_on_draws=6 bloom_on_pp=4 bloom_off_draws=3 bloom_off_pp=1 ... avg_frame_ms=0.43 avg_fps=2304.2
+```
+
+The 0.43 ms / 2304 fps figure is QPC around BeginScene through Present with `PRESENT_INTERVAL_IMMEDIATE` in `--smoke` only. It is not a vsync-capped interactive measurement. Frozen triangle (30 frames) and synthetic starfield (25k points) stayed green.
+
+Launch for human tuning:
+
+```powershell
+.\scripts\run-visual-lab.ps1
+```
+
+See [docs/visual-rendering-plan.md](visual-rendering-plan.md).
 
 ## Milestone 0 — triangle
 
@@ -126,22 +162,23 @@ The 0.25 ms / 4051 fps figure is QPC around BeginScene through Present with `PRE
 
 ## Known gaps
 
-- Point size is not controllable through TrinityAL on DX11. 1-pixel systems are accepted for 1B; later size needs the verified instanced-triangle path, not `RS_POINTSIZE`.
-- W-space is intentionally omitted from this first visual.
+- Visual look is not proven. Defaults are a starting preset for human sliders.
+- `EveSpriteSet` / `Tr2QuadRenderer` / `Tr2PPBloomEffect` cannot be used from this TrinityAL-only host (Blue / `res:/` / Eve scene).
+- Gate lines remain 1 px. There is still no DX11 line-width API.
+- W-space is intentionally omitted.
 - Metal marks `TOP_POINTS` `validType=false`. This host is DX11-only.
-- Resize is implemented from verified APIs but was not interactively exercised in smoke.
-- Debug CRT is `/MD`. Global git `insteadOf` is still mutated by configure. Paths still assume `C:\dev\eo-map-carbon` and `C:\dev\carbon-upstream\trinity`.
-- No labels, picking, jump bridges, routing, security colours, regions, ESI, or UI (intentionally out of scope).
-- 1-pixel systems remain faint versus EO-Map. That look is still deferred.
+- Resize of bloom RTs is implemented from verified APIs but was not interactively exercised in smoke.
+- Debug CRT is `/MD`. Global git `insteadOf` is still mutated by configure.
+- No labels, picking, routing, security colours, ESI, or product UI.
 
 ## Human smoke (already done)
 
 Re-run if Carbon or the host changes:
 
 ```powershell
-.\scripts\run-neweden.ps1
+.\scripts\run-visual-lab.ps1
 .\scripts\run-starfield.ps1
 .\scripts\run-triangle.ps1
 ```
 
-Milestone 1C is already human-verified. Re-run only if Carbon or the host changes.
+Milestones 0 / 1A / 1B / 1C are already human-verified. Re-run those only if Carbon or the frozen hosts change. The visual lab needs a human to look and tune.

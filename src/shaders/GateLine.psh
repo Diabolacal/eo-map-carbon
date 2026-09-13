@@ -1,0 +1,29 @@
+struct VS_OUTPUT
+{
+	float4 Position : SV_Position;
+	float ViewDepth : TEXCOORD0;
+	float Intensity : TEXCOORD1;
+};
+
+cbuffer cb0 : register(b0)
+{
+	float4x4 viewProj;
+	float4 viewRight;
+	float4 viewUp;
+	float4 cameraPos;
+	float4 sizeParams;
+	float4 fadeParams;
+	float4 gateParams; // x=opacity, y=distAtten, z=viewportW, w=viewportH
+};
+
+float4 main(VS_OUTPUT input) : SV_Target
+{
+	float scale = max(0.1, cameraPos.w / max(fadeParams.z, 1.0));
+	float dynNear = 3.0 * scale;
+	float dynFar = 275.0 * scale;
+	float t = saturate((input.ViewDepth - dynNear) / max(dynFar - dynNear, 0.001));
+	float gain = lerp(1.0, 1.0 - 0.65 * gateParams.y, t);
+	float a = saturate(gateParams.x * gain);
+	float grey = 0.267 * a;
+	return float4(grey, grey, grey, a);
+}

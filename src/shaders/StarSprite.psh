@@ -1,0 +1,16 @@
+struct VS_OUTPUT
+{
+	float4 Position : SV_Position;
+	float2 Corner : TEXCOORD0;
+	float3 Color : TEXCOORD1;
+	float Intensity : TEXCOORD2;
+};
+
+float4 main(VS_OUTPUT input) : SV_Target
+{
+	float r = length(input.Corner);
+	float falloff = saturate(1.0 - r);
+	falloff *= falloff;
+	float3 rgb = input.Color * input.Intensity * falloff;
+	return float4(rgb, falloff);
+}
