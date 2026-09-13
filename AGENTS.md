@@ -40,11 +40,11 @@ W-space (2,604 Anoikis systems in Contract A) is a separate ~1,300 LY cluster an
 
 ## Proven New Eden stargate graph (Milestone 1C)
 
-Automated smoke is in place. Pixels still need a human look.
+Human-verified. Do not redo it.
 
-`eo-map-carbon-neweden` also loads `data/new_eden_stargates.bin`: 6,989 unique undirected known-space connections from the same Contract A `stargates` table (13,978 directed rows, already k-space only). The host draws them as one static `TOP_LINES` buffer (`DrawPrimitive(0, 6989)` — count is the number of segments). Systems stay on the unchanged 1B `TOP_POINTS` path. Two draw calls per frame. Same orbit / pan / zoom.
+`eo-map-carbon-neweden` also loads `data/new_eden_stargates.bin`: 6,989 unique undirected known-space connections from the same Contract A `stargates` table (13,978 directed rows, already k-space only). The host draws them as one static `TOP_LINES` buffer (`DrawPrimitive(0, 6989)` — count is the number of segments). Systems stay on the unchanged 1B `TOP_POINTS` path. Two draw calls per frame. A human confirmed the network is the real New Eden graph and stays attached through orbit / pan / zoom.
 
-Do not re-interpret the SDE. Regenerate both artefacts with `scripts/export-new-eden-systems.py`. Do not add W-space, wormholes, jump bridges, security colours, or route highlighting here.
+Do not re-interpret the SDE. Regenerate both artefacts with `scripts/export-new-eden-systems.py`. Do not fold later map features into this host. Do not add W-space, wormholes, jump bridges, security colours, or route highlighting here.
 
 ## Upstream Trinity
 
@@ -73,7 +73,7 @@ Three WIN32 hosts, one CMake project, one vcpkg prefix:
 
 - `eo-map-carbon-triangle` — frozen Milestone 0 diagnostic.
 - `eo-map-carbon-starfield` — frozen Milestone 1A synthetic 3D starfield.
-- `eo-map-carbon-neweden` — Milestone 1B point cloud plus Milestone 1C static stargate graph.
+- `eo-map-carbon-neweden` — frozen Milestone 1B point cloud plus proven Milestone 1C static stargate graph.
 
 Do not fold camera/depth/starfield/New Eden changes into `triangle_main.cpp`.
 Do not replace the synthetic 1A generator with New Eden data.
@@ -164,4 +164,4 @@ New Eden:
 .\scripts\run-neweden.ps1
 ```
 
-Milestone 1B geometry is already human-verified. Milestone 1C adds the real stargate network on the same host. Expect a Win32 window titled **EO-Map Carbon New Eden (TrinityAL DX11)** with the recognisable New Eden cluster plus a subdued grey network of straight 3D gate lines that stay attached while orbiting. Same orbit / pan / zoom as the starfield. Automated `--smoke` loads the pinned Contract A systems and undirected gates, checks 5485 systems, 6989 connections, hub adjacency, Jita→Amarr = 11 hops, presents 60 frames, and still cannot claim pixels.
+Milestone 1B geometry and Milestone 1C stargate topology are already human-verified. Re-run only if the host or Carbon changes. Expect a Win32 window titled **EO-Map Carbon New Eden (TrinityAL DX11)** with the recognisable New Eden cluster plus a subdued grey network of straight 3D gate lines that stay attached while orbiting. Same orbit / pan / zoom as the starfield. Automated `--smoke` loads the pinned Contract A systems and undirected gates, checks 5485 systems, 6989 connections, hub adjacency, Jita→Amarr = 11 hops, presents 60 frames, and still cannot claim pixels.

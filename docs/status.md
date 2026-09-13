@@ -1,12 +1,12 @@
 # Current status
 
-Last updated 2026-09-13 after adding Milestone 1C stargate lines. 0 / 1A / 1B stay human-proven. 1C is waiting on a human look at the window.
+Last updated 2026-09-13 after human visual verification of Milestone 1C.
 
 ## Outcome
 
-**PROVEN PENDING HUMAN VISUAL** (Milestone 1C only)
+**PROVEN**
 
-Milestone 0 (red triangle) is human-verified. Milestone 1A (synthetic TrinityAL starfield plus EO-Map-matching orbit/pan/zoom) is human-verified. Milestone 1B (real New Eden known-space geometry on the same TrinityAL path) is human-verified. Milestone 1C (real New Eden stargate graph on that same host) has automated load / graph / draw / Present smoke. It cannot claim pixels until a human looks.
+Milestone 0 (red triangle) is human-verified. Milestone 1A (synthetic TrinityAL starfield plus EO-Map-matching orbit/pan/zoom) is human-verified. Milestone 1B (real New Eden known-space geometry on the same TrinityAL path) is human-verified. Milestone 1C (real New Eden stargate graph on that same host) is human-verified.
 
 ## Milestone 0 — triangle
 
@@ -53,7 +53,7 @@ The frozen 1A host is unchanged: `eo-map-carbon-starfield`, `src/starfield_main.
 
 ## Milestone 1C — New Eden stargate graph
 
-**PROVEN PENDING HUMAN VISUAL**
+**PROVEN**, including human pixel, topology, and camera verification.
 
 Same host as 1B. Systems path is unchanged. Gates are a second static buffer.
 
@@ -66,8 +66,8 @@ Same host as 1B. Systems path is unchanged. Gates are a second static buffer.
 | E. graph checks | **pass** | every endpoint in the 1B catalogue; Jita/Amarr/Dodixie/Rens/Hek/Zarzakh adjacency; Jita→Amarr = 11; Niarja unreachable; Jita reachable = 5228 |
 | F. renderer init | **pass** | `adapter count: 3` then `TrinityAL CreateDevice succeeded` |
 | G. present | **pass** | `first Present completed`; 60-frame smoke exit 0; 2 draws/frame |
-| H. pixels / 3D topology | **pending human** | recognisable New Eden plus attached gate lines while rotating |
-| I. orbit / pan / zoom | **pending human** | same 1A/1B controls |
+| H. pixels / 3D topology | **pass (human)** | recognisable New Eden plus a visibly correct stargate network; lines stay attached while rotating |
+| I. orbit / pan / zoom | **pass (human)** | left-drag orbit, right-drag pan, wheel zoom; remains responsive |
 
 ### New Eden 1C smoke log
 
@@ -99,7 +99,7 @@ exiting after 60 frames
 
 Process exit code: 0.
 
-The 0.25 ms / 4051 fps figure is QPC around BeginScene through Present with `PRESENT_INTERVAL_IMMEDIATE` in `--smoke` only. It is not a vsync-capped interactive measurement. Re-smoke of the frozen triangle (30 frames, exit 0) and synthetic starfield (25k points, 0.31 ms / 3218 fps, exit 0) stayed green.
+The 0.25 ms / 4051 fps figure is QPC around BeginScene through Present with `PRESENT_INTERVAL_IMMEDIATE` in `--smoke` only. It is not a vsync-capped interactive measurement. Re-smoke after human verification also exited 0 (5485 systems, 6989 connections, 60 frames). Frozen triangle (30 frames) and synthetic starfield (25k points) stayed green.
 
 ### Architecture actually used (1C)
 
@@ -113,35 +113,6 @@ The 0.25 ms / 4051 fps figure is QPC around BeginScene through Present with `PRE
 
 - `Tr2RenderContextEnum::TOP_LINES` (DX11 `D3D11_PRIMITIVE_TOPOLOGY_LINELIST`)
 - `DrawPrimitive(startVertex, primitiveCount)` with `primitiveCount` = number of line segments (`ComputeVertexCount` returns `2 * primitiveCount`)
-
-### New Eden smoke log
-
-File: `.cmake-build-triangle-debug\bin\eo-map-carbon-neweden-smoke.log` (gitignored)
-
-```
-eo-map-carbon-neweden starting
-renderer: TrinityAL DX11
-path: TOP_POINTS DrawPrimitive (one call)
-draw calls per frame: 1
-dataset: map_data_eo_3464040.db builder=1.5.0 SDE=3464040
-dataset file: C:\dev\eo-map-carbon\.cmake-build-triangle-debug\bin\new_eden_systems.bin
-dataset source sha256: 874262496556d933bbbc184cdec8f469660f6c1108b21e25f0481475b68eba81
-system count: 5485 (known-space 5485, other-space 0)
-anchor check: Jita/Amarr/Dodixie/Rens/Hek scene coordinates match EO-Map transform
-adapter count: 3
-window hwnd=00000000001B1456 1280x720
-TrinityAL CreateDevice succeeded
-Rendering 5485 New Eden systems via TOP_POINTS. Left-drag orbits, right-drag pans, wheel zooms. Close the window to exit.
-first Present completed
-camera eye=43.9,106.4,145.9 target=-9.1,-4.0,0.6 distance=190.0
-smoke test reached 60 frames, exiting
-smoke: frames=60 systems=5485 known_space=5485 other_space=0 draw_calls/frame=1 avg_frame_ms=0.31 avg_fps=3232.5 path=TrinityAL_DX11/TOP_POINTS dataset=SDE3464040
-exiting after 60 frames
-```
-
-Process exit code: 0.
-
-The 0.31 ms / 3232 fps figure is QPC around BeginScene through Present with `PRESENT_INTERVAL_IMMEDIATE` in `--smoke` only. It is not a vsync-capped interactive measurement.
 
 ## Architecture actually used (1B)
 
@@ -161,7 +132,7 @@ The 0.31 ms / 3232 fps figure is QPC around BeginScene through Present with `PRE
 - Resize is implemented from verified APIs but was not interactively exercised in smoke.
 - Debug CRT is `/MD`. Global git `insteadOf` is still mutated by configure. Paths still assume `C:\dev\eo-map-carbon` and `C:\dev\carbon-upstream\trinity`.
 - No labels, picking, jump bridges, routing, security colours, regions, ESI, or UI (intentionally out of scope).
-- Milestone 1C automated smoke does not prove pixels. 1-pixel systems remain faint; that look is still deferred.
+- 1-pixel systems remain faint versus EO-Map. That look is still deferred.
 
 ## Human smoke (already done)
 
@@ -173,4 +144,4 @@ Re-run if Carbon or the host changes:
 .\scripts\run-triangle.ps1
 ```
 
-For 1C, compare the gate graph with EO-Map (3D, not the 2D schematic): Jita's seven spokes, the Amarr hub, Zarzakh's four gates, Pochven as a small disconnected cluster around Niarja, and isolated Jove points with no incident lines.
+Milestone 1C is already human-verified. Re-run only if Carbon or the host changes.

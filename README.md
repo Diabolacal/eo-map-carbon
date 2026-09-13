@@ -16,7 +16,7 @@ A Windows-native experiment that:
 4. Draws a human-verified red triangle (`eo-map-carbon-triangle`) using TrinityAL APIs from `trinityal/tests`.
 5. Draws a human-verified synthetic 3D starfield of 25,000 points (`eo-map-carbon-starfield`) through the same TrinityAL DX11 path.
 6. Draws a human-verified New Eden known-space point cloud (`eo-map-carbon-neweden`) from an export of EO-Map's pinned Contract A artefact.
-7. Draws the real New Eden stargate graph on that same host from the same Contract A `stargates` table (pixels still need a human look).
+7. Draws a human-verified New Eden stargate graph on that same host from the same Contract A `stargates` table.
 
 The visual sophistication is still low. The question is whether Carbon/Trinity can be consumed, then whether many points can be drawn in 3D without leaving TrinityAL.
 
@@ -139,7 +139,7 @@ Milestone 1A (primary):
 
 Win32 window titled **EO-Map Carbon starfield (TrinityAL DX11)**. Thousands of white/grey stars on a near-black background. Left-drag orbits the current target (same direction as EO-Map). Right-drag pans that target. Mouse wheel zooms toward it. Close the window to exit.
 
-Milestone 1B (primary; real New Eden geometry):
+Milestone 1B / 1C (primary; real New Eden geometry plus stargate graph):
 
 ```powershell
 .\scripts\run-neweden.ps1
