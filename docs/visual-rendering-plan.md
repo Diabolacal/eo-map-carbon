@@ -155,23 +155,26 @@ bloom OFF:
 - Constant-buffer `Create` size must be a multiple of 16 (TrinityAL does not pad).
 - This host remains DX11-only.
 
-## Initial visual preset (defensible, not proven)
+## Locked visual baseline (human-tuned)
+
+These are the checked-in `TuneParams` defaults. F9 / Reset return here.
+They replace the first-lab starting preset after a human tuning pass.
 
 | Control | Default |
 | --- | --- |
-| Star size multiplier | 1.00 |
-| Star brightness | 1.00 |
-| Star colour saturation | 1.70 |
+| Star size multiplier | 0.39 |
+| Star brightness | 1.26 |
+| Star colour saturation | 2.50 |
 | Bloom enabled | on |
-| Bloom threshold | 0.90 |
-| Bloom strength | 0.55 |
+| Bloom threshold | 0.06 |
+| Bloom strength | 1.03 |
 | Bloom radius | 1.60 |
-| Near-star attenuation (gain) | 1.15 |
-| Far-star attenuation (gain) | 0.40 |
-| Gate base opacity | 0.38 |
-| Gate distance attenuation | 1.00 |
-| Exposure | 1.10 |
+| Near-star attenuation (gain) | 1.80 |
+| Far-star attenuation (gain) | 0.57 |
+| Gate base opacity | 0.62 |
+| Gate distance attenuation | 1.55 |
+| Exposure | 2.09 |
 
 EO-Map bloom (0.25 / 0.25 / 0) is a Three.js UnrealBloom reference, not a
-Carbon constant. Threshold is higher here because stars are HDR (emissive up
-to 6×) rather than LDR WebGL points.
+Carbon constant. The locked threshold is lower than the first-lab 0.90 because
+the human pass wanted a softer halo around the HDR cores.

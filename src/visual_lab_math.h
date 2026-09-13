@@ -17,7 +17,7 @@ namespace vislab
 // 1C wrote RGB 0.22, alpha 1, no blend, onto an LDR backbuffer.
 // That is the intended *displayed* grey. This host now blends then tonemaps,
 // so the shader keeps a constant unpremultiplied light grey and puts
-// visibility in alpha only. 0.55 * default opacity 0.38 ≈ 0.21 blended.
+// visibility in alpha only. 0.55 * baseline opacity 0.62 ≈ 0.34 blended.
 constexpr float kGateUnpremulGrey = 0.55f;
 constexpr float kSceneClearR = 2.0f / 255.0f;
 constexpr float kSceneClearG = 2.0f / 255.0f;

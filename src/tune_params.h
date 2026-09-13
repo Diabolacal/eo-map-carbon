@@ -7,20 +7,22 @@
 #include <cstring>
 #include <string>
 
+// Checked-in Creator Mode baseline. These are the human-tuned visual-lab
+// values, not the first-lab starting preset. F9 / Reset return here.
 struct TuneParams
 {
-	float starSize = 1.00f;
-	float starBrightness = 1.00f;
-	float starSaturation = 1.70f;
+	float starSize = 0.39f;
+	float starBrightness = 1.26f;
+	float starSaturation = 2.50f;
 	bool bloomEnabled = true;
-	float bloomThreshold = 0.90f;
-	float bloomStrength = 0.55f;
+	float bloomThreshold = 0.06f;
+	float bloomStrength = 1.03f;
 	float bloomRadius = 1.60f;
-	float nearStarAtten = 1.15f;
-	float farStarAtten = 0.40f;
-	float gateOpacity = 0.38f;
-	float gateDistanceAtten = 1.00f;
-	float exposure = 1.10f;
+	float nearStarAtten = 1.80f;
+	float farStarAtten = 0.57f;
+	float gateOpacity = 0.62f;
+	float gateDistanceAtten = 1.55f;
+	float exposure = 2.09f;
 };
 
 inline TuneParams TuneDefaults()

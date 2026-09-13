@@ -1,6 +1,6 @@
 # Current status
 
-Last updated 2026-09-13 after a visual-lab follow-up for black gates and washed-out star colour.
+Last updated 2026-09-13 after locking the human-tuned Creator Mode visual baseline.
 
 ## Outcome
 
@@ -8,7 +8,7 @@ Milestones 0 / 1A / 1B / 1C remain **PROVEN** (human pixel verification).
 
 The visual rendering lab is **READY FOR HUMAN TUNING**. Automated smoke proves init, instanced star draws, bloom on/off, Present, numeric gate/chroma contracts, and a clean exit. It cannot claim pixels or aesthetics.
 
-Human follow-up after the first lab look: gate lines had gone black because `GateLine.psh` premultiplied a too-dark grey by alpha and then blended with `SRCALPHA` (contribution ~ `a²`), and far-gate attenuation multiplied RGB toward black. Stars read white because full 1–6× emissive plus per-channel Reinhard clipped HDR cores. Gates now keep a constant unpremultiplied light grey (`0.55`) and fade only in alpha. Stars apply a live chroma boost (default saturation `1.70`), a modest core gain, luminance Reinhard, and a hue-preserving peak clamp.
+Human follow-up after the first lab look: gate lines had gone black because `GateLine.psh` premultiplied a too-dark grey by alpha and then blended with `SRCALPHA` (contribution ~ `a²`), and far-gate attenuation multiplied RGB toward black. Stars read white because full 1–6× emissive plus per-channel Reinhard clipped HDR cores. Gates now keep a constant unpremultiplied light grey (`0.55`) and fade only in alpha. Stars apply a live chroma boost, a modest core gain, luminance Reinhard, and a hue-preserving peak clamp. `TuneParams` defaults are the human-tuned Creator Mode baseline (`starSize=0.39`, `starBrightness=1.26`, `starSaturation=2.50`, bloom `0.06/1.03/1.60`, near/far atten `1.80/0.57`, gate `0.62/1.55`, `exposure=2.09`).
 
 ## Visual rendering lab
 
