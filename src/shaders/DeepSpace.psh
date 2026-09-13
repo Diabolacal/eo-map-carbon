@@ -1,0 +1,108 @@
+// View-direction deep-space dome. Hash stars ignore camera translation.
+// Nebula shells use a huge radius so panning is a few percent of the sphere.
+
+cbuffer cb0 : register(b0)
+{
+	float4 viewRight;  // xyz, w = aspect
+	float4 viewUp;     // xyz, w = tanHalfFovY
+	float4 viewFwd;    // xyz, w = intensity
+	float4 cameraPos;  // xyz
+	float4 cool;       // rgb, w = contrast
+	float4 warm;       // rgb, w = band
+	float4 stars;      // amount, bright, unused, unused
+	float4 baseCol;    // rgb base, w unused
+};
+
+struct VS_OUTPUT
+{
+	float4 Position : SV_Position;
+	float2 TexCoord : TEXCOORD;
+};
+
+float hash13(float3 p)
+{
+	p = frac(p * 0.3183099 + 0.1);
+	p *= 17.0;
+	return frac(p.x * p.y * p.z * (p.x + p.y + p.z));
+}
+
+float valueNoise(float3 p)
+{
+	float3 i = floor(p);
+	float3 f = frac(p);
+	f = f * f * (3.0 - 2.0 * f);
+	float n000 = hash13(i + float3(0, 0, 0));
+	float n100 = hash13(i + float3(1, 0, 0));
+	float n010 = hash13(i + float3(0, 1, 0));
+	float n110 = hash13(i + float3(1, 1, 0));
+	float n001 = hash13(i + float3(0, 0, 1));
+	float n101 = hash13(i + float3(1, 0, 1));
+	float n011 = hash13(i + float3(0, 1, 1));
+	float n111 = hash13(i + float3(1, 1, 1));
+	float nx00 = lerp(n000, n100, f.x);
+	float nx10 = lerp(n010, n110, f.x);
+	float nx01 = lerp(n001, n101, f.x);
+	float nx11 = lerp(n011, n111, f.x);
+	float nxy0 = lerp(nx00, nx10, f.y);
+	float nxy1 = lerp(nx01, nx11, f.y);
+	return lerp(nxy0, nxy1, f.z);
+}
+
+float fbm5(float3 p)
+{
+	float a = 0.0;
+	float w = 0.5;
+	[unroll]
+	for (int i = 0; i < 5; ++i)
+	{
+		a += w * valueNoise(p);
+		p = p * 2.02 + 17.13;
+		w *= 0.5;
+	}
+	return a;
+}
+
+float4 main(VS_OUTPUT input) : SV_Target
+{
+	float2 uv = input.TexCoord;
+	float2 ndc = float2(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0);
+	float aspect = max(viewRight.w, 1e-4);
+	float tanHalf = max(viewUp.w, 1e-4);
+	float3 rd = normalize(viewFwd.xyz + viewRight.xyz * (ndc.x * tanHalf * aspect) + viewUp.xyz * (ndc.y * tanHalf));
+
+	float intensity = max(viewFwd.w, 0.0);
+	float contrast = max(cool.w, 0.5);
+	float band = saturate(warm.w);
+
+	float3 rgb = baseCol.rgb;
+
+	float3 p0 = cameraPos.xyz + rd * 2833.0;
+	float3 p1 = cameraPos.xyz + rd * 4959.0;
+	float3 p2 = cameraPos.xyz + rd * 7084.0;
+	float d0 = fbm5(p0 * 0.00078);
+	float d1 = fbm5(p1 * 0.00068 + 31.7);
+	float d2 = fbm5(p2 * 0.00072 + 71.3);
+	float density = saturate(0.50 * d0 + 0.32 * d1 + 0.18 * d2);
+	density = pow(density, contrast);
+	float plane = lerp(1.0 - band, 1.0, smoothstep(0.62, 0.0, abs(rd.y)));
+	density *= plane;
+	float3 neb = lerp(cool.rgb, warm.rgb, saturate(density * 1.35));
+	rgb += neb * density * intensity;
+	rgb += cool.rgb * 0.010 * intensity;
+
+	// Distant hash stars: direction only. Pan must not translate them.
+	float amount = saturate(stars.x);
+	float bright = max(stars.y, 0.0);
+	float threshA = lerp(0.9965, 0.9840, amount);
+	float threshB = lerp(0.9985, 0.9910, amount);
+	float spA = valueNoise(rd * 280.0);
+	float spB = valueNoise(rd * 520.0 + 19.0);
+	float starA = smoothstep(threshA, 1.0, spA);
+	float starB = smoothstep(threshB, 1.0, spB) * 0.55;
+	float star = (starA + starB) * bright * amount;
+	float hue = hash13(rd * 41.0);
+	float3 starCol = lerp(float3(0.72, 0.78, 0.95), float3(1.00, 0.86, 0.70), hue);
+	rgb += starCol * star;
+
+	return float4(max(rgb, 0.0), 1.0);
+}

@@ -1,0 +1,23 @@
+struct VS_OUTPUT
+{
+	float4 Position : SV_Position;
+	float2 Corner : TEXCOORD0;
+	float3 Color : TEXCOORD1;
+	float Intensity : TEXCOORD2;
+	float Chroma : TEXCOORD3;
+};
+
+float4 main(VS_OUTPUT input) : SV_Target
+{
+	float ax = abs(input.Corner.x);
+	float ay = abs(input.Corner.y);
+	float streak = saturate(1.0 - ax);
+	streak *= streak;
+	float thin = saturate(1.0 - ay * 3.4);
+	thin *= thin;
+	float falloff = streak * thin;
+	float3 rgb = input.Color * input.Intensity * falloff;
+	float fringe = input.Chroma * falloff * input.Corner.x;
+	rgb += float3(fringe, 0.0, -fringe) * 0.35;
+	return float4(max(rgb, 0.0), falloff);
+}

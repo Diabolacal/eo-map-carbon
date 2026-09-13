@@ -1,44 +1,56 @@
 #include "tune_panel.h"
 
 #include <commctrl.h>
+#include <commdlg.h>
 
+#include <algorithm>
 #include <cstdio>
 
 namespace
 {
 const wchar_t* kPanelClass = L"eo-map-carbon-tune";
+const wchar_t* kPageClass = L"eo-map-carbon-tune-page";
+
+enum TabId
+{
+	TAB_STARS = 0,
+	TAB_GATES,
+	TAB_SKY,
+	TAB_ISM,
+	TAB_GLOW,
+	TAB_COLOUR,
+	TAB_POST,
+	TAB_COUNT,
+};
+
+const wchar_t* kTabNames[TAB_COUNT] = {
+	L"Stars",
+	L"Gates",
+	L"Background",
+	L"Medium",
+	L"Glow",
+	L"Colour",
+	L"Post",
+};
 
 enum ControlId
 {
-	IDC_STAR_SIZE = 1001,
-	IDC_STAR_SIZE_VAL = 1002,
-	IDC_STAR_BRIGHT = 1011,
-	IDC_STAR_BRIGHT_VAL = 1012,
-	IDC_STAR_SAT = 1015,
-	IDC_STAR_SAT_VAL = 1016,
+	IDC_TABS = 900,
 	IDC_BLOOM_ENABLE = 1021,
-	IDC_BLOOM_THRESH = 1031,
-	IDC_BLOOM_THRESH_VAL = 1032,
-	IDC_BLOOM_STRENGTH = 1041,
-	IDC_BLOOM_STRENGTH_VAL = 1042,
-	IDC_BLOOM_RADIUS = 1051,
-	IDC_BLOOM_RADIUS_VAL = 1052,
-	IDC_NEAR_ATTEN = 1061,
-	IDC_NEAR_ATTEN_VAL = 1062,
-	IDC_FAR_ATTEN = 1071,
-	IDC_FAR_ATTEN_VAL = 1072,
-	IDC_GATE_OPACITY = 1081,
-	IDC_GATE_OPACITY_VAL = 1082,
-	IDC_GATE_DIST_ATTEN = 1091,
-	IDC_GATE_DIST_ATTEN_VAL = 1092,
-	IDC_EXPOSURE = 1101,
-	IDC_EXPOSURE_VAL = 1102,
+	IDC_SKY_ENABLE = 1022,
+	IDC_ISM_ENABLE = 1023,
+	IDC_GLOW_ENABLE = 1024,
+	IDC_FLARE_ENABLE = 1025,
+	IDC_REGION_ENABLE = 1026,
 	IDC_RESET = 1201,
 	IDC_DUMP = 1202,
+	IDC_SAVE = 1203,
+	IDC_LOAD = 1204,
 };
 
 struct SliderDesc
 {
+	int tab;
 	int id;
 	int valueId;
 	const wchar_t* label;
@@ -47,18 +59,97 @@ struct SliderDesc
 	float TuneParams::* field;
 };
 
+struct CheckDesc
+{
+	int tab;
+	int id;
+	const wchar_t* label;
+	bool TuneParams::* field;
+};
+
+struct ColorDesc
+{
+	int tab;
+	int id;
+	const wchar_t* label;
+	float TuneParams::* r;
+	float TuneParams::* g;
+	float TuneParams::* b;
+};
+
 const SliderDesc kSliders[] = {
-	{ IDC_STAR_SIZE, IDC_STAR_SIZE_VAL, L"Star size", 0.10f, 8.00f, &TuneParams::starSize },
-	{ IDC_STAR_BRIGHT, IDC_STAR_BRIGHT_VAL, L"Star brightness", 0.00f, 4.00f, &TuneParams::starBrightness },
-	{ IDC_STAR_SAT, IDC_STAR_SAT_VAL, L"Star colour sat", 0.50f, 3.00f, &TuneParams::starSaturation },
-	{ IDC_BLOOM_THRESH, IDC_BLOOM_THRESH_VAL, L"Bloom threshold", 0.00f, 2.00f, &TuneParams::bloomThreshold },
-	{ IDC_BLOOM_STRENGTH, IDC_BLOOM_STRENGTH_VAL, L"Bloom strength", 0.00f, 4.00f, &TuneParams::bloomStrength },
-	{ IDC_BLOOM_RADIUS, IDC_BLOOM_RADIUS_VAL, L"Bloom radius", 0.10f, 8.00f, &TuneParams::bloomRadius },
-	{ IDC_NEAR_ATTEN, IDC_NEAR_ATTEN_VAL, L"Near-star atten", 0.00f, 4.00f, &TuneParams::nearStarAtten },
-	{ IDC_FAR_ATTEN, IDC_FAR_ATTEN_VAL, L"Far-star atten", 0.00f, 4.00f, &TuneParams::farStarAtten },
-	{ IDC_GATE_OPACITY, IDC_GATE_OPACITY_VAL, L"Gate opacity", 0.00f, 1.00f, &TuneParams::gateOpacity },
-	{ IDC_GATE_DIST_ATTEN, IDC_GATE_DIST_ATTEN_VAL, L"Gate dist atten", 0.00f, 4.00f, &TuneParams::gateDistanceAtten },
-	{ IDC_EXPOSURE, IDC_EXPOSURE_VAL, L"Exposure", 0.10f, 4.00f, &TuneParams::exposure },
+	{ TAB_STARS, 2001, 2002, L"Star size", 0.10f, 8.00f, &TuneParams::starSize },
+	{ TAB_STARS, 2003, 2004, L"Star brightness", 0.00f, 4.00f, &TuneParams::starBrightness },
+	{ TAB_STARS, 2005, 2006, L"Star colour sat", 0.50f, 3.00f, &TuneParams::starSaturation },
+	{ TAB_STARS, 2007, 2008, L"Depth desaturate", 0.00f, 1.00f, &TuneParams::starDepthDesat },
+	{ TAB_STARS, 2009, 2010, L"Near-star atten", 0.00f, 4.00f, &TuneParams::nearStarAtten },
+	{ TAB_STARS, 2011, 2012, L"Far-star atten", 0.00f, 4.00f, &TuneParams::farStarAtten },
+
+	{ TAB_GATES, 2101, 2102, L"Gate opacity", 0.00f, 1.00f, &TuneParams::gateOpacity },
+	{ TAB_GATES, 2103, 2104, L"Gate dist atten", 0.00f, 4.00f, &TuneParams::gateDistanceAtten },
+
+	{ TAB_SKY, 2201, 2202, L"Sky intensity", 0.00f, 2.00f, &TuneParams::skyIntensity },
+	{ TAB_SKY, 2203, 2204, L"Sky contrast", 0.50f, 4.00f, &TuneParams::skyContrast },
+	{ TAB_SKY, 2205, 2206, L"Galactic band", 0.00f, 1.00f, &TuneParams::skyBand },
+	{ TAB_SKY, 2207, 2208, L"BG star density", 0.00f, 2.00f, &TuneParams::skyStarAmount },
+	{ TAB_SKY, 2209, 2210, L"BG star brightness", 0.00f, 2.00f, &TuneParams::skyStarBright },
+
+	{ TAB_ISM, 2301, 2302, L"Density", 0.00f, 4.00f, &TuneParams::ismDensity },
+	{ TAB_ISM, 2303, 2304, L"Scale", 0.20f, 4.00f, &TuneParams::ismScale },
+	{ TAB_ISM, 2305, 2306, L"Detail / ridge", 0.00f, 1.00f, &TuneParams::ismDetail },
+	{ TAB_ISM, 2307, 2308, L"Contrast", 0.50f, 6.00f, &TuneParams::ismContrast },
+	{ TAB_ISM, 2309, 2310, L"Emission", 0.00f, 0.60f, &TuneParams::ismEmission },
+	{ TAB_ISM, 2311, 2312, L"Reddening", 0.00f, 1.00f, &TuneParams::ismRedden },
+	{ TAB_ISM, 2313, 2314, L"Star extinction", 0.00f, 1.00f, &TuneParams::ismStarExt },
+	{ TAB_ISM, 2315, 2316, L"Min transmittance", 0.05f, 1.00f, &TuneParams::ismMinT },
+	{ TAB_ISM, 2317, 2318, L"Near cut", 0.15f, 0.60f, &TuneParams::ismNearCut },
+	{ TAB_ISM, 2319, 2320, L"Dark-lane strength", 0.00f, 2.00f, &TuneParams::ismDarkLane },
+	{ TAB_ISM, 2321, 2322, L"Dark-lane scale", 0.20f, 4.00f, &TuneParams::ismDarkScale },
+	{ TAB_ISM, 2323, 2324, L"Light-wisp strength", 0.00f, 1.00f, &TuneParams::ismLightLane },
+	{ TAB_ISM, 2325, 2326, L"Light-wisp scale", 0.20f, 4.00f, &TuneParams::ismLightScale },
+	{ TAB_ISM, 2327, 2328, L"Star scatter", 0.00f, 2.00f, &TuneParams::ismScatter },
+	{ TAB_ISM, 2329, 2330, L"Quality steps", 4.00f, 8.00f, &TuneParams::ismSteps },
+
+	{ TAB_GLOW, 2401, 2402, L"Glow intensity", 0.00f, 2.00f, &TuneParams::glowIntensity },
+	{ TAB_GLOW, 2403, 2404, L"Glow scale", 0.50f, 6.00f, &TuneParams::glowScale },
+	{ TAB_GLOW, 2405, 2406, L"Glow threshold", 0.00f, 2.00f, &TuneParams::glowThreshold },
+	{ TAB_GLOW, 2407, 2408, L"Flare intensity", 0.00f, 2.00f, &TuneParams::flareIntensity },
+	{ TAB_GLOW, 2409, 2410, L"Flare threshold", 0.00f, 2.00f, &TuneParams::flareThreshold },
+	{ TAB_GLOW, 2411, 2412, L"Flare length", 0.50f, 8.00f, &TuneParams::flareLength },
+	{ TAB_GLOW, 2413, 2414, L"Flare chroma", 0.00f, 1.00f, &TuneParams::flareChroma },
+
+	{ TAB_COLOUR, 2501, 2502, L"Region star mix", 0.00f, 1.00f, &TuneParams::regionStarMix },
+	{ TAB_COLOUR, 2503, 2504, L"Region ISM mix", 0.00f, 1.00f, &TuneParams::regionIsmMix },
+
+	{ TAB_POST, 2601, 2602, L"Bloom threshold", 0.00f, 2.00f, &TuneParams::bloomThreshold },
+	{ TAB_POST, 2603, 2604, L"Bloom strength", 0.00f, 4.00f, &TuneParams::bloomStrength },
+	{ TAB_POST, 2605, 2606, L"Bloom radius", 0.10f, 8.00f, &TuneParams::bloomRadius },
+	{ TAB_POST, 2607, 2608, L"Exposure", 0.10f, 4.00f, &TuneParams::exposure },
+	{ TAB_POST, 2609, 2610, L"Saturation", 0.00f, 2.00f, &TuneParams::saturation },
+	{ TAB_POST, 2611, 2612, L"Contrast", 0.50f, 2.00f, &TuneParams::contrast },
+	{ TAB_POST, 2613, 2614, L"Black level", 0.00f, 0.25f, &TuneParams::blackLevel },
+	{ TAB_POST, 2615, 2616, L"Gamma", 0.40f, 2.20f, &TuneParams::gamma },
+	{ TAB_POST, 2617, 2618, L"Vignette", 0.00f, 1.50f, &TuneParams::vignette },
+};
+
+const CheckDesc kChecks[] = {
+	{ TAB_SKY, IDC_SKY_ENABLE, L"Background enabled", &TuneParams::skyEnabled },
+	{ TAB_ISM, IDC_ISM_ENABLE, L"Interstellar medium enabled", &TuneParams::ismEnabled },
+	{ TAB_GLOW, IDC_GLOW_ENABLE, L"Star glow enabled", &TuneParams::glowEnabled },
+	{ TAB_GLOW, IDC_FLARE_ENABLE, L"Flares enabled", &TuneParams::flareEnabled },
+	{ TAB_COLOUR, IDC_REGION_ENABLE, L"Region tint enabled", &TuneParams::regionEnabled },
+	{ TAB_POST, IDC_BLOOM_ENABLE, L"Bloom enabled", &TuneParams::bloomEnabled },
+};
+
+const ColorDesc kColors[] = {
+	{ TAB_GATES, 3101, L"Gate tint", &TuneParams::gateTintR, &TuneParams::gateTintG, &TuneParams::gateTintB },
+	{ TAB_SKY, 3201, L"Sky cool", &TuneParams::skyCoolR, &TuneParams::skyCoolG, &TuneParams::skyCoolB },
+	{ TAB_SKY, 3202, L"Sky warm", &TuneParams::skyWarmR, &TuneParams::skyWarmG, &TuneParams::skyWarmB },
+	{ TAB_SKY, 3203, L"Sky base", &TuneParams::skyBaseR, &TuneParams::skyBaseG, &TuneParams::skyBaseB },
+	{ TAB_ISM, 3301, L"Medium primary", &TuneParams::ismPrimaryR, &TuneParams::ismPrimaryG, &TuneParams::ismPrimaryB },
+	{ TAB_ISM, 3302, L"Medium secondary", &TuneParams::ismSecondaryR, &TuneParams::ismSecondaryG, &TuneParams::ismSecondaryB },
+	{ TAB_ISM, 3303, L"Medium highlight", &TuneParams::ismHighlightR, &TuneParams::ismHighlightG, &TuneParams::ismHighlightB },
+	{ TAB_POST, 3601, L"Bloom tint", &TuneParams::bloomTintR, &TuneParams::bloomTintG, &TuneParams::bloomTintB },
 };
 
 TunePanel* PanelFromHwnd(HWND hwnd)
@@ -66,39 +157,75 @@ TunePanel* PanelFromHwnd(HWND hwnd)
 	return reinterpret_cast<TunePanel*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
 }
 
-void SetValueText(HWND panel, int valueId, float v)
+void SetValueText(HWND page, int valueId, float v)
 {
 	wchar_t text[32];
 	swprintf_s(text, L"%.2f", v);
-	SetDlgItemTextW(panel, valueId, text);
+	SetDlgItemTextW(page, valueId, text);
 }
 
-void EnableBloomSliders(HWND panel, bool enabled)
+COLORREF RgbToColor(float r, float g, float b)
 {
-	EnableWindow(GetDlgItem(panel, IDC_BLOOM_THRESH), enabled);
-	EnableWindow(GetDlgItem(panel, IDC_BLOOM_STRENGTH), enabled);
-	EnableWindow(GetDlgItem(panel, IDC_BLOOM_RADIUS), enabled);
+	const int ir = int(TuneClamp(r, 0.0f, 1.0f) * 255.0f + 0.5f);
+	const int ig = int(TuneClamp(g, 0.0f, 1.0f) * 255.0f + 0.5f);
+	const int ib = int(TuneClamp(b, 0.0f, 1.0f) * 255.0f + 0.5f);
+	return RGB(ir, ig, ib);
 }
 
-void SyncSlider(HWND panel, const SliderDesc& slider, float value)
+void PaintColorButton(HWND button, float r, float g, float b)
+{
+	HDC dc = GetDC(button);
+	if (!dc)
+	{
+		return;
+	}
+	RECT rc = {};
+	GetClientRect(button, &rc);
+	HBRUSH brush = CreateSolidBrush(RgbToColor(r, g, b));
+	FillRect(dc, &rc, brush);
+	DeleteObject(brush);
+	ReleaseDC(button, dc);
+}
+
+void SyncSlider(HWND page, const SliderDesc& slider, float value)
 {
 	const int ticks = TuneToTicks(value, slider.lo, slider.hi);
-	SendDlgItemMessageW(panel, slider.id, TBM_SETPOS, TRUE, ticks);
-	SetValueText(panel, slider.valueId, TuneFromTicks(ticks, slider.lo, slider.hi));
+	SendDlgItemMessageW(page, slider.id, TBM_SETPOS, TRUE, ticks);
+	SetValueText(page, slider.valueId, TuneFromTicks(ticks, slider.lo, slider.hi));
 }
 
 void SyncAll(const TunePanel& panel)
 {
-	if (!panel.hwnd || !panel.params)
+	if (!panel.params)
 	{
 		return;
 	}
 	for (const SliderDesc& slider : kSliders)
 	{
-		SyncSlider(panel.hwnd, slider, panel.params->*slider.field);
+		if (panel.pages[slider.tab])
+		{
+			SyncSlider(panel.pages[slider.tab], slider, panel.params->*slider.field);
+		}
 	}
-	SendDlgItemMessageW(panel.hwnd, IDC_BLOOM_ENABLE, BM_SETCHECK, panel.params->bloomEnabled ? BST_CHECKED : BST_UNCHECKED, 0);
-	EnableBloomSliders(panel.hwnd, panel.params->bloomEnabled);
+	for (const CheckDesc& check : kChecks)
+	{
+		if (panel.pages[check.tab])
+		{
+			SendDlgItemMessageW(
+				panel.pages[check.tab],
+				check.id,
+				BM_SETCHECK,
+				(panel.params->*check.field) ? BST_CHECKED : BST_UNCHECKED,
+				0);
+		}
+	}
+	for (const ColorDesc& color : kColors)
+	{
+		if (HWND button = panel.pages[color.tab] ? GetDlgItem(panel.pages[color.tab], color.id) : nullptr)
+		{
+			PaintColorButton(button, panel.params->*color.r, panel.params->*color.g, panel.params->*color.b);
+		}
+	}
 }
 
 const SliderDesc* FindSlider(int id)
@@ -113,19 +240,87 @@ const SliderDesc* FindSlider(int id)
 	return nullptr;
 }
 
-void Dump(const TunePanel& panel)
+const CheckDesc* FindCheck(int id)
 {
-	if (!panel.params)
+	for (const CheckDesc& check : kChecks)
 	{
-		return;
+		if (check.id == id)
+		{
+			return &check;
+		}
 	}
-	char text[1024] = {};
-	WriteTuneDump(*panel.params, text, sizeof(text));
+	return nullptr;
 }
 
-LRESULT CALLBACK PanelProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+const ColorDesc* FindColor(int id)
 {
-	TunePanel* panel = PanelFromHwnd(hwnd);
+	for (const ColorDesc& color : kColors)
+	{
+		if (color.id == id)
+		{
+			return &color;
+		}
+	}
+	return nullptr;
+}
+
+void ScrollPage(HWND page, int delta)
+{
+	SCROLLINFO si = { sizeof(si), SIF_ALL };
+	GetScrollInfo(page, SB_VERT, &si);
+	const int old = si.nPos;
+	const int maxPos = (std::max)(0, int(si.nMax) - int(si.nPage));
+	int next = old - delta;
+	if (next < 0)
+	{
+		next = 0;
+	}
+	if (next > maxPos)
+	{
+		next = maxPos;
+	}
+	si.nPos = next;
+	si.fMask = SIF_POS;
+	SetScrollInfo(page, SB_VERT, &si, TRUE);
+	GetScrollInfo(page, SB_VERT, &si);
+	if (si.nPos != old)
+	{
+		ScrollWindow(page, 0, old - si.nPos, nullptr, nullptr);
+	}
+}
+
+void ShowTab(TunePanel& panel, int tab)
+{
+	panel.currentTab = tab;
+	for (int i = 0; i < TAB_COUNT; ++i)
+	{
+		if (panel.pages[i])
+		{
+			ShowWindow(panel.pages[i], i == tab ? SW_SHOW : SW_HIDE);
+		}
+	}
+}
+
+void PickColor(HWND owner, TuneParams& params, const ColorDesc& color)
+{
+	static COLORREF custom[16] = {};
+	CHOOSECOLORW cc = {};
+	cc.lStructSize = sizeof(cc);
+	cc.hwndOwner = owner;
+	cc.rgbResult = RgbToColor(params.*color.r, params.*color.g, params.*color.b);
+	cc.lpCustColors = custom;
+	cc.Flags = CC_FULLOPEN | CC_RGBINIT;
+	if (ChooseColorW(&cc))
+	{
+		params.*color.r = float(GetRValue(cc.rgbResult)) / 255.0f;
+		params.*color.g = float(GetGValue(cc.rgbResult)) / 255.0f;
+		params.*color.b = float(GetBValue(cc.rgbResult)) / 255.0f;
+	}
+}
+
+LRESULT CALLBACK PageProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	TunePanel* panel = PanelFromHwnd(GetParent(hwnd));
 	switch (msg)
 	{
 	case WM_HSCROLL:
@@ -152,18 +347,113 @@ LRESULT CALLBACK PanelProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 		if (HIWORD(wParam) == BN_CLICKED)
 		{
+			if (const CheckDesc* check = FindCheck(LOWORD(wParam)))
+			{
+				panel->params->*check->field = SendDlgItemMessageW(hwnd, check->id, BM_GETCHECK, 0, 0) == BST_CHECKED;
+				return 0;
+			}
+			if (const ColorDesc* color = FindColor(LOWORD(wParam)))
+			{
+				PickColor(GetParent(hwnd), *panel->params, *color);
+				PaintColorButton(GetDlgItem(hwnd, color->id), panel->params->*color->r, panel->params->*color->g, panel->params->*color->b);
+				return 0;
+			}
+		}
+		break;
+	case WM_DRAWITEM:
+	{
+		const DRAWITEMSTRUCT* dis = reinterpret_cast<DRAWITEMSTRUCT*>(lParam);
+		if (panel && panel->params && dis)
+		{
+			if (const ColorDesc* color = FindColor(int(dis->CtlID)))
+			{
+				HBRUSH brush = CreateSolidBrush(RgbToColor(panel->params->*color->r, panel->params->*color->g, panel->params->*color->b));
+				FillRect(dis->hDC, &dis->rcItem, brush);
+				DeleteObject(brush);
+				DrawEdge(dis->hDC, const_cast<RECT*>(&dis->rcItem), EDGE_SUNKEN, BF_RECT);
+				return TRUE;
+			}
+		}
+		break;
+	}
+	case WM_VSCROLL:
+	{
+		int delta = 0;
+		switch (LOWORD(wParam))
+		{
+		case SB_LINEUP:
+			delta = 24;
+			break;
+		case SB_LINEDOWN:
+			delta = -24;
+			break;
+		case SB_PAGEUP:
+			delta = 120;
+			break;
+		case SB_PAGEDOWN:
+			delta = -120;
+			break;
+		default:
+			break;
+		}
+		if (delta != 0)
+		{
+			ScrollPage(hwnd, delta);
+		}
+		return 0;
+	}
+	case WM_MOUSEWHEEL:
+		ScrollPage(hwnd, GET_WHEEL_DELTA_WPARAM(wParam) / 4);
+		return 0;
+	default:
+		break;
+	}
+	return DefWindowProcW(hwnd, msg, wParam, lParam);
+}
+
+LRESULT CALLBACK PanelProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	TunePanel* panel = PanelFromHwnd(hwnd);
+	switch (msg)
+	{
+	case WM_NOTIFY:
+		if (panel && reinterpret_cast<NMHDR*>(lParam)->idFrom == IDC_TABS &&
+			reinterpret_cast<NMHDR*>(lParam)->code == TCN_SELCHANGE)
+		{
+			ShowTab(*panel, int(SendMessageW(panel->tabs, TCM_GETCURSEL, 0, 0)));
+			return 0;
+		}
+		break;
+	case WM_COMMAND:
+		if (!panel || !panel->params)
+		{
+			break;
+		}
+		if (HIWORD(wParam) == BN_CLICKED)
+		{
 			switch (LOWORD(wParam))
 			{
-			case IDC_BLOOM_ENABLE:
-				panel->params->bloomEnabled = SendDlgItemMessageW(hwnd, IDC_BLOOM_ENABLE, BM_GETCHECK, 0, 0) == BST_CHECKED;
-				EnableBloomSliders(hwnd, panel->params->bloomEnabled);
-				return 0;
 			case IDC_RESET:
 				*panel->params = TuneDefaults();
 				SyncAll(*panel);
 				return 0;
 			case IDC_DUMP:
-				Dump(*panel);
+			{
+				char text[4096] = {};
+				WriteTuneDump(*panel->params, text, sizeof(text));
+				return 0;
+			}
+			case IDC_SAVE:
+			{
+				char text[4096] = {};
+				WriteTuneDump(*panel->params, text, sizeof(text));
+				return 0;
+			}
+			case IDC_LOAD:
+				if (LoadTuneFromExeDir(*panel->params))
+				{
+					SyncAll(*panel);
+				}
 				return 0;
 			default:
 				break;
@@ -181,7 +471,8 @@ LRESULT CALLBACK PanelProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 			if (wParam == VK_F8)
 			{
-				Dump(*panel);
+				char text[4096] = {};
+				WriteTuneDump(*panel->params, text, sizeof(text));
 				return 0;
 			}
 			if (wParam == VK_ESCAPE)
@@ -198,6 +489,11 @@ LRESULT CALLBACK PanelProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		if (panel)
 		{
 			panel->hwnd = nullptr;
+			panel->tabs = nullptr;
+			for (int i = 0; i < TAB_COUNT; ++i)
+			{
+				panel->pages[i] = nullptr;
+			}
 		}
 		return 0;
 	default:
@@ -242,6 +538,101 @@ HWND MakeTrackbar(HWND parent, HINSTANCE instance, int id, int x, int y, int w, 
 	SendMessageW(bar, TBM_SETPAGESIZE, 0, 10);
 	return bar;
 }
+
+int PopulatePage(HWND page, HINSTANCE instance, int tab)
+{
+	int y = 8;
+	for (const CheckDesc& check : kChecks)
+	{
+		if (check.tab != tab)
+		{
+			continue;
+		}
+		CreateWindowW(
+			L"BUTTON",
+			check.label,
+			WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+			12,
+			y,
+			360,
+			22,
+			page,
+			reinterpret_cast<HMENU>(static_cast<INT_PTR>(check.id)),
+			instance,
+			nullptr);
+		y += 28;
+	}
+	for (const ColorDesc& color : kColors)
+	{
+		if (color.tab != tab)
+		{
+			continue;
+		}
+		MakeLabel(page, instance, 12, y + 4, 160, 18, color.label);
+		CreateWindowW(
+			L"BUTTON",
+			L"",
+			WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
+			180,
+			y,
+			120,
+			22,
+			page,
+			reinterpret_cast<HMENU>(static_cast<INT_PTR>(color.id)),
+			instance,
+			nullptr);
+		y += 28;
+	}
+	for (const SliderDesc& slider : kSliders)
+	{
+		if (slider.tab != tab)
+		{
+			continue;
+		}
+		MakeLabel(page, instance, 12, y, 220, 16, slider.label);
+		MakeLabel(page, instance, 340, y + 18, 80, 18, L"0.00", slider.valueId);
+		const int maxTicks = TuneToTicks(slider.hi, slider.lo, slider.hi);
+		MakeTrackbar(page, instance, slider.id, 12, y + 16, 320, 28, maxTicks);
+		y += 48;
+	}
+	if (tab == TAB_COLOUR)
+	{
+		MakeLabel(page, instance, 12, y, 400, 48, L"Region tint uses Contract A region_id and EO-Map's 11-stop atlas. Off by default so stellar colour stays intact.");
+	}
+	if (tab == TAB_SKY)
+	{
+		MakeLabel(page, instance, 12, y, 400, 48, L"Background stars are procedural and view-locked. They must not slide with New Eden.");
+		y += 52;
+	}
+	SCROLLINFO si = { sizeof(si), SIF_RANGE | SIF_PAGE | SIF_POS };
+	si.nMin = 0;
+	si.nMax = y + 8;
+	si.nPage = 700;
+	si.nPos = 0;
+	SetScrollInfo(page, SB_VERT, &si, TRUE);
+	return y;
+}
+
+LRESULT CALLBACK ColorDrawProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	if (msg == WM_DRAWITEM)
+	{
+		const DRAWITEMSTRUCT* dis = reinterpret_cast<DRAWITEMSTRUCT*>(lParam);
+		TunePanel* panel = PanelFromHwnd(hwnd);
+		if (panel && panel->params && dis)
+		{
+			if (const ColorDesc* color = FindColor(int(dis->CtlID)))
+			{
+				HBRUSH brush = CreateSolidBrush(RgbToColor(panel->params->*color->r, panel->params->*color->g, panel->params->*color->b));
+				FillRect(dis->hDC, &dis->rcItem, brush);
+				DeleteObject(brush);
+				DrawEdge(dis->hDC, const_cast<RECT*>(&dis->rcItem), EDGE_SUNKEN, BF_RECT);
+				return TRUE;
+			}
+		}
+	}
+	return PanelProc(hwnd, msg, wParam, lParam);
+}
 }
 
 bool TunePanel_Create(HINSTANCE instance, HWND owner, TuneParams* params, TunePanel& out)
@@ -249,26 +640,35 @@ bool TunePanel_Create(HINSTANCE instance, HWND owner, TuneParams* params, TunePa
 	out = TunePanel();
 	out.params = params;
 
-	INITCOMMONCONTROLSEX icc = { sizeof(icc), ICC_BAR_CLASSES | ICC_STANDARD_CLASSES };
+	INITCOMMONCONTROLSEX icc = { sizeof(icc), ICC_BAR_CLASSES | ICC_STANDARD_CLASSES | ICC_TAB_CLASSES };
 	InitCommonControlsEx(&icc);
 
 	WNDCLASSEXW wc = {};
 	wc.cbSize = sizeof(wc);
-	wc.lpfnWndProc = PanelProc;
+	wc.lpfnWndProc = ColorDrawProc;
 	wc.hInstance = instance;
 	wc.lpszClassName = kPanelClass;
 	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
 	RegisterClassExW(&wc);
 
+	WNDCLASSEXW pageWc = {};
+	pageWc.cbSize = sizeof(pageWc);
+	pageWc.lpfnWndProc = PageProc;
+	pageWc.hInstance = instance;
+	pageWc.lpszClassName = kPageClass;
+	pageWc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+	pageWc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
+	RegisterClassExW(&pageWc);
+
 	RECT ownerRect = {};
 	GetWindowRect(owner, &ownerRect);
-	const int width = 440;
-	const int height = 810;
+	const int width = 500;
+	const int height = 860;
 	out.hwnd = CreateWindowExW(
 		WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT,
 		kPanelClass,
-		L"Visual lab",
+		L"Creator / Visual lab",
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_VISIBLE,
 		ownerRect.right + 8,
 		ownerRect.top,
@@ -284,59 +684,57 @@ bool TunePanel_Create(HINSTANCE instance, HWND owner, TuneParams* params, TunePa
 	}
 	SetWindowLongPtrW(out.hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(&out));
 
-	int y = 10;
-	MakeLabel(out.hwnd, instance, 12, y, 400, 18, L"Developer visual tuning  (F8 dump, F9 reset)");
-	y += 28;
+	MakeLabel(out.hwnd, instance, 12, 8, 470, 18, L"F8 save+copy   F9 baseline   Load/Save INI next to the exe");
 
-	CreateWindowW(
-		L"BUTTON",
-		L"Bloom enabled",
-		WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-		12,
-		y,
-		200,
-		22,
+	out.tabs = CreateWindowW(
+		WC_TABCONTROLW,
+		L"",
+		WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
+		8,
+		30,
+		476,
+		740,
 		out.hwnd,
-		reinterpret_cast<HMENU>(static_cast<INT_PTR>(IDC_BLOOM_ENABLE)),
+		reinterpret_cast<HMENU>(static_cast<INT_PTR>(IDC_TABS)),
 		instance,
 		nullptr);
-	y += 30;
 
-	for (const SliderDesc& slider : kSliders)
+	TCITEMW item = {};
+	item.mask = TCIF_TEXT;
+	for (int i = 0; i < TAB_COUNT; ++i)
 	{
-		MakeLabel(out.hwnd, instance, 12, y, 200, 16, slider.label);
-		MakeLabel(out.hwnd, instance, 320, y + 18, 88, 18, L"0.00", slider.valueId);
-		const int maxTicks = TuneToTicks(slider.hi, slider.lo, slider.hi);
-		MakeTrackbar(out.hwnd, instance, slider.id, 12, y + 16, 300, 28, maxTicks);
-		y += 50;
+		item.pszText = const_cast<wchar_t*>(kTabNames[i]);
+		SendMessageW(out.tabs, TCM_INSERTITEM, i, reinterpret_cast<LPARAM>(&item));
 	}
 
-	CreateWindowW(
-		L"BUTTON",
-		L"Reset to defaults",
-		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		12,
-		y,
-		190,
-		28,
-		out.hwnd,
-		reinterpret_cast<HMENU>(static_cast<INT_PTR>(IDC_RESET)),
-		instance,
-		nullptr);
-	CreateWindowW(
-		L"BUTTON",
-		L"Print / copy settings",
-		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		214,
-		y,
-		190,
-		28,
-		out.hwnd,
-		reinterpret_cast<HMENU>(static_cast<INT_PTR>(IDC_DUMP)),
-		instance,
-		nullptr);
+	RECT tabInner = { 8, 30, 484, 770 };
+	SendMessageW(out.tabs, TCM_ADJUSTRECT, FALSE, reinterpret_cast<LPARAM>(&tabInner));
+
+	for (int i = 0; i < TAB_COUNT; ++i)
+	{
+		out.pages[i] = CreateWindowExW(
+			0,
+			kPageClass,
+			L"",
+			WS_CHILD | (i == 0 ? WS_VISIBLE : 0) | WS_VSCROLL,
+			tabInner.left,
+			tabInner.top,
+			tabInner.right - tabInner.left,
+			tabInner.bottom - tabInner.top,
+			out.hwnd,
+			nullptr,
+			instance,
+			nullptr);
+		PopulatePage(out.pages[i], instance, i);
+	}
+
+	CreateWindowW(L"BUTTON", L"Baseline (F9)", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, 8, 780, 114, 28, out.hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(IDC_RESET)), instance, nullptr);
+	CreateWindowW(L"BUTTON", L"Load INI", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, 128, 780, 86, 28, out.hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(IDC_LOAD)), instance, nullptr);
+	CreateWindowW(L"BUTTON", L"Save INI", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, 220, 780, 86, 28, out.hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(IDC_SAVE)), instance, nullptr);
+	CreateWindowW(L"BUTTON", L"Copy / F8", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, 312, 780, 172, 28, out.hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(IDC_DUMP)), instance, nullptr);
 
 	SyncAll(out);
+	ShowTab(out, 0);
 	return true;
 }
 

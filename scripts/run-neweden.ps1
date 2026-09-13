@@ -13,6 +13,7 @@ $ours = Join-Path $binDir "eo-map-carbon-neweden.exe"
 $catalog = Join-Path $binDir "new_eden_systems.bin"
 $gates = Join-Path $binDir "new_eden_stargates.bin"
 $visuals = Join-Path $binDir "new_eden_star_visuals.bin"
+$regions = Join-Path $binDir "new_eden_regions.bin"
 $upstreamTestDir = "C:\dev\carbon-upstream\trinity\.cmake-build-local-dx11-debug\carbon\autobuild\TrinityALTest\Windows\x64\v141"
 
 if (-not (Test-Path $ours)) {
@@ -29,6 +30,10 @@ if (-not (Test-Path $gates)) {
 
 if (-not (Test-Path $visuals)) {
     Write-Error "new_eden_star_visuals.bin is missing from $binDir. Rebuild with .\scripts\build-neweden.ps1."
+}
+
+if (-not (Test-Path $regions)) {
+    Write-Error "new_eden_regions.bin is missing from $binDir. Rebuild with .\scripts\build-neweden.ps1."
 }
 
 if (-not (Test-Path (Join-Path $binDir "CcpCore_debug.dll")) -and (Test-Path $upstreamTestDir)) {

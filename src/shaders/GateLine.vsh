@@ -22,6 +22,8 @@ cbuffer cb0 : register(b0)
 	float4 sizeParams;
 	float4 fadeParams;
 	float4 gateParams;
+	float4 extraParams;
+	float4 gateTint;
 };
 
 VS_OUTPUT main(VS_INPUT input)

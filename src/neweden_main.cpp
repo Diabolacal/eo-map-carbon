@@ -16,6 +16,7 @@ typedef HWND Tr2WindowHandle;
 #include "new_eden_anchors.h"
 #include "new_eden_catalog.h"
 #include "new_eden_gates.h"
+#include "new_eden_regions.h"
 #include "new_eden_star_visuals.h"
 #include "orbit_camera.h"
 #include "star_color.h"
@@ -39,7 +40,7 @@ const char* g_moduleName = "eo-map-carbon-neweden";
 namespace
 {
 const wchar_t* kWindowClass = L"eo-map-carbon-neweden";
-const wchar_t* kWindowTitle = L"EO-Map Carbon New Eden visual lab (TrinityAL DX11)";
+const wchar_t* kWindowTitle = L"EO-Map Carbon New Eden Creator Mode (TrinityAL DX11)";
 const uint32_t kDefaultWidth = 1280;
 const uint32_t kDefaultHeight = 720;
 const uint32_t kSmokeFrames = 60;
@@ -68,6 +69,10 @@ struct StarInstance
 	float g;
 	float b;
 	float emissive;
+	float regionR;
+	float regionG;
+	float regionB;
+	float pad;
 };
 
 struct FrameConstants
@@ -79,6 +84,8 @@ struct FrameConstants
 	float sizeParams[4];
 	float fadeParams[4];
 	float gateParams[4];
+	float extraParams[4]; // x=depthDesat, y=regionMix
+	float gateTint[4];
 };
 
 struct BloomConstants
@@ -91,10 +98,62 @@ struct BloomConstants
 	float texelY;
 	float blurDirX;
 	float blurDirY;
+	float saturation;
+	float contrast;
+	float blackLevel;
+	float gamma;
+	float vignette;
+	float bloomTintR;
+	float bloomTintG;
+	float bloomTintB;
+	float ismStarExt;
+	float ismMinT;
+	float ismRedden;
+	float ismEnable;
 };
 
-static_assert(sizeof(FrameConstants) == 160, "FrameConstants must stay 16-byte aligned");
-static_assert(sizeof(BloomConstants) == 32, "BloomConstants must stay 16-byte aligned");
+struct SkyConstants
+{
+	float viewRight[4];
+	float viewUp[4];
+	float viewFwd[4];
+	float cameraPos[4];
+	float cool[4];
+	float warm[4];
+	float stars[4];
+	float baseCol[4];
+};
+
+struct IsmConstants
+{
+	float viewRight[4];
+	float viewUp[4];
+	float viewFwd[4];
+	float cameraPos[4];
+	float centre[4];
+	float envelope[4];
+	float field[4];
+	float extinct[4];
+	float emission[4];
+	float lanes[4];
+	float mixp[4];
+	float cool[4];
+	float warm[4];
+	float high[4];
+};
+
+struct GlowConstants
+{
+	float glow[4];
+	float flare[4];
+};
+
+static_assert(sizeof(FrameConstants) == 192, "FrameConstants must stay 16-byte aligned");
+static_assert(sizeof(BloomConstants) == 80, "BloomConstants must stay 16-byte aligned");
+static_assert(sizeof(SkyConstants) == 128, "SkyConstants must stay 16-byte aligned");
+static_assert(sizeof(IsmConstants) == 224, "IsmConstants must stay 16-byte aligned");
+static_assert(sizeof(GlowConstants) == 32, "GlowConstants must stay 16-byte aligned");
+static_assert(sizeof(StarInstance) == 48, "StarInstance must stay 16-byte aligned");
 
 enum class DragMode
 {
@@ -110,9 +169,12 @@ struct Offscreen
 	Tr2TextureAL blurA;
 	Tr2TextureAL blurB;
 	Tr2TextureAL dummy;
+	Tr2TextureAL ism;
 	Tr2ResourceSetAL extractSet;
 	Tr2ResourceSetAL blurFromExtract;
 	Tr2ResourceSetAL blurFromA;
+	Tr2ResourceSetAL ismFromBloom;
+	Tr2ResourceSetAL ismFromDummy;
 	Tr2ResourceSetAL compositeOn;
 	Tr2ResourceSetAL compositeOff;
 	Tr2ResourceSetAL unbind;
@@ -141,6 +203,7 @@ struct HostState
 	Tr2ShaderProgramAL* extractProgram = nullptr;
 	Tr2ShaderProgramAL* blurProgram = nullptr;
 	Tr2ShaderProgramAL* compositeProgram = nullptr;
+	Tr2ShaderProgramAL* ismProgram = nullptr;
 };
 
 FILE* g_logFile = nullptr;
@@ -201,7 +264,7 @@ bool Failed(const char* what, const ALResult& result)
 
 void DumpTune(const TuneParams& tune)
 {
-	char text[1024] = {};
+	char text[4096] = {};
 	const bool wrote = WriteTuneDump(tune, text, sizeof(text));
 	Log(stdout, "%s", text);
 	Log(stdout, wrote ? "wrote eo-map-carbon-neweden-tune.ini next to the exe\n" : "tune dump file write failed\n");
@@ -401,7 +464,10 @@ std::vector<StarVertex> MakeSystemVertices(const neweden::Catalog& catalog)
 	return stars;
 }
 
-std::vector<StarInstance> MakeStarInstances(const neweden::Catalog& catalog, const neweden::StarVisuals& visuals)
+std::vector<StarInstance> MakeStarInstances(
+	const neweden::Catalog& catalog,
+	const neweden::StarVisuals& visuals,
+	const neweden::RegionTable& regions)
 {
 	std::vector<StarInstance> instances;
 	instances.reserve(catalog.systems.size());
@@ -410,6 +476,7 @@ std::vector<StarInstance> MakeStarInstances(const neweden::Catalog& catalog, con
 		const neweden::System& system = catalog.systems[i];
 		const neweden::StarVisual& visual = visuals.records[i];
 		const starcolor::Rgb rgb = starcolor::TemperatureRgb(visual.temperatureK);
+		const neweden::Rgb region = neweden::RegionAtlasColor(regions.records[i].regionId);
 		StarInstance instance = {};
 		instance.x = system.sceneX;
 		instance.y = system.sceneY;
@@ -419,6 +486,9 @@ std::vector<StarInstance> MakeStarInstances(const neweden::Catalog& catalog, con
 		instance.g = rgb.g;
 		instance.b = rgb.b;
 		instance.emissive = starcolor::EmissiveForTemperature(visual.temperatureK);
+		instance.regionR = region.r;
+		instance.regionG = region.g;
+		instance.regionB = region.b;
 		instances.push_back(instance);
 	}
 	return instances;
@@ -504,10 +574,31 @@ bool MakeDualSrvSet(
 	return !Failed(what, set.Create(desc, program, renderContext));
 }
 
+bool MakeTripleSrvSet(
+	Tr2ResourceSetAL& set,
+	const Tr2ShaderProgramAL& program,
+	const Tr2TextureAL& scene,
+	const Tr2TextureAL& bloom,
+	const Tr2TextureAL& ism,
+	const Tr2SamplerStateAL& sampler,
+	Tr2PrimaryRenderContextAL& renderContext,
+	const char* what)
+{
+	Tr2ResourceSetDescriptionAL desc(program);
+	if (!desc.SetSrv(PIXEL_SHADER, 0, scene) || !desc.SetSrv(PIXEL_SHADER, 1, bloom) ||
+		!desc.SetSrv(PIXEL_SHADER, 2, ism) || !desc.SetSampler(PIXEL_SHADER, 0, sampler))
+	{
+		Log(stderr, "FAILED %s: SetSrv/SetSampler\n", what);
+		return false;
+	}
+	set = Tr2ResourceSetAL();
+	return !Failed(what, set.Create(desc, program, renderContext));
+}
+
 bool RecreateOffscreen(HostState& state)
 {
 	if (!state.renderContext || !state.offscreen || !state.sampler || !state.extractProgram || !state.blurProgram ||
-		!state.compositeProgram)
+		!state.compositeProgram || !state.ismProgram)
 	{
 		return false;
 	}
@@ -519,7 +610,8 @@ bool RecreateOffscreen(HostState& state)
 	if (!CreateColorTarget(*state.renderContext, off.scene, w, h) ||
 		!CreateColorTarget(*state.renderContext, off.extract, hw, hh) ||
 		!CreateColorTarget(*state.renderContext, off.blurA, hw, hh) ||
-		!CreateColorTarget(*state.renderContext, off.blurB, hw, hh))
+		!CreateColorTarget(*state.renderContext, off.blurB, hw, hh) ||
+		!CreateColorTarget(*state.renderContext, off.ism, hw, hh))
 	{
 		return false;
 	}
@@ -529,13 +621,20 @@ bool RecreateOffscreen(HostState& state)
 		{
 			return false;
 		}
+		if (Failed("Set dummy RT", state.renderContext->SetRenderTarget(off.dummy)) ||
+			Failed("Clear dummy", state.renderContext->Clear(CLEARFLAGS_TARGET, 0xff000000, 1.0f)))
+		{
+			return false;
+		}
 	}
 	if (!MakeSingleSrvSet(off.extractSet, *state.extractProgram, off.scene, *state.sampler, *state.renderContext, "extract resource set") ||
 		!MakeSingleSrvSet(off.blurFromExtract, *state.blurProgram, off.extract, *state.sampler, *state.renderContext, "blur-from-extract set") ||
 		!MakeSingleSrvSet(off.blurFromA, *state.blurProgram, off.blurA, *state.sampler, *state.renderContext, "blur-from-A set") ||
-		!MakeDualSrvSet(off.compositeOn, *state.compositeProgram, off.scene, off.blurB, *state.sampler, *state.renderContext, "composite-on set") ||
-		!MakeDualSrvSet(off.compositeOff, *state.compositeProgram, off.scene, off.dummy, *state.sampler, *state.renderContext, "composite-off set") ||
-		!MakeDualSrvSet(off.unbind, *state.compositeProgram, off.dummy, off.dummy, *state.sampler, *state.renderContext, "unbind set"))
+		!MakeSingleSrvSet(off.ismFromBloom, *state.ismProgram, off.blurB, *state.sampler, *state.renderContext, "ism-from-bloom set") ||
+		!MakeSingleSrvSet(off.ismFromDummy, *state.ismProgram, off.dummy, *state.sampler, *state.renderContext, "ism-from-dummy set") ||
+		!MakeTripleSrvSet(off.compositeOn, *state.compositeProgram, off.scene, off.blurB, off.ism, *state.sampler, *state.renderContext, "composite-on set") ||
+		!MakeTripleSrvSet(off.compositeOff, *state.compositeProgram, off.scene, off.dummy, off.ism, *state.sampler, *state.renderContext, "composite-off set") ||
+		!MakeTripleSrvSet(off.unbind, *state.compositeProgram, off.dummy, off.dummy, off.dummy, *state.sampler, *state.renderContext, "unbind set"))
 	{
 		return false;
 	}
@@ -622,6 +721,14 @@ bool UpdateFrameConstants(
 	data->gateParams[1] = state.tune.gateDistanceAtten;
 	data->gateParams[2] = float(state.width);
 	data->gateParams[3] = float(state.height);
+	data->extraParams[0] = state.tune.starDepthDesat;
+	data->extraParams[1] = state.tune.regionEnabled ? state.tune.regionStarMix : 0.0f;
+	data->extraParams[2] = 0.0f;
+	data->extraParams[3] = 0.0f;
+	data->gateTint[0] = state.tune.gateTintR;
+	data->gateTint[1] = state.tune.gateTintG;
+	data->gateTint[2] = state.tune.gateTintB;
+	data->gateTint[3] = 0.0f;
 	if (Failed("Unlock frame constants", cb.Unlock(renderContext)))
 	{
 		return false;
@@ -652,11 +759,150 @@ bool UpdateBloomConstants(
 	data->texelY = texelY;
 	data->blurDirX = dirX;
 	data->blurDirY = dirY;
+	data->saturation = tune.saturation;
+	data->contrast = tune.contrast;
+	data->blackLevel = tune.blackLevel;
+	data->gamma = tune.gamma;
+	data->vignette = tune.vignette;
+	data->bloomTintR = tune.bloomTintR;
+	data->bloomTintG = tune.bloomTintG;
+	data->bloomTintB = tune.bloomTintB;
+	data->ismStarExt = tune.ismStarExt;
+	data->ismMinT = tune.ismMinT;
+	data->ismRedden = tune.ismRedden;
+	data->ismEnable = tune.ismEnabled ? 1.0f : 0.0f;
 	if (Failed("Unlock bloom constants", cb.Unlock(renderContext)))
 	{
 		return false;
 	}
 	return true;
+}
+
+bool FillViewBasis(const HostState& state, float right[4], float up[4], float fwd[4], float cam[4])
+{
+	const float aspect = (state.height > 0) ? (float(state.width) / float(state.height)) : 1.0f;
+	const orbit::Vec3 eye = state.camera.Eye();
+	const orbit::Vec3 back = orbit::Normalize(orbit::Sub(eye, state.camera.target));
+	const orbit::Vec3 worldUp = { 0.0f, 1.0f, 0.0f };
+	const orbit::Vec3 r = orbit::Normalize(orbit::Cross(worldUp, back));
+	const orbit::Vec3 u = orbit::Cross(back, r);
+	const orbit::Vec3 f = { -back.x, -back.y, -back.z };
+	right[0] = r.x;
+	right[1] = r.y;
+	right[2] = r.z;
+	right[3] = aspect;
+	up[0] = u.x;
+	up[1] = u.y;
+	up[2] = u.z;
+	up[3] = tanf(state.camera.fovY * 0.5f);
+	fwd[0] = f.x;
+	fwd[1] = f.y;
+	fwd[2] = f.z;
+	fwd[3] = 0.0f;
+	cam[0] = eye.x;
+	cam[1] = eye.y;
+	cam[2] = eye.z;
+	cam[3] = 0.0f;
+	return true;
+}
+
+bool UpdateSkyConstants(Tr2ConstantBufferAL& cb, Tr2PrimaryRenderContextAL& renderContext, const HostState& state)
+{
+	SkyConstants* data = nullptr;
+	if (Failed("Lock sky constants", cb.Lock(reinterpret_cast<void**>(&data), renderContext)))
+	{
+		return false;
+	}
+	FillViewBasis(state, data->viewRight, data->viewUp, data->viewFwd, data->cameraPos);
+	data->viewFwd[3] = state.tune.skyIntensity;
+	data->cool[0] = state.tune.skyCoolR;
+	data->cool[1] = state.tune.skyCoolG;
+	data->cool[2] = state.tune.skyCoolB;
+	data->cool[3] = state.tune.skyContrast;
+	data->warm[0] = state.tune.skyWarmR;
+	data->warm[1] = state.tune.skyWarmG;
+	data->warm[2] = state.tune.skyWarmB;
+	data->warm[3] = state.tune.skyBand;
+	data->stars[0] = state.tune.skyStarAmount;
+	data->stars[1] = state.tune.skyStarBright;
+	data->stars[2] = 0.0f;
+	data->stars[3] = 0.0f;
+	data->baseCol[0] = state.tune.skyBaseR;
+	data->baseCol[1] = state.tune.skyBaseG;
+	data->baseCol[2] = state.tune.skyBaseB;
+	data->baseCol[3] = 0.0f;
+	return !Failed("Unlock sky constants", cb.Unlock(renderContext));
+}
+
+bool UpdateIsmConstants(Tr2ConstantBufferAL& cb, Tr2PrimaryRenderContextAL& renderContext, const HostState& state)
+{
+	IsmConstants* data = nullptr;
+	if (Failed("Lock ism constants", cb.Lock(reinterpret_cast<void**>(&data), renderContext)))
+	{
+		return false;
+	}
+	FillViewBasis(state, data->viewRight, data->viewUp, data->viewFwd, data->cameraPos);
+	data->viewFwd[3] = state.camera.distance;
+	data->cameraPos[3] = state.tune.ismNearCut;
+	data->centre[0] = neweden::kCentreX;
+	data->centre[1] = neweden::kCentreY;
+	data->centre[2] = neweden::kCentreZ;
+	data->centre[3] = 46.0f;
+	data->envelope[0] = 22.0f;
+	data->envelope[1] = 6.0f;
+	data->envelope[2] = 5.5f;
+	data->envelope[3] = 0.16f;
+	data->field[0] = state.tune.ismDensity;
+	data->field[1] = state.tune.ismContrast;
+	data->field[2] = state.tune.ismDetail;
+	data->field[3] = state.tune.ismScale;
+	data->extinct[0] = 0.030f;
+	data->extinct[1] = 2.20f;
+	data->extinct[2] = state.tune.ismRedden;
+	data->extinct[3] = 0.0f;
+	data->emission[0] = state.tune.ismEmission;
+	data->emission[1] = 0.055f;
+	data->emission[2] = 0.0f;
+	data->emission[3] = state.tune.ismScatter;
+	data->lanes[0] = state.tune.ismDarkLane;
+	data->lanes[1] = state.tune.ismDarkScale;
+	data->lanes[2] = state.tune.ismLightLane;
+	data->lanes[3] = state.tune.ismLightScale;
+	data->mixp[0] = state.tune.ismStarExt;
+	data->mixp[1] = state.tune.ismMinT;
+	data->mixp[2] = state.tune.ismSteps;
+	data->mixp[3] = state.tune.regionEnabled ? state.tune.regionIsmMix : 0.0f;
+	data->cool[0] = state.tune.ismPrimaryR;
+	data->cool[1] = state.tune.ismPrimaryG;
+	data->cool[2] = state.tune.ismPrimaryB;
+	data->cool[3] = 0.0f;
+	data->warm[0] = state.tune.ismSecondaryR;
+	data->warm[1] = state.tune.ismSecondaryG;
+	data->warm[2] = state.tune.ismSecondaryB;
+	data->warm[3] = 0.0f;
+	data->high[0] = state.tune.ismHighlightR;
+	data->high[1] = state.tune.ismHighlightG;
+	data->high[2] = state.tune.ismHighlightB;
+	data->high[3] = 0.0f;
+	return !Failed("Unlock ism constants", cb.Unlock(renderContext));
+}
+
+bool UpdateGlowConstants(Tr2ConstantBufferAL& cb, Tr2PrimaryRenderContextAL& renderContext, const TuneParams& tune)
+{
+	GlowConstants* data = nullptr;
+	if (Failed("Lock glow constants", cb.Lock(reinterpret_cast<void**>(&data), renderContext)))
+	{
+		return false;
+	}
+	data->glow[0] = tune.glowIntensity;
+	data->glow[1] = tune.glowScale;
+	data->glow[2] = tune.glowThreshold;
+	data->glow[3] = 0.0f;
+	data->flare[0] = tune.flareIntensity;
+	data->flare[1] = tune.flareThreshold;
+	data->flare[2] = tune.flareLength;
+	data->flare[3] = tune.flareChroma;
+	return !Failed("Unlock glow constants", cb.Unlock(renderContext));
 }
 
 bool DrawFullscreen(
@@ -685,6 +931,31 @@ bool DrawFullscreen(
 	}
 	return true;
 }
+
+bool DrawFullscreenNoSrv(
+	Tr2PrimaryRenderContextAL& renderContext,
+	Tr2VertexLayoutAL& layout,
+	Tr2BufferAL& vb,
+	uint32_t stride,
+	Tr2ShaderProgramAL& program,
+	Tr2ConstantBufferAL& cb)
+{
+	if (Failed("FSNS SetVertexLayout", renderContext.SetVertexLayout(layout)) ||
+		Failed("FSNS SetShaderProgram", renderContext.SetShaderProgram(program)) ||
+		Failed("FSNS SetStreamSource", renderContext.SetStreamSource(0, vb, 0, stride)) ||
+		Failed("FSNS SetStreamSource1", renderContext.SetStreamSource(1, Tr2BufferAL(), 0, 0)) ||
+		Failed("FSNS SetTopology", renderContext.SetTopology(TOP_TRIANGLES)) ||
+		Failed("FSNS SetConstants", renderContext.SetConstants(cb, PIXEL_SHADER, 0)) ||
+		Failed("FSNS RS_ZENABLE", renderContext.SetRenderState(RS_ZENABLE, 0)) ||
+		Failed("FSNS RS_ZWRITEENABLE", renderContext.SetRenderState(RS_ZWRITEENABLE, 0)) ||
+		Failed("FSNS RS_ALPHABLENDENABLE", renderContext.SetRenderState(RS_ALPHABLENDENABLE, 0)) ||
+		Failed("FSNS RS_CULLMODE", renderContext.SetRenderState(RS_CULLMODE, CULLMODE_NONE)) ||
+		Failed("FSNS DrawPrimitive", renderContext.DrawPrimitive(0, 2)))
+	{
+		return false;
+	}
+	return true;
+}
 }
 
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
@@ -706,7 +977,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 
 	Log(stdout, "eo-map-carbon-neweden starting\n");
 	Log(stdout, "renderer: TrinityAL DX11\n");
-	Log(stdout, "path: instanced star quads + TOP_LINES + TrinityAL bloom\n");
+	Log(stdout, "path: instanced star quads + TOP_LINES + Creator Mode TrinityAL passes\n");
 
 	neweden::Catalog catalog;
 	std::string catalogError;
@@ -784,6 +1055,31 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 	}
 	Log(stdout, "%s", mathLog);
 
+	neweden::RegionTable regions;
+	std::string regionError;
+	if (!neweden::FindAndLoadRegions(regions, regionError))
+	{
+		Log(stderr, "FAILED load New Eden regions: %s\n", regionError.c_str());
+		CloseSmokeLog();
+		return 1;
+	}
+	if (!neweden::ValidateRegions(regions, systemIds, regionError))
+	{
+		Log(stderr, "FAILED New Eden region check: %s\n", regionError.c_str());
+		CloseSmokeLog();
+		return 1;
+	}
+
+	std::string persistError;
+	if (!ValidateTunePersist(persistError))
+	{
+		Log(stderr, "FAILED tune persist: %s\n", persistError.c_str());
+		CloseSmokeLog();
+		return 1;
+	}
+	Log(stdout, "region check: 5485 ids, 70 regions, Jita region_id=10000002\n");
+	Log(stdout, "persist check: parse/clamp/unknown-key/roundtrip ok\n");
+
 	unsigned adapterCount = 0;
 	if (Failed("GetAdapterCount", Tr2VideoAdapterInfo::GetAdapterCount(adapterCount)) || adapterCount == 0)
 	{
@@ -795,6 +1091,10 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 
 	HostState state;
 	state.debugPoints = startPoints;
+	if (!smoke && LoadTuneFromExeDir(state.tune))
+	{
+		Log(stdout, "loaded creator settings from eo-map-carbon-neweden-tune.ini\n");
+	}
 	if (startBloomOff)
 	{
 		state.tune.bloomEnabled = false;
@@ -898,6 +1198,24 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 	uint8_t compositePsBytecode[] = {
 #include "BloomComposite_ps.h"
 	};
+	uint8_t skyPsBytecode[] = {
+#include "DeepSpace_ps.h"
+	};
+	uint8_t ismPsBytecode[] = {
+#include "IsmField_ps.h"
+	};
+	uint8_t glowVsBytecode[] = {
+#include "StarGlow_vs.h"
+	};
+	uint8_t glowPsBytecode[] = {
+#include "StarGlow_ps.h"
+	};
+	uint8_t flareVsBytecode[] = {
+#include "StarFlare_vs.h"
+	};
+	uint8_t flarePsBytecode[] = {
+#include "StarFlare_ps.h"
+	};
 
 	Tr2ShaderAL pointVs;
 	auto pointVsInput = Tr2ShaderSignatureAL()
@@ -929,6 +1247,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 							 .Add(Tr2VertexDefinition::POSITION, 0, 1, Tr2ShaderPipelineInputAL::FLOAT, 3)
 							 .Add(Tr2VertexDefinition::TEXCOORD, 1, 2, Tr2ShaderPipelineInputAL::FLOAT, 1)
 							 .Add(Tr2VertexDefinition::COLOR, 0, 3, Tr2ShaderPipelineInputAL::FLOAT, 4)
+							 .Add(Tr2VertexDefinition::TEXCOORD, 2, 4, Tr2ShaderPipelineInputAL::FLOAT, 3)
 							 .Add(Tr2ShaderRegisterAL::CONSTANT_BUFFER, 0);
 	if (Failed("Create sprite VS", spriteVs.Create(VERTEX_SHADER, spriteVsBytecode, spriteVsInput, "", *renderContext)))
 	{
@@ -992,6 +1311,21 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 						 .Add(Tr2ShaderRegisterAL::SRV_TEXTURE2D, 1)
 						 .Add(Tr2ShaderRegisterAL::SAMPLER, 0)
 						 .Add(Tr2ShaderRegisterAL::CONSTANT_BUFFER, 0);
+	auto sampleThree = Tr2ShaderSignatureAL()
+						   .Add(Tr2ShaderRegisterAL::SRV_TEXTURE2D, 0)
+						   .Add(Tr2ShaderRegisterAL::SRV_TEXTURE2D, 1)
+						   .Add(Tr2ShaderRegisterAL::SRV_TEXTURE2D, 2)
+						   .Add(Tr2ShaderRegisterAL::SAMPLER, 0)
+						   .Add(Tr2ShaderRegisterAL::CONSTANT_BUFFER, 0);
+	auto skyPsInput = Tr2ShaderSignatureAL().Add(Tr2ShaderRegisterAL::CONSTANT_BUFFER, 0);
+	auto haloVsInput = Tr2ShaderSignatureAL()
+						   .Add(Tr2VertexDefinition::TEXCOORD, 0, 0, Tr2ShaderPipelineInputAL::FLOAT, 2)
+						   .Add(Tr2VertexDefinition::POSITION, 0, 1, Tr2ShaderPipelineInputAL::FLOAT, 3)
+						   .Add(Tr2VertexDefinition::TEXCOORD, 1, 2, Tr2ShaderPipelineInputAL::FLOAT, 1)
+						   .Add(Tr2VertexDefinition::COLOR, 0, 3, Tr2ShaderPipelineInputAL::FLOAT, 4)
+						   .Add(Tr2VertexDefinition::TEXCOORD, 2, 4, Tr2ShaderPipelineInputAL::FLOAT, 3)
+						   .Add(Tr2ShaderRegisterAL::CONSTANT_BUFFER, 0)
+						   .Add(Tr2ShaderRegisterAL::CONSTANT_BUFFER, 1);
 	Tr2ShaderAL extractPs;
 	if (Failed("Create extract PS", extractPs.Create(PIXEL_SHADER, extractPsBytecode, sampleOne, "", *renderContext)))
 	{
@@ -1005,7 +1339,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 		return 1;
 	}
 	Tr2ShaderAL compositePs;
-	if (Failed("Create composite PS", compositePs.Create(PIXEL_SHADER, compositePsBytecode, sampleTwo, "", *renderContext)))
+	if (Failed("Create composite PS", compositePs.Create(PIXEL_SHADER, compositePsBytecode, sampleThree, "", *renderContext)))
 	{
 		CloseSmokeLog();
 		return 1;
@@ -1032,8 +1366,76 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 		return 1;
 	}
 
+	Tr2ShaderAL skyPs;
+	if (Failed("Create sky PS", skyPs.Create(PIXEL_SHADER, skyPsBytecode, skyPsInput, "", *renderContext)))
+	{
+		CloseSmokeLog();
+		return 1;
+	}
+	Tr2ShaderAL skyShaders[] = { fsVs, skyPs };
+	Tr2ShaderProgramAL skyProgram;
+	if (Failed("Create sky program", skyProgram.Create(skyShaders, 2, *renderContext)))
+	{
+		CloseSmokeLog();
+		return 1;
+	}
+
+	Tr2ShaderAL ismPs;
+	if (Failed("Create ism PS", ismPs.Create(PIXEL_SHADER, ismPsBytecode, sampleOne, "", *renderContext)))
+	{
+		CloseSmokeLog();
+		return 1;
+	}
+	Tr2ShaderAL ismShaders[] = { fsVs, ismPs };
+	Tr2ShaderProgramAL ismProgram;
+	if (Failed("Create ism program", ismProgram.Create(ismShaders, 2, *renderContext)))
+	{
+		CloseSmokeLog();
+		return 1;
+	}
+
+	Tr2ShaderAL glowVs;
+	if (Failed("Create glow VS", glowVs.Create(VERTEX_SHADER, glowVsBytecode, haloVsInput, "", *renderContext)))
+	{
+		CloseSmokeLog();
+		return 1;
+	}
+	Tr2ShaderAL glowPs;
+	if (Failed("Create glow PS", glowPs.Create(PIXEL_SHADER, glowPsBytecode, Tr2ShaderSignatureAL(), "", *renderContext)))
+	{
+		CloseSmokeLog();
+		return 1;
+	}
+	Tr2ShaderAL glowShaders[] = { glowVs, glowPs };
+	Tr2ShaderProgramAL glowProgram;
+	if (Failed("Create glow program", glowProgram.Create(glowShaders, 2, *renderContext)))
+	{
+		CloseSmokeLog();
+		return 1;
+	}
+
+	Tr2ShaderAL flareVs;
+	if (Failed("Create flare VS", flareVs.Create(VERTEX_SHADER, flareVsBytecode, haloVsInput, "", *renderContext)))
+	{
+		CloseSmokeLog();
+		return 1;
+	}
+	Tr2ShaderAL flarePs;
+	if (Failed("Create flare PS", flarePs.Create(PIXEL_SHADER, flarePsBytecode, Tr2ShaderSignatureAL(), "", *renderContext)))
+	{
+		CloseSmokeLog();
+		return 1;
+	}
+	Tr2ShaderAL flareShaders[] = { flareVs, flarePs };
+	Tr2ShaderProgramAL flareProgram;
+	if (Failed("Create flare program", flareProgram.Create(flareShaders, 2, *renderContext)))
+	{
+		CloseSmokeLog();
+		return 1;
+	}
+
 	const std::vector<StarVertex> pointStars = MakeSystemVertices(catalog);
-	const std::vector<StarInstance> starInstances = MakeStarInstances(catalog, visuals);
+	const std::vector<StarInstance> starInstances = MakeStarInstances(catalog, visuals, regions);
 	const std::vector<StarVertex> gates = MakeGateVertices(catalog, graph);
 	const uint32_t gateVertexCount = uint32_t(gates.size());
 	if (gateVertexCount != edgeCount * 2 || starInstances.size() != systemCount)
@@ -1108,6 +1510,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 	spriteDef.Add(Tr2VertexDefinition::FLOAT32_3, Tr2VertexDefinition::POSITION, 0, 1, 1);
 	spriteDef.Add(Tr2VertexDefinition::FLOAT32_1, Tr2VertexDefinition::TEXCOORD, 1, 1, 1);
 	spriteDef.Add(Tr2VertexDefinition::FLOAT32_4, Tr2VertexDefinition::COLOR, 0, 1, 1);
+	spriteDef.Add(Tr2VertexDefinition::FLOAT32_3, Tr2VertexDefinition::TEXCOORD, 2, 1, 1);
 	Tr2VertexLayoutAL spriteLayout;
 	if (Failed("Create sprite layout", spriteLayout.Create(spriteDef, *renderContext)))
 	{
@@ -1137,6 +1540,24 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 		CloseSmokeLog();
 		return 1;
 	}
+	Tr2ConstantBufferAL skyCb;
+	if (Failed("Create sky CB", skyCb.Create(sizeof(SkyConstants), *renderContext)))
+	{
+		CloseSmokeLog();
+		return 1;
+	}
+	Tr2ConstantBufferAL ismCb;
+	if (Failed("Create ism CB", ismCb.Create(sizeof(IsmConstants), *renderContext)))
+	{
+		CloseSmokeLog();
+		return 1;
+	}
+	Tr2ConstantBufferAL glowCb;
+	if (Failed("Create glow CB", glowCb.Create(sizeof(GlowConstants), *renderContext)))
+	{
+		CloseSmokeLog();
+		return 1;
+	}
 
 	Tr2SamplerStateAL linearClamp;
 	if (Failed("Create sampler", linearClamp.Create(Tr2SamplerDescription(TF_LINEAR, TA_CLAMP), *renderContext)))
@@ -1154,6 +1575,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 	state.extractProgram = &extractProgram;
 	state.blurProgram = &blurProgram;
 	state.compositeProgram = &compositeProgram;
+	state.ismProgram = &ismProgram;
 	if (!RecreateOffscreen(state))
 	{
 		CloseSmokeLog();
@@ -1169,7 +1591,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 		SetForegroundWindow(hwnd);
 	}
 
-	Log(stdout, "Visual lab: instanced discs, distance-faded gates, togglable bloom. F1 panel, F7 1px points, F8 dump, F9 reset.\n");
+	Log(stdout, "Creator Mode: sky, ISM, glow/flare, region tint, persist. F1 panel, F7 1px points, F8 save+copy, F9 baseline.\n");
 	if (smoke)
 	{
 		Log(stdout, "smoke will present %u bloom-on frames then %u bloom-off frames\n", kSmokeBloomOnFrames, kSmokeFrames - kSmokeBloomOnFrames);
@@ -1186,6 +1608,8 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 	uint32_t lastPp = 0;
 	uint32_t bloomOnDraws = 0;
 	uint32_t bloomOnPp = 0;
+	uint32_t bloomOffCreatorDraws = 0;
+	uint32_t bloomOffCreatorPp = 0;
 
 	uint32_t frames = 0;
 	bool ok = true;
@@ -1206,8 +1630,24 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 			continue;
 		}
 
-		const bool bloomOn = smoke ? (frames < kSmokeBloomOnFrames) : state.tune.bloomEnabled;
-		if (!UpdateFrameConstants(frameCb, *renderContext, state))
+		TuneParams frameTune = state.tune;
+		if (smoke && frames >= 50)
+		{
+			frameTune.skyEnabled = false;
+			frameTune.ismEnabled = false;
+			frameTune.glowEnabled = false;
+			frameTune.flareEnabled = false;
+			frameTune.bloomEnabled = false;
+		}
+		const bool bloomOn = smoke ? (frames < kSmokeBloomOnFrames) : frameTune.bloomEnabled;
+		const bool skyOn = frameTune.skyEnabled;
+		const bool ismOn = frameTune.ismEnabled;
+		const bool glowOn = frameTune.glowEnabled && !state.debugPoints && frameTune.glowIntensity > 0.001f;
+		const bool flareOn = frameTune.flareEnabled && !state.debugPoints && frameTune.flareIntensity > 0.001f;
+		if (!UpdateFrameConstants(frameCb, *renderContext, state) ||
+			!UpdateSkyConstants(skyCb, *renderContext, state) ||
+			!UpdateIsmConstants(ismCb, *renderContext, state) ||
+			!UpdateGlowConstants(glowCb, *renderContext, frameTune))
 		{
 			ok = false;
 			break;
@@ -1221,6 +1661,19 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 		{
 			ok = false;
 			break;
+		}
+
+		uint32_t draws = 0;
+		uint32_t ppPasses = 0;
+		if (skyOn)
+		{
+			if (!DrawFullscreenNoSrv(*renderContext, fsLayout, fullscreenVb, fsStride, skyProgram, skyCb))
+			{
+				ok = false;
+				break;
+			}
+			++draws;
+			++ppPasses;
 		}
 
 		if (Failed("Set frame VS CB", renderContext->SetConstants(frameCb, VERTEX_SHADER, 0)) ||
@@ -1247,8 +1700,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 			ok = false;
 			break;
 		}
-		uint32_t draws = 1;
-		uint32_t ppPasses = 0;
+		++draws;
 
 		if (state.debugPoints)
 		{
@@ -1284,6 +1736,29 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 			++draws;
 		}
 
+		if (glowOn)
+		{
+			if (Failed("Set glow VS0", renderContext->SetConstants(frameCb, VERTEX_SHADER, 0)) ||
+				Failed("Set glow VS1", renderContext->SetConstants(glowCb, VERTEX_SHADER, 1)) ||
+				Failed("Set glow program", renderContext->SetShaderProgram(glowProgram)) ||
+				Failed("Draw glow", renderContext->DrawIndexedInstanced(4, 0, 2, systemCount)))
+			{
+				ok = false;
+				break;
+			}
+			++draws;
+		}
+		if (flareOn)
+		{
+			if (Failed("Set flare program", renderContext->SetShaderProgram(flareProgram)) ||
+				Failed("Draw flare", renderContext->DrawIndexedInstanced(4, 0, 2, systemCount)))
+			{
+				ok = false;
+				break;
+			}
+			++draws;
+		}
+
 		if (Failed("Unbind depth for PP", renderContext->SetDepthStencil(Tr2TextureAL())))
 		{
 			ok = false;
@@ -1297,7 +1772,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 
 		if (bloomOn)
 		{
-			if (!UpdateBloomConstants(bloomCb, *renderContext, state.tune, halfTexelX, halfTexelY, 1.0f, 0.0f, state.tune.bloomStrength) ||
+			if (!UpdateBloomConstants(bloomCb, *renderContext, frameTune, halfTexelX, halfTexelY, 1.0f, 0.0f, frameTune.bloomStrength) ||
 				Failed("Set extract RT", renderContext->SetRenderTarget(offscreen.extract)) ||
 				!DrawFullscreen(*renderContext, fsLayout, fullscreenVb, fsStride, extractProgram, offscreen.extractSet, bloomCb) ||
 				Failed("Set blurA RT", renderContext->SetRenderTarget(offscreen.blurA)) ||
@@ -1306,30 +1781,58 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 				ok = false;
 				break;
 			}
-			if (!UpdateBloomConstants(bloomCb, *renderContext, state.tune, halfTexelX, halfTexelY, 0.0f, 1.0f, state.tune.bloomStrength) ||
+			if (!UpdateBloomConstants(bloomCb, *renderContext, frameTune, halfTexelX, halfTexelY, 0.0f, 1.0f, frameTune.bloomStrength) ||
 				Failed("Set blurB RT", renderContext->SetRenderTarget(offscreen.blurB)) ||
-				!DrawFullscreen(*renderContext, fsLayout, fullscreenVb, fsStride, blurProgram, offscreen.blurFromA, bloomCb) ||
-				Failed("Set backbuffer", renderContext->SetRenderTarget(renderContext->GetDefaultBackBuffer())) ||
-				!DrawFullscreen(*renderContext, fsLayout, fullscreenVb, fsStride, compositeProgram, offscreen.compositeOn, bloomCb))
+				!DrawFullscreen(*renderContext, fsLayout, fullscreenVb, fsStride, blurProgram, offscreen.blurFromA, bloomCb))
 			{
 				ok = false;
 				break;
 			}
-			draws += 4;
-			ppPasses = 4;
+			draws += 3;
+			ppPasses += 3;
 		}
-		else
+
+		if (Failed("Set ism RT", renderContext->SetRenderTarget(offscreen.ism)) ||
+			Failed("Clear ism", renderContext->Clear(CLEARFLAGS_TARGET, 0xff000000, 1.0f)))
 		{
-			if (!UpdateBloomConstants(bloomCb, *renderContext, state.tune, halfTexelX, halfTexelY, 0.0f, 0.0f, 0.0f) ||
-				Failed("Set backbuffer", renderContext->SetRenderTarget(renderContext->GetDefaultBackBuffer())) ||
-				!DrawFullscreen(*renderContext, fsLayout, fullscreenVb, fsStride, compositeProgram, offscreen.compositeOff, bloomCb))
+			ok = false;
+			break;
+		}
+		if (ismOn)
+		{
+			if (!UpdateIsmConstants(ismCb, *renderContext, state) ||
+				!DrawFullscreen(
+					*renderContext,
+					fsLayout,
+					fullscreenVb,
+					fsStride,
+					ismProgram,
+					bloomOn ? offscreen.ismFromBloom : offscreen.ismFromDummy,
+					ismCb))
 			{
 				ok = false;
 				break;
 			}
-			draws += 1;
-			ppPasses = 1;
+			++draws;
+			++ppPasses;
 		}
+
+		if (!UpdateBloomConstants(bloomCb, *renderContext, frameTune, halfTexelX, halfTexelY, 0.0f, 0.0f, bloomOn ? frameTune.bloomStrength : 0.0f) ||
+			Failed("Set backbuffer", renderContext->SetRenderTarget(renderContext->GetDefaultBackBuffer())) ||
+			!DrawFullscreen(
+				*renderContext,
+				fsLayout,
+				fullscreenVb,
+				fsStride,
+				compositeProgram,
+				bloomOn ? offscreen.compositeOn : offscreen.compositeOff,
+				bloomCb))
+		{
+			ok = false;
+			break;
+		}
+		++draws;
+		++ppPasses;
 
 		if (Failed("EndScene", renderContext->EndScene()) || Failed("Present", renderContext->Present()))
 		{
@@ -1343,6 +1846,11 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 		{
 			bloomOnDraws = draws;
 			bloomOnPp = ppPasses;
+		}
+		else if (smoke && frames == 49)
+		{
+			bloomOffCreatorDraws = draws;
+			bloomOffCreatorPp = ppPasses;
 		}
 		++frames;
 		LARGE_INTEGER frameEnd = {};
@@ -1393,7 +1901,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 	{
 		const double avgMs = totalFrameMs / double(frames);
 		const double fps = (avgMs > 0.0) ? (1000.0 / avgMs) : 0.0;
-		Log(stdout, "smoke: frames=%u systems=%u connections=%u known_space=%u other_space=%u bloom_on_draws=%u bloom_on_pp=%u bloom_off_draws=%u bloom_off_pp=%u star_draws=1 gate_draws=1 bloom_on_frames=%u bloom_off_frames=%u avg_frame_ms=%.2f avg_fps=%.1f path=TrinityAL_DX11/instanced_quads+TOP_LINES+bloom dataset=SDE3464040\n",
+		Log(stdout, "smoke: frames=%u systems=%u connections=%u known_space=%u other_space=%u bloom_on_draws=%u bloom_on_pp=%u bloom_off_creator_draws=%u bloom_off_creator_pp=%u creator_off_draws=%u creator_off_pp=%u star_draws=1 gate_draws=1 bloom_on_frames=%u avg_frame_ms=%.2f avg_fps=%.1f path=TrinityAL_DX11/creator-mode dataset=SDE3464040\n",
 			frames,
 			systemCount,
 			edgeCount,
@@ -1401,12 +1909,21 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 			catalog.otherSpaceCount,
 			bloomOnDraws,
 			bloomOnPp,
+			bloomOffCreatorDraws,
+			bloomOffCreatorPp,
 			lastDraws,
 			lastPp,
 			kSmokeBloomOnFrames,
-			kSmokeFrames - kSmokeBloomOnFrames,
 			avgMs,
 			fps);
+		const uint32_t expectBloomOnDraws = startPoints ? 8u : 9u;
+		const uint32_t expectBloomOffDraws = startPoints ? 5u : 6u;
+		if (bloomOnDraws != expectBloomOnDraws || bloomOnPp != 6 || bloomOffCreatorDraws != expectBloomOffDraws ||
+			bloomOffCreatorPp != 3 || lastDraws != 3 || lastPp != 1)
+		{
+			Log(stderr, "FAILED smoke draw/pass counts (expected %u/6, %u/3, 3/1)\n", expectBloomOnDraws, expectBloomOffDraws);
+			ok = false;
+		}
 	}
 
 	Log(stdout, "exiting after %u frames\n", frames);

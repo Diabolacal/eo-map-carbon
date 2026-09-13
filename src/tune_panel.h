@@ -7,7 +7,10 @@
 struct TunePanel
 {
 	HWND hwnd = nullptr;
+	HWND tabs = nullptr;
+	HWND pages[7] = {};
 	TuneParams* params = nullptr;
+	int currentTab = 0;
 };
 
 bool TunePanel_Create(HINSTANCE instance, HWND owner, TuneParams* params, TunePanel& out);

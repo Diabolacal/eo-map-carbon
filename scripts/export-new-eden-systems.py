@@ -13,6 +13,8 @@ handoffs for the Carbon host:
   src/new_eden_gates_expect.h
   data/new_eden_star_visuals.bin
   data/new_eden_star_visuals.manifest.json
+  data/new_eden_regions.bin
+  data/new_eden_regions.manifest.json
 
 Runtime Carbon never opens SQLite, never talks to ESI, and never loads the
 EO-Map web app.
@@ -101,6 +103,16 @@ EXPECTED_TEMP_MAX_K = 7496.0
 EXPECTED_JITA_TEMP_K = 7305.0
 EXPECTED_JITA_SPECTRAL = "F"
 
+REGION_MAGIC = b"NEREGN1\0"
+REGION_VERSION = 1
+REGION_RECORD_SIZE = 8
+REGION_HEADER_STRUCT = struct.Struct("<8sHHIII32s8s")
+REGION_RECORD_STRUCT = struct.Struct("<II")
+EXPECTED_REGION_HEADER_SIZE = 64
+EXPECTED_REGION_RECORD_SIZE = 8
+EXPECTED_DISTINCT_REGIONS = 70
+EXPECTED_JITA_REGION_ID = 10000002
+
 JITA_ID = 30000142
 AMARR_ID = 30002187
 NIARJA_ID = 30003504  # Pochven; EO-Map marks it unreachable from the main graph
@@ -182,6 +194,96 @@ def load_star_visuals(db_path: Path) -> list[tuple[int, str, float]]:
         if not cls:
             raise RuntimeError(f"system {sid} has an empty star_class")
     return [(int(sid), str(cls), float(temp)) for sid, cls, temp in rows]
+
+
+def load_regions(db_path: Path) -> list[tuple[int, int]]:
+    connection = sqlite3.connect(f"file:{db_path.as_posix()}?mode=ro", uri=True)
+    try:
+        rows = list(
+            connection.execute(
+                "SELECT id, region_id FROM systems "
+                "WHERE hidden = 0 AND id BETWEEN ? AND ? ORDER BY id ASC",
+                (NEW_EDEN_SYSTEM_MIN, NEW_EDEN_SYSTEM_MAX),
+            )
+        )
+    finally:
+        connection.close()
+    if len(rows) != EXPECTED_KNOWN_SPACE:
+        raise RuntimeError(f"region row count {len(rows)} != {EXPECTED_KNOWN_SPACE}")
+    by_id = {int(sid): int(rid) for sid, rid in rows}
+    if by_id[JITA_ID] != EXPECTED_JITA_REGION_ID:
+        raise RuntimeError(f"Jita region_id {by_id[JITA_ID]} != {EXPECTED_JITA_REGION_ID}")
+    distinct = {int(rid) for _sid, rid in rows}
+    if len(distinct) != EXPECTED_DISTINCT_REGIONS:
+        raise RuntimeError(f"distinct region count {len(distinct)} != {EXPECTED_DISTINCT_REGIONS}")
+    for sid, rid in rows:
+        if not (10000000 <= int(rid) <= 10999999):
+            raise RuntimeError(f"system {sid} has unexpected region_id {rid}")
+    return [(int(sid), int(rid)) for sid, rid in rows]
+
+
+def write_region_binary(rows: list[tuple[int, int]], source_sha: bytes, dest: Path) -> bytes:
+    records = bytearray()
+    for system_id, region_id in rows:
+        records.extend(REGION_RECORD_STRUCT.pack(system_id, region_id))
+    header = REGION_HEADER_STRUCT.pack(
+        REGION_MAGIC,
+        REGION_VERSION,
+        REGION_RECORD_SIZE,
+        len(rows),
+        PINNED_SDE_BUILD,
+        0,
+        source_sha,
+        b"\0" * 8,
+    )
+    if REGION_HEADER_STRUCT.size != EXPECTED_REGION_HEADER_SIZE or REGION_RECORD_STRUCT.size != EXPECTED_REGION_RECORD_SIZE:
+        raise RuntimeError("region binary layout drift")
+    blob = header + bytes(records)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(blob)
+    return blob
+
+
+def write_region_manifest(
+    dest: Path,
+    *,
+    source_sha: str,
+    metadata: dict[str, str],
+    rows: list[tuple[int, int]],
+    binary_sha: str,
+    binary_bytes: int,
+) -> dict:
+    distinct = sorted({rid for _sid, rid in rows})
+    by_id = {sid: rid for sid, rid in rows}
+    document = {
+        "artifact": {
+            "filename": "new_eden_regions.bin",
+            "bytes": binary_bytes,
+            "sha256": binary_sha,
+            "format": "NEREGN1",
+            "version": REGION_VERSION,
+            "record": "system_id u32, region_id u32",
+        },
+        "source": {
+            "kind": "EO-Map Contract A systems.region_id (raw metadata)",
+            "sibling_path": "../eo-map/eve-frontier-map/public/map_data_eo_3464040.db",
+            "filename": PINNED_DB_NAME,
+            "sha256": source_sha,
+            "builder_version": metadata.get("builder_version", PINNED_BUILDER_VERSION),
+            "sde_build": int(metadata.get("sde_build", PINNED_SDE_BUILD)),
+        },
+        "selection": {
+            "space": "new-eden-known-space",
+            "count": len(rows),
+            "distinct_regions": len(distinct),
+            "jita_id": JITA_ID,
+            "jita_region_id": by_id[JITA_ID],
+            "palette": "EO-Map REGION_ATLAS_PALETTE, region_id % 11, applied at runtime",
+        },
+        "generator": "scripts/export-new-eden-systems.py",
+    }
+    dest.write_text(json.dumps(document, indent=2, sort_keys=False) + "\n", encoding="utf-8")
+    return document
 
 
 def write_star_binary(rows: list[tuple[int, str, float]], source_sha: bytes, dest: Path) -> bytes:
@@ -758,6 +860,8 @@ def main() -> int:
     parser.add_argument("--out-gates-header", type=Path, default=repo_root / "src" / "new_eden_gates_expect.h")
     parser.add_argument("--out-star-bin", type=Path, default=repo_root / "data" / "new_eden_star_visuals.bin")
     parser.add_argument("--out-star-manifest", type=Path, default=repo_root / "data" / "new_eden_star_visuals.manifest.json")
+    parser.add_argument("--out-region-bin", type=Path, default=repo_root / "data" / "new_eden_regions.bin")
+    parser.add_argument("--out-region-manifest", type=Path, default=repo_root / "data" / "new_eden_regions.manifest.json")
     parser.add_argument("--allow-db-mismatch", action="store_true")
     args = parser.parse_args()
 
@@ -839,6 +943,21 @@ def main() -> int:
         binary_bytes=len(star_blob),
     )
 
+    region_rows = load_regions(args.db)
+    region_ids = [int(row[0]) for row in region_rows]
+    if region_ids != system_ids:
+        raise RuntimeError("region ids are not in the same order as the systems export")
+    region_blob = write_region_binary(region_rows, source_sha_bytes, args.out_region_bin)
+    region_sha = hashlib.sha256(region_blob).hexdigest()
+    region_document = write_region_manifest(
+        args.out_region_manifest,
+        source_sha=source_sha,
+        metadata=metadata,
+        rows=region_rows,
+        binary_sha=region_sha,
+        binary_bytes=len(region_blob),
+    )
+
     centre = document["scene_aabb"]["centre"]
     print(f"source db       : {args.db}")
     print(f"source sha256   : {source_sha}")
@@ -858,6 +977,9 @@ def main() -> int:
     print(f"gates header    : {args.out_gates_header}")
     print(f"star visuals    : {args.out_star_bin} ({len(star_blob)} bytes, {star_sha})")
     print(f"star manifest   : {args.out_star_manifest}")
+    print(f"regions         : {args.out_region_bin} ({len(region_blob)} bytes, {region_sha})")
+    print(f"region manifest : {args.out_region_manifest}")
+    print(f"distinct regions: {region_document['selection']['distinct_regions']}")
     print(
         f"star temps      : {star_document['selection']['temperature_min_k']}-"
         f"{star_document['selection']['temperature_max_k']} K"

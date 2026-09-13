@@ -14,12 +14,12 @@ cbuffer cb0 : register(b0)
 	float4 sizeParams;
 	float4 fadeParams;
 	float4 gateParams; // x=opacity, y=distAtten, z=viewportW, w=viewportH
+	float4 extraParams;
+	float4 gateTint; // rgb tint; default 0.55 grey matches vislab::kGateUnpremulGrey
 };
 
-// 1C wrote RGB 0.22, alpha 1, no blend. Visibility now lives in alpha only.
-// RGB stays a constant unpremultiplied light grey so attenuation fades toward
-// invisibility, not toward black. Must stay in lockstep with vislab::kGateUnpremulGrey.
-static const float kGateGrey = 0.55;
+// Visibility lives in alpha only. RGB is an unpremultiplied tint so
+// attenuation fades toward invisibility, not toward black.
 
 float4 main(VS_OUTPUT input) : SV_Target
 {
@@ -29,5 +29,5 @@ float4 main(VS_OUTPUT input) : SV_Target
 	float t = saturate((input.ViewDepth - dynNear) / max(dynFar - dynNear, 0.001));
 	float gain = lerp(1.0, 1.0 - 0.65 * gateParams.y, t);
 	float a = saturate(gateParams.x * gain);
-	return float4(kGateGrey, kGateGrey, kGateGrey, a);
+	return float4(gateTint.rgb, a);
 }

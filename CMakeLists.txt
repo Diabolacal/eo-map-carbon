@@ -64,6 +64,12 @@ compile_hlsl("${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/Fullscreen.vsh" vs_5_0 Ful
 compile_hlsl("${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/BloomExtract.psh" ps_5_0 BloomExtract_ps)
 compile_hlsl("${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/BloomBlur.psh" ps_5_0 BloomBlur_ps)
 compile_hlsl("${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/BloomComposite.psh" ps_5_0 BloomComposite_ps)
+compile_hlsl("${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/DeepSpace.psh" ps_5_0 DeepSpace_ps)
+compile_hlsl("${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/IsmField.psh" ps_5_0 IsmField_ps)
+compile_hlsl("${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/StarGlow.vsh" vs_5_0 StarGlow_vs)
+compile_hlsl("${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/StarGlow.psh" ps_5_0 StarGlow_ps)
+compile_hlsl("${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/StarFlare.vsh" vs_5_0 StarFlare_vs)
+compile_hlsl("${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/StarFlare.psh" ps_5_0 StarFlare_ps)
 
 # TrinityAL_dx11 is a static lib produced by the Trinity checkout.
 set(_al_lib_debug "${TRINITY_BUILD_DIR}/carbon/autobuild/TrinityAL/Windows/x64/v141/TrinityAL_dx11_debug.lib")
@@ -154,6 +160,8 @@ add_executable(eo-map-carbon-neweden WIN32
     src/new_eden_gates_expect.h
     src/new_eden_star_visuals.cpp
     src/new_eden_star_visuals.h
+    src/new_eden_regions.cpp
+    src/new_eden_regions.h
     src/new_eden_anchors.h
     src/orbit_camera.h
     src/star_color.h
@@ -171,9 +179,15 @@ add_executable(eo-map-carbon-neweden WIN32
     "${BloomExtract_ps_HEADER}"
     "${BloomBlur_ps_HEADER}"
     "${BloomComposite_ps_HEADER}"
+    "${DeepSpace_ps_HEADER}"
+    "${IsmField_ps_HEADER}"
+    "${StarGlow_vs_HEADER}"
+    "${StarGlow_ps_HEADER}"
+    "${StarFlare_vs_HEADER}"
+    "${StarFlare_ps_HEADER}"
 )
 eo_map_carbon_app(eo-map-carbon-neweden)
-target_link_libraries(eo-map-carbon-neweden PRIVATE comctl32)
+target_link_libraries(eo-map-carbon-neweden PRIVATE comctl32 comdlg32)
 add_custom_command(
     TARGET eo-map-carbon-neweden POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -185,5 +199,8 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${CMAKE_CURRENT_SOURCE_DIR}/data/new_eden_star_visuals.bin"
         "$<TARGET_FILE_DIR:eo-map-carbon-neweden>/new_eden_star_visuals.bin"
-    COMMENT "Copy New Eden catalogue, stargate graph, and star visuals next to eo-map-carbon-neweden"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_CURRENT_SOURCE_DIR}/data/new_eden_regions.bin"
+        "$<TARGET_FILE_DIR:eo-map-carbon-neweden>/new_eden_regions.bin"
+    COMMENT "Copy New Eden catalogue, stargate graph, star visuals, and regions next to eo-map-carbon-neweden"
 )

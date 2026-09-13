@@ -1,5 +1,6 @@
 Texture2D sceneTex : register(t0);
 Texture2D bloomTex : register(t1);
+Texture2D ismTex : register(t2);
 SamplerState sampl : register(s0);
 
 cbuffer cb0 : register(b0)
@@ -12,6 +13,18 @@ cbuffer cb0 : register(b0)
 	float texelY;
 	float blurDirX;
 	float blurDirY;
+	float saturation;
+	float contrast;
+	float blackLevel;
+	float gamma;
+	float vignette;
+	float bloomTintR;
+	float bloomTintG;
+	float bloomTintB;
+	float ismStarExt;
+	float ismMinT;
+	float ismRedden;
+	float ismEnable;
 };
 
 struct VS_OUTPUT
@@ -23,14 +36,37 @@ struct VS_OUTPUT
 float4 main(VS_OUTPUT input) : SV_Target
 {
 	float3 scene = sceneTex.Sample(sampl, input.TexCoord).rgb;
-	float3 bloom = bloomTex.Sample(sampl, input.TexCoord).rgb;
-	float3 hdr = (scene + bloom * strength) * max(exposure, 0.01);
-	// Luminance Reinhard keeps channel ratios. Per-channel Reinhard plus HDR
-	// emissive was collapsing cool/warm stars onto white.
+	float3 bloom = bloomTex.Sample(sampl, input.TexCoord).rgb * float3(bloomTintR, bloomTintG, bloomTintB);
+	float4 ism = ismTex.Sample(sampl, input.TexCoord);
+
+	float3 Text = 1.0;
+	float3 Tstar = 1.0;
+	float3 emission = 0.0;
+	if (ismEnable > 0.5)
+	{
+		float3 extRGB = lerp(float3(1, 1, 1), float3(1.18, 1.00, 0.72), saturate(ismRedden));
+		Text = pow(max(ism.aaa, 1e-4), extRGB);
+		Tstar = max(lerp(float3(1, 1, 1), Text, saturate(ismStarExt)), ismMinT);
+		emission = ism.rgb;
+	}
+
+	float3 hdr = (scene * Tstar + bloom * strength * Tstar + emission) * max(exposure, 0.01);
 	float lum = dot(hdr, float3(0.2126, 0.7152, 0.0722));
 	float mappedLum = lum / (1.0 + lum * 0.35);
 	float3 mapped = hdr * (mappedLum / max(lum, 1e-5));
 	float peak = max(mapped.r, max(mapped.g, mapped.b));
 	mapped *= (peak > 1.0) ? (1.0 / peak) : 1.0;
+
+	float mappedLum2 = dot(mapped, float3(0.2126, 0.7152, 0.0722));
+	mapped = mappedLum2 + (mapped - mappedLum2) * saturation;
+	mapped = (mapped - 0.5) * contrast + 0.5;
+	mapped = mapped - blackLevel;
+	mapped = saturate(mapped);
+	mapped = pow(max(mapped, 0.0), 1.0 / max(gamma, 0.05));
+
+	float2 v = input.TexCoord * 2.0 - 1.0;
+	float vig = saturate(1.0 - vignette * dot(v, v));
+	mapped *= vig;
+
 	return float4(mapped, 1.0);
 }

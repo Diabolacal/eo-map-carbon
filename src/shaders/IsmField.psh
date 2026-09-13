@@ -1,0 +1,222 @@
+// Half-res interstellar medium. World-space 4-8 tap slab, not a 48-step march.
+// rgb = in-scattered emission, a = transmittance.
+
+Texture2D bloomTex : register(t0);
+SamplerState sampl : register(s0);
+
+cbuffer cb0 : register(b0)
+{
+	float4 viewRight;   // xyz, aspect
+	float4 viewUp;      // xyz, tanHalfFovY
+	float4 viewFwd;     // xyz, camDist
+	float4 cameraPos;   // xyz, nearCut
+	float4 centre;      // xyz, discR
+	float4 envelope;    // clumpR, thick, flatten, floor
+	float4 field;       // density, contrast, ridge, scale
+	float4 extinct;     // tauScale, tauMax, redden, unused
+	float4 emission;    // emisGain, glowGain, wispGain, scatterGain
+	float4 lanes;       // dark, darkScale, light, lightScale
+	float4 mixp;        // starExt, minT, steps, regionMix
+	float4 cool;        // rgb
+	float4 warm;        // rgb
+	float4 high;        // rgb
+};
+
+struct VS_OUTPUT
+{
+	float4 Position : SV_Position;
+	float2 TexCoord : TEXCOORD;
+};
+
+float hash13(float3 p)
+{
+	p = frac(p * 0.3183099 + 0.1);
+	p *= 17.0;
+	return frac(p.x * p.y * p.z * (p.x + p.y + p.z));
+}
+
+float valueNoise(float3 p)
+{
+	float3 i = floor(p);
+	float3 f = frac(p);
+	f = f * f * (3.0 - 2.0 * f);
+	float n000 = hash13(i);
+	float n100 = hash13(i + float3(1, 0, 0));
+	float n010 = hash13(i + float3(0, 1, 0));
+	float n110 = hash13(i + float3(1, 1, 0));
+	float n001 = hash13(i + float3(0, 0, 1));
+	float n101 = hash13(i + float3(1, 0, 1));
+	float n011 = hash13(i + float3(0, 1, 1));
+	float n111 = hash13(i + float3(1, 1, 1));
+	float nx00 = lerp(n000, n100, f.x);
+	float nx10 = lerp(n010, n110, f.x);
+	float nx01 = lerp(n001, n101, f.x);
+	float nx11 = lerp(n011, n111, f.x);
+	return lerp(lerp(nx00, nx10, f.y), lerp(nx01, nx11, f.y), f.z);
+}
+
+float fbm4(float3 p)
+{
+	float a = 0.0;
+	float w = 0.5;
+	[unroll]
+	for (int i = 0; i < 4; ++i)
+	{
+		a += w * valueNoise(p);
+		p = p * 2.03 + 11.7;
+		w *= 0.5;
+	}
+	return a;
+}
+
+float ridged(float3 p, float ridge)
+{
+	float n = fbm4(p);
+	float billow = 1.0 - abs(n * 2.0 - 1.0);
+	return lerp(n, billow, saturate(ridge));
+}
+
+float envelopeAt(float3 p)
+{
+	float3 c = centre.xyz;
+	float discR = max(centre.w, 1.0);
+	float clumpR = max(envelope.x, 1.0);
+	float thick = max(envelope.y, 0.4);
+	float flatten = max(envelope.z, 1.0);
+	float floorAmt = envelope.w;
+
+	float3 q = p - c;
+	q.y *= flatten;
+	float radial = length(float2(q.x, q.z));
+	float disc = exp(-pow(radial / discR, 2.0));
+	float sheet = exp(-pow(q.y / thick, 2.0));
+	float outer = saturate(1.0 - radial / (discR * 1.85));
+
+	float3 l0 = c + float3(0.40, 0.0, 0.18) * discR;
+	float3 l1 = c + float3(-0.32, 0.0, 0.28) * discR;
+	float3 l2 = c + float3(0.08, 0.0, -0.36) * discR;
+	float g0 = exp(-dot(p - l0, p - l0) / (clumpR * clumpR));
+	float g1 = exp(-dot(p - l1, p - l1) / (clumpR * clumpR));
+	float g2 = exp(-dot(p - l2, p - l2) / (clumpR * clumpR));
+	float lobes = g0 + g1 + g2;
+	return saturate((floorAmt + 0.85 * lobes) * disc * sheet * outer);
+}
+
+bool intersectSlab(float3 ro, float3 rd, float y0, float y1, out float tEnter, out float tExit)
+{
+	if (y1 < y0)
+	{
+		float tmp = y0;
+		y0 = y1;
+		y1 = tmp;
+	}
+	if (abs(rd.y) < 1e-5)
+	{
+		if (ro.y < y0 || ro.y > y1)
+		{
+			tEnter = 0;
+			tExit = 0;
+			return false;
+		}
+		tEnter = 0.0;
+		tExit = 220.0;
+		return true;
+	}
+	float t0 = (y0 - ro.y) / rd.y;
+	float t1 = (y1 - ro.y) / rd.y;
+	tEnter = min(t0, t1);
+	tExit = max(t0, t1);
+	tEnter = max(tEnter, 0.0);
+	return tExit > tEnter;
+}
+
+float4 main(VS_OUTPUT input) : SV_Target
+{
+	float2 uv = input.TexCoord;
+	float2 ndc = float2(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0);
+	float aspect = max(viewRight.w, 1e-4);
+	float tanHalf = max(viewUp.w, 1e-4);
+	float3 rd = normalize(viewFwd.xyz + viewRight.xyz * (ndc.x * tanHalf * aspect) + viewUp.xyz * (ndc.y * tanHalf));
+	float3 ro = cameraPos.xyz;
+	float camDist = max(viewFwd.w, 1.0);
+	float nearCut = saturate(cameraPos.w);
+	float t0 = max(8.0, nearCut * camDist);
+
+	float thick = max(envelope.y, 0.4);
+	float y0 = centre.y - thick * 6.0;
+	float y1 = centre.y + thick * 6.0;
+	float tEnter, tExit;
+	if (!intersectSlab(ro, rd, y0, y1, tEnter, tExit))
+	{
+		return float4(0, 0, 0, 1);
+	}
+
+	float tStart = max(tEnter, t0);
+	float tEnd = min(tExit, 240.0);
+	if (tEnd <= tStart)
+	{
+		return float4(0, 0, 0, 1);
+	}
+
+	int steps = (mixp.z >= 7.0) ? 8 : 4;
+	float dt = (tEnd - tStart) / float(steps);
+	float scale = max(field.w, 0.05);
+	float densityMul = field.x;
+	float contrast = max(field.y, 0.5);
+	float ridge = saturate(field.z);
+
+	float tau = 0.0;
+	float3 E = 0.0;
+	float3 irr = bloomTex.Sample(sampl, uv).rgb;
+	float scatter = max(emission.w, 0.0);
+
+	[loop]
+	for (int i = 0; i < steps; ++i)
+	{
+		float t = tStart + (float(i) + 0.5) * dt;
+		float3 p = ro + rd * t;
+		float env = envelopeAt(p);
+		if (env < 0.002)
+		{
+			continue;
+		}
+
+		float3 warp = float3(valueNoise(p * 0.035 * scale), valueNoise(p * 0.035 * scale + 17.0), valueNoise(p * 0.035 * scale + 41.0));
+		float3 pw = p * (0.055 * scale) + (warp - 0.5) * 0.8;
+		float n = ridged(pw, ridge);
+		float rho = densityMul * env * pow(saturate(n), contrast);
+
+		float3 lp = p * (0.028 / max(lanes.y, 0.05));
+		lp.y *= 2.4;
+		float laneN = ridged(lp + warp * 1.4, 0.85);
+		float lane = pow(saturate(laneN - 0.42), 2.4) * env * max(lanes.x, 0.0);
+
+		float3 wp = p * (0.11 / max(lanes.w, 0.05));
+		float wispN = ridged(wp + 9.1, 0.70);
+		float wisp = pow(saturate(wispN), 2.2) * env * max(lanes.z, 0.0);
+		wisp *= saturate(1.0 - lane * 4.0);
+
+		float glow = pow(env, 3.2) * emission.y;
+		float dTau = (rho + lane) * dt * max(extinct.x, 0.0);
+		float Tpre = exp(-tau);
+		tau += dTau;
+		float absorb = 1.0 - exp(-dTau);
+		float3 col = lerp(cool.rgb, warm.rgb, saturate(env * 1.4));
+		col = lerp(col, high.rgb, saturate(wisp * 2.5));
+		if (mixp.w > 1e-4)
+		{
+			const float3 atlas[11] = {
+				float3(1.00, 0.30, 0.15), float3(1.00, 0.65, 0.17), float3(0.95, 1.00, 0.38),
+				float3(0.18, 0.94, 0.66), float3(0.00, 0.76, 0.48), float3(0.27, 0.78, 1.00),
+				float3(0.12, 0.42, 1.00), float3(0.62, 0.49, 1.00), float3(1.00, 0.36, 0.56),
+				float3(1.00, 0.23, 0.19), float3(0.00, 0.82, 1.00)
+			};
+			uint stop = uint(abs(p.x * 1.7 + p.z * 2.3 + centre.x * 3.1)) % 11u;
+			col = lerp(col, atlas[stop], saturate(mixp.w) * 0.55);
+		}
+		E += Tpre * (emission.x * rho * col + wisp * high.rgb + glow * col + rho * irr * scatter) * absorb;
+	}
+
+	float T = exp(-min(tau, max(extinct.y, 0.1)));
+	return float4(E, T);
+}
