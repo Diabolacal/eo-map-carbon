@@ -1,0 +1,6 @@
+{
+  "name": "fxc",
+  "version": "10.1",
+  "description": "Public overlay: Microsoft FXC from a local Windows SDK instead of CCP prebuilt CDN.",
+  "supports": "windows & x64"
+}

@@ -1,0 +1,13 @@
+// Copyright © 2023 CCP ehf.
+// Copied from carbonengine/trinity trinityal/tests/Shaders.DX11/ConstantColor.psh (MIT).
+
+struct VS_OUTPUT
+{
+	float4 Position : SV_Position;
+};
+
+float4 main(VS_OUTPUT In) : SV_Target
+{
+    float4 color = float4( 1, 0, 0, 1 );
+    return color;
+}

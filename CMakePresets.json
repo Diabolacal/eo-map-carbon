@@ -1,0 +1,35 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 31,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "triangle-debug",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/.cmake-build-triangle-debug",
+      "toolchainFile": "C:/dev/carbon-upstream/trinity/vendor/github.com/microsoft/vcpkg/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-debug",
+        "VCPKG_INSTALLED_DIR": "C:/dev/carbon-upstream/trinity/.cmake-build-local-dx11-debug/vcpkg_installed",
+        "VCPKG_MANIFEST_MODE": "OFF",
+        "TRINITY_SOURCE_DIR": "C:/dev/carbon-upstream/trinity",
+        "TRINITY_BUILD_DIR": "C:/dev/carbon-upstream/trinity/.cmake-build-local-dx11-debug",
+        "TRINITY_VCPKG_TRIPLET": "x64-windows-debug"
+      },
+      "environment": {
+        "PATH_TO_VCPKG_ROOT": "C:/dev/carbon-upstream/trinity/vendor/github.com/microsoft/vcpkg"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "triangle-debug",
+      "configurePreset": "triangle-debug",
+      "configuration": "Debug"
+    }
+  ]
+}

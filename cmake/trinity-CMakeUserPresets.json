@@ -1,0 +1,38 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 31,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "local-dx11-debug",
+      "inherits": ["x64-windows-debug"],
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/.cmake-build-local-dx11-debug",
+      "cacheVariables": {
+        "BUILD_DX11": "ON",
+        "BUILD_DX12": "OFF",
+        "WITH_GRANNY": "OFF",
+        "BUILD_TESTING": "ON",
+        "BUILD_SHADER_COMPILER": "OFF",
+        "BUILD_DOCUMENTATION": "OFF",
+        "CMAKE_COMPILE_WARNING_AS_ERROR": "OFF",
+        "CMAKE_SYSTEM_VERSION": "10.0.17763.0",
+        "CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION": "10.0.17763.0",
+        "VCPKG_OVERLAY_PORTS": "C:/dev/eo-map-carbon/overlays/vcpkg",
+        "VCPKG_INSTALL_OPTIONS": "--x-buildtrees-root=C:/buildtrees"
+      },
+      "environment": {
+        "GIT_CONFIG_COUNT": "1",
+        "GIT_CONFIG_KEY_0": "url.https://github.com/.insteadOf",
+        "GIT_CONFIG_VALUE_0": "git@github.com:",
+        "VCPKG_OVERLAY_PORTS": "C:/dev/eo-map-carbon/overlays/vcpkg",
+        "VCPKG_MAX_CONCURRENCY": "12",
+        "WindowsSDKVersion": "10.0.17763.0\\",
+        "UCRTVersion": "10.0.17763.0"
+      }
+    }
+  ]
+}

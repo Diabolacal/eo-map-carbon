@@ -1,0 +1,68 @@
+# Build and CMake
+.cmake-build*/
+cmake-build*/
+out/
+build/
+CMakeUserPresets.json
+CMakeCache.txt
+CMakeFiles/
+*.sln
+*.slnx
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
+# Compilers / objects / binaries
+*.obj
+*.o
+*.lib
+*.dll
+*.exe
+*.pdb
+*.ilk
+*.exp
+*.idb
+*.pch
+*.ipch
+*.iobj
+*.ipdb
+
+# vcpkg / package caches (never commit).
+# Anchor /vcpkg/ so overlays/vcpkg/ (our fxc port overlay) is not ignored.
+vcpkg_installed/
+/vcpkg/
+/buildtrees/
+/packages/
+/downloads/
+
+# Generated shader bytecode headers
+generated/
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Local secrets / machine paths
+.env
+.env.*
+*.pfx
+*.snk
+
+# Do not commit cloned Carbon sources or Windows SDK installers
+/third_party/
+/upstream/
