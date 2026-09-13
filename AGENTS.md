@@ -50,7 +50,7 @@ Do not re-interpret the SDE. Regenerate artefacts with `scripts/export-new-eden-
 
 Aesthetics are not proven. Human look-and-tune is required.
 
-The New Eden host draws instanced camera-facing star quads, temperature colour, faded `TOP_LINES` gates, HDR bloom, a procedural view-locked sky, a half-res 4/8-tap ISM field, optional glow/flare, optional region tint, and a tabbed Win32 Creator panel. `TOP_POINTS` remains `--points` / F7.
+The New Eden host draws instanced camera-facing star quads, temperature colour, faded `TOP_LINES` gates, HDR bloom, a procedural view-locked sky, a half-res world-space ISM disc raymarch, optional glow/flare, optional region tint, and a tabbed Win32 Creator panel. `TOP_POINTS` remains `--points` / F7.
 
 `TuneParams` defaults are the locked human baseline for stars/gates/bloom/exposure, plus restrained cinematic layers. F9 / Baseline reset to `TuneDefaults()`. Interactive mode loads `eo-map-carbon-neweden-tune.ini` next to the exe if present. `--smoke` never loads it.
 
@@ -179,7 +179,7 @@ New Eden:
 .\scripts\run-neweden.ps1
 ```
 
-Milestone 1B geometry and Milestone 1C stargate topology are already human-verified. Re-run only if the host or Carbon changes. Expect a Win32 window titled **EO-Map Carbon New Eden Creator Mode (TrinityAL DX11)** with the locked human baseline, procedural sky, restrained ISM, optional glow, faded gates, and a tabbed Creator / Visual lab window. Same orbit / pan / zoom as the starfield. Automated `--smoke` loads the pinned Contract A systems, undirected gates, star temperatures, and region ids, checks persist parse, presents 40 bloom-on + 10 bloom-off creator + 10 creator-off frames, and still cannot claim pixels or aesthetics.
+Milestone 1B geometry and Milestone 1C stargate topology are already human-verified. Re-run only if the host or Carbon changes. Expect a Win32 window titled **EO-Map Carbon New Eden Creator Mode (TrinityAL DX11)** with the locked human baseline, procedural sky, a broad New Eden-scale ISM disc, optional glow, faded gates, and a tabbed Creator / Visual lab window. Same orbit / pan / zoom as the starfield. Automated `--smoke` loads the pinned Contract A systems, undirected gates, star temperatures, and region ids, checks persist parse and ISM envelope math, presents 40 bloom-on + 10 bloom-off creator + 10 creator-off frames, and still cannot claim pixels or aesthetics.
 
 ```powershell
 .\scripts\run-creator-mode.ps1

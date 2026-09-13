@@ -37,7 +37,7 @@ Aesthetics are **not** proven. Automated smoke cannot claim pixels.
 | Deep-space dome hash stars | Distant infinite dressing | Hash on view direction only | Background tab | adapted | Pan must not translate them |
 | 320 geometric parallax points | Extra film dressing | — | — | deferred | Hash stars cover the need |
 | Background galaxies | 8 far billboards | — | — | deferred | Avoid proprietary-looking stamps |
-| Universe Effects / ISM raymarch | Dust dims what is behind it | Half-res 4/8-tap world slab, Beer–Lambert | Medium tab | adapted | Not EO's 48-step march or 96³ volumes |
+| Universe Effects / ISM raymarch | Dust dims what is behind it | Half-res world disc, plane-centred 8–48 step march, Beer–Lambert | Medium tab | adapted | Analytic three-lobe flared disc, not EO's 96³ bake |
 | Dark lanes | Extinction threads | Extra optical depth from ridged FBM | Medium tab | adapted | Never writes black RGB |
 | Density glow / “light lanes” | Unresolved starlight wash | Envelope glow + wisps + bloom-as-irradiance scatter | Medium tab | adapted | No star-density histogram |
 | Diffuse gas / emission regions | Dropped EO layers | — | — | not applicable | Permanently off in EO |
@@ -60,7 +60,7 @@ HDR sceneRT (RGBA16F) + D24S8
   4. optional instanced flare
   unbind depth
   5–7. bloom extract / blur H / blur V @ 1/2   // if bloom on
-  8. IsmField @ 1/2 (or clear to T=1)          // world slab
+  8. IsmField @ 1/2 (or clear to T=1)          // world disc march
   9. composite to backbuffer
 ```
 
@@ -82,7 +82,7 @@ Named preset in the file is `preset=Baseline`. That is `TuneDefaults()`, not a p
 
 - Sky stars: `valueNoise(rd * 280)` and `rd * 520`. No `cameraPos` in the hash.
 - Sky nebula: `p = cameraPos + rd * R` at EO-like shell radii 2833 / 4959 / 7084.
-- ISM: analytic three-lobe disc around `kCentre`, 4 or 8 taps, half-res RGBA16F (`rgb` emission, `a` transmittance).
+- ISM: analytic flared three-lobe disc around `kCentre` (scene LY), plane-centred 8/16/24/32/48-step march, half-res RGBA16F (`rgb` emission, `a` transmittance). Radius / thickness / edge softness are tunable. The old 4-tap Y-slab plus `tEnd=240` only lit a northern sliver.
 - Star illumination of dust: one sample of the bloom buffer (`ismScatter`). Not N point lights.
 - Region ISM mix: world XZ atlas tint, not a true region volume.
 

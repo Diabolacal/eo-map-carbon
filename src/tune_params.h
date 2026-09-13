@@ -8,9 +8,8 @@
 #include <cstring>
 #include <string>
 
-// Checked-in Creator Mode baseline. Star / gate / bloom / exposure values are
-// the human-tuned visual-lab pass. Newer cinematic layers default to restrained
-// on-states so the first launch is already a picture, not a black void.
+// Checked-in Creator Mode baseline. Values are the human-approved visual pass
+// locked before the ISM volume fix. F9 / Baseline restore TuneDefaults().
 struct TuneParams
 {
 	float starSize = 0.39f;
@@ -19,79 +18,84 @@ struct TuneParams
 	float starDepthDesat = 0.18f;
 	bool bloomEnabled = true;
 	float bloomThreshold = 0.06f;
-	float bloomStrength = 1.03f;
-	float bloomRadius = 1.60f;
+	float bloomStrength = 0.89f;
+	float bloomRadius = 1.80f;
 	float nearStarAtten = 1.80f;
 	float farStarAtten = 0.57f;
-	float gateOpacity = 0.62f;
-	float gateDistanceAtten = 1.55f;
+	float gateOpacity = 0.19f;
+	float gateDistanceAtten = 1.61f;
 	float gateTintR = 0.55f;
 	float gateTintG = 0.55f;
 	float gateTintB = 0.55f;
-	float exposure = 2.09f;
-	float saturation = 1.00f;
-	float contrast = 1.00f;
+	float exposure = 2.18f;
+	float saturation = 1.21f;
+	float contrast = 0.99f;
 	float blackLevel = 0.00f;
-	float gamma = 1.00f;
-	float vignette = 0.16f;
+	float gamma = 1.19f;
+	float vignette = 0.35f;
 	float bloomTintR = 1.00f;
 	float bloomTintG = 1.00f;
 	float bloomTintB = 1.00f;
 
 	bool skyEnabled = true;
-	float skyIntensity = 0.40f;
-	float skyContrast = 2.20f;
-	float skyBand = 0.42f;
-	float skyStarAmount = 0.34f;
-	float skyStarBright = 0.72f;
-	float skyCoolR = 0.035f;
-	float skyCoolG = 0.045f;
-	float skyCoolB = 0.090f;
-	float skyWarmR = 0.090f;
-	float skyWarmG = 0.055f;
-	float skyWarmB = 0.110f;
-	float skyBaseR = 0.004f;
-	float skyBaseG = 0.006f;
-	float skyBaseB = 0.014f;
+	float skyIntensity = 0.49f;
+	float skyContrast = 2.23f;
+	float skyBand = 0.41f;
+	float skyStarAmount = 2.00f;
+	float skyStarBright = 1.37f;
+	float skyCoolR = 1.000f;
+	float skyCoolG = 0.000f;
+	float skyCoolB = 0.000f;
+	float skyWarmR = 1.000f;
+	float skyWarmG = 1.000f;
+	float skyWarmB = 0.000f;
+	float skyBaseR = 0.000f;
+	float skyBaseG = 0.000f;
+	float skyBaseB = 0.000f;
 
 	bool ismEnabled = true;
-	float ismDensity = 1.25f;
-	float ismScale = 1.00f;
-	float ismDetail = 0.62f;
-	float ismContrast = 2.35f;
-	float ismEmission = 0.040f;
+	float ismDensity = 1.46f;
+	float ismScale = 0.91f;
+	float ismDetail = 0.70f;
+	float ismContrast = 2.73f;
+	float ismEmission = 0.170f;
 	float ismRedden = 0.78f;
-	float ismStarExt = 0.55f;
+	float ismStarExt = 0.37f;
 	float ismMinT = 0.46f;
-	float ismNearCut = 0.36f;
-	float ismDarkLane = 0.16f;
-	float ismDarkScale = 1.00f;
-	float ismLightLane = 0.035f;
+	float ismNearCut = 0.17f;
+	float ismDarkLane = 0.69f;
+	float ismDarkScale = 1.56f;
+	float ismLightLane = 0.170f;
 	float ismLightScale = 1.10f;
-	float ismPrimaryR = 0.16f;
-	float ismPrimaryG = 0.10f;
-	float ismPrimaryB = 0.22f;
-	float ismSecondaryR = 0.12f;
-	float ismSecondaryG = 0.09f;
-	float ismSecondaryB = 0.07f;
-	float ismHighlightR = 0.32f;
-	float ismHighlightG = 0.22f;
-	float ismHighlightB = 0.16f;
+	float ismPrimaryR = 0.160f;
+	float ismPrimaryG = 0.100f;
+	float ismPrimaryB = 0.220f;
+	float ismSecondaryR = 0.120f;
+	float ismSecondaryG = 0.090f;
+	float ismSecondaryB = 0.070f;
+	float ismHighlightR = 0.320f;
+	float ismHighlightG = 0.220f;
+	float ismHighlightB = 0.160f;
 	float ismScatter = 0.18f;
-	float ismSteps = 4.00f;
+	float ismSteps = 16.00f;
+	float ismRadius = 32.00f;
+	float ismThickness = 8.00f;
+	float ismEdgeSoft = 1.40f;
+	float ismLobe = 0.70f;
+	float ismDebug = 0.00f;
 
 	bool glowEnabled = true;
-	float glowIntensity = 0.22f;
-	float glowScale = 2.20f;
-	float glowThreshold = 0.40f;
+	float glowIntensity = 0.68f;
+	float glowScale = 2.28f;
+	float glowThreshold = 0.95f;
 	bool flareEnabled = false;
-	float flareIntensity = 0.18f;
-	float flareThreshold = 0.82f;
-	float flareLength = 3.40f;
-	float flareChroma = 0.30f;
+	float flareIntensity = 0.74f;
+	float flareThreshold = 0.52f;
+	float flareLength = 2.85f;
+	float flareChroma = 0.28f;
 
 	bool regionEnabled = false;
-	float regionStarMix = 0.28f;
+	float regionStarMix = 0.29f;
 	float regionIsmMix = 0.16f;
 };
 
@@ -210,7 +214,12 @@ inline const TuneFloatField* TuneFloatFields(size_t& count)
 		{ "ismHighlightG", &TuneParams::ismHighlightG, 0.00f, 1.00f },
 		{ "ismHighlightB", &TuneParams::ismHighlightB, 0.00f, 1.00f },
 		{ "ismScatter", &TuneParams::ismScatter, 0.00f, 2.00f },
-		{ "ismSteps", &TuneParams::ismSteps, 4.00f, 8.00f },
+		{ "ismSteps", &TuneParams::ismSteps, 8.00f, 48.00f },
+		{ "ismRadius", &TuneParams::ismRadius, 12.00f, 80.00f },
+		{ "ismThickness", &TuneParams::ismThickness, 1.00f, 24.00f },
+		{ "ismEdgeSoft", &TuneParams::ismEdgeSoft, 0.40f, 2.50f },
+		{ "ismLobe", &TuneParams::ismLobe, 0.00f, 2.00f },
+		{ "ismDebug", &TuneParams::ismDebug, 0.00f, 6.00f },
 		{ "glowIntensity", &TuneParams::glowIntensity, 0.00f, 2.00f },
 		{ "glowScale", &TuneParams::glowScale, 0.50f, 6.00f },
 		{ "glowThreshold", &TuneParams::glowThreshold, 0.00f, 2.00f },
@@ -315,6 +324,10 @@ inline int FormatTuneText(char* buf, size_t n, const TuneParams& p)
 		"ismEnabled=%d\r\n"
 		"ismDensity=%.2f\r\n"
 		"ismScale=%.2f\r\n"
+		"ismRadius=%.2f\r\n"
+		"ismThickness=%.2f\r\n"
+		"ismEdgeSoft=%.2f\r\n"
+		"ismLobe=%.2f\r\n"
 		"ismDetail=%.2f\r\n"
 		"ismContrast=%.2f\r\n"
 		"ismEmission=%.3f\r\n"
@@ -337,6 +350,7 @@ inline int FormatTuneText(char* buf, size_t n, const TuneParams& p)
 		"ismHighlightB=%.3f\r\n"
 		"ismScatter=%.2f\r\n"
 		"ismSteps=%.0f\r\n"
+		"ismDebug=%.0f\r\n"
 		"glowEnabled=%d\r\n"
 		"glowIntensity=%.2f\r\n"
 		"glowScale=%.2f\r\n"
@@ -391,6 +405,10 @@ inline int FormatTuneText(char* buf, size_t n, const TuneParams& p)
 		p.ismEnabled ? 1 : 0,
 		p.ismDensity,
 		p.ismScale,
+		p.ismRadius,
+		p.ismThickness,
+		p.ismEdgeSoft,
+		p.ismLobe,
 		p.ismDetail,
 		p.ismContrast,
 		p.ismEmission,
@@ -413,6 +431,7 @@ inline int FormatTuneText(char* buf, size_t n, const TuneParams& p)
 		p.ismHighlightB,
 		p.ismScatter,
 		p.ismSteps,
+		p.ismDebug,
 		p.glowEnabled ? 1 : 0,
 		p.glowIntensity,
 		p.glowScale,

@@ -13,6 +13,7 @@ typedef HWND Tr2WindowHandle;
 
 #include <TrinityAL.h>
 
+#include "ism_math.h"
 #include "new_eden_anchors.h"
 #include "new_eden_catalog.h"
 #include "new_eden_gates.h"
@@ -110,6 +111,10 @@ struct BloomConstants
 	float ismMinT;
 	float ismRedden;
 	float ismEnable;
+	float ismDebug;
+	float pad0;
+	float pad1;
+	float pad2;
 };
 
 struct SkyConstants
@@ -149,7 +154,7 @@ struct GlowConstants
 };
 
 static_assert(sizeof(FrameConstants) == 192, "FrameConstants must stay 16-byte aligned");
-static_assert(sizeof(BloomConstants) == 80, "BloomConstants must stay 16-byte aligned");
+static_assert(sizeof(BloomConstants) == 96, "BloomConstants must stay 16-byte aligned");
 static_assert(sizeof(SkyConstants) == 128, "SkyConstants must stay 16-byte aligned");
 static_assert(sizeof(IsmConstants) == 224, "IsmConstants must stay 16-byte aligned");
 static_assert(sizeof(GlowConstants) == 32, "GlowConstants must stay 16-byte aligned");
@@ -771,6 +776,10 @@ bool UpdateBloomConstants(
 	data->ismMinT = tune.ismMinT;
 	data->ismRedden = tune.ismRedden;
 	data->ismEnable = tune.ismEnabled ? 1.0f : 0.0f;
+	data->ismDebug = tune.ismDebug;
+	data->pad0 = 0.0f;
+	data->pad1 = 0.0f;
+	data->pad2 = 0.0f;
 	if (Failed("Unlock bloom constants", cb.Unlock(renderContext)))
 	{
 		return false;
@@ -834,7 +843,7 @@ bool UpdateSkyConstants(Tr2ConstantBufferAL& cb, Tr2PrimaryRenderContextAL& rend
 	return !Failed("Unlock sky constants", cb.Unlock(renderContext));
 }
 
-bool UpdateIsmConstants(Tr2ConstantBufferAL& cb, Tr2PrimaryRenderContextAL& renderContext, const HostState& state)
+bool UpdateIsmConstants(Tr2ConstantBufferAL& cb, Tr2PrimaryRenderContextAL& renderContext, const HostState& state, const TuneParams& tune)
 {
 	IsmConstants* data = nullptr;
 	if (Failed("Lock ism constants", cb.Lock(reinterpret_cast<void**>(&data), renderContext)))
@@ -843,46 +852,46 @@ bool UpdateIsmConstants(Tr2ConstantBufferAL& cb, Tr2PrimaryRenderContextAL& rend
 	}
 	FillViewBasis(state, data->viewRight, data->viewUp, data->viewFwd, data->cameraPos);
 	data->viewFwd[3] = state.camera.distance;
-	data->cameraPos[3] = state.tune.ismNearCut;
+	data->cameraPos[3] = tune.ismNearCut;
 	data->centre[0] = neweden::kCentreX;
 	data->centre[1] = neweden::kCentreY;
 	data->centre[2] = neweden::kCentreZ;
-	data->centre[3] = 46.0f;
-	data->envelope[0] = 22.0f;
-	data->envelope[1] = 6.0f;
-	data->envelope[2] = 5.5f;
-	data->envelope[3] = 0.16f;
-	data->field[0] = state.tune.ismDensity;
-	data->field[1] = state.tune.ismContrast;
-	data->field[2] = state.tune.ismDetail;
-	data->field[3] = state.tune.ismScale;
-	data->extinct[0] = 0.030f;
-	data->extinct[1] = 2.20f;
-	data->extinct[2] = state.tune.ismRedden;
-	data->extinct[3] = 0.0f;
-	data->emission[0] = state.tune.ismEmission;
-	data->emission[1] = 0.055f;
+	data->centre[3] = tune.ismRadius;
+	data->envelope[0] = tune.ismThickness;
+	data->envelope[1] = tune.ismEdgeSoft;
+	data->envelope[2] = tune.ismLobe;
+	data->envelope[3] = ism::kFloor;
+	data->field[0] = tune.ismDensity;
+	data->field[1] = tune.ismContrast;
+	data->field[2] = tune.ismDetail;
+	data->field[3] = tune.ismScale;
+	data->extinct[0] = ism::kTauScale;
+	data->extinct[1] = ism::kTauMax;
+	data->extinct[2] = tune.ismRedden;
+	data->extinct[3] = tune.ismDebug;
+	data->emission[0] = tune.ismEmission;
+	data->emission[1] = ism::kGlowGain;
 	data->emission[2] = 0.0f;
-	data->emission[3] = state.tune.ismScatter;
-	data->lanes[0] = state.tune.ismDarkLane;
-	data->lanes[1] = state.tune.ismDarkScale;
-	data->lanes[2] = state.tune.ismLightLane;
-	data->lanes[3] = state.tune.ismLightScale;
-	data->mixp[0] = state.tune.ismStarExt;
-	data->mixp[1] = state.tune.ismMinT;
-	data->mixp[2] = state.tune.ismSteps;
-	data->mixp[3] = state.tune.regionEnabled ? state.tune.regionIsmMix : 0.0f;
-	data->cool[0] = state.tune.ismPrimaryR;
-	data->cool[1] = state.tune.ismPrimaryG;
-	data->cool[2] = state.tune.ismPrimaryB;
+	data->emission[3] = tune.ismScatter;
+	data->lanes[0] = tune.ismDarkLane;
+	data->lanes[1] = tune.ismDarkScale;
+	data->lanes[2] = tune.ismLightLane;
+	data->lanes[3] = tune.ismLightScale;
+	data->mixp[0] = tune.ismStarExt;
+	data->mixp[1] = tune.ismMinT;
+	data->mixp[2] = tune.ismSteps;
+	data->mixp[3] = tune.regionEnabled ? tune.regionIsmMix : 0.0f;
+	data->cool[0] = tune.ismPrimaryR;
+	data->cool[1] = tune.ismPrimaryG;
+	data->cool[2] = tune.ismPrimaryB;
 	data->cool[3] = 0.0f;
-	data->warm[0] = state.tune.ismSecondaryR;
-	data->warm[1] = state.tune.ismSecondaryG;
-	data->warm[2] = state.tune.ismSecondaryB;
+	data->warm[0] = tune.ismSecondaryR;
+	data->warm[1] = tune.ismSecondaryG;
+	data->warm[2] = tune.ismSecondaryB;
 	data->warm[3] = 0.0f;
-	data->high[0] = state.tune.ismHighlightR;
-	data->high[1] = state.tune.ismHighlightG;
-	data->high[2] = state.tune.ismHighlightB;
+	data->high[0] = tune.ismHighlightR;
+	data->high[1] = tune.ismHighlightG;
+	data->high[2] = tune.ismHighlightB;
 	data->high[3] = 0.0f;
 	return !Failed("Unlock ism constants", cb.Unlock(renderContext));
 }
@@ -1054,6 +1063,16 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 		return 1;
 	}
 	Log(stdout, "%s", mathLog);
+
+	std::string ismError;
+	char ismLog[512] = {};
+	if (!ism::ValidateIsmMath(ismError, ismLog, sizeof(ismLog)))
+	{
+		Log(stderr, "FAILED ISM math: %s\n", ismError.c_str());
+		CloseSmokeLog();
+		return 1;
+	}
+	Log(stdout, "%s", ismLog);
 
 	neweden::RegionTable regions;
 	std::string regionError;
@@ -1604,6 +1623,10 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 	double fpsWindowMs = 0.0;
 	uint32_t fpsWindowFrames = 0;
 	double totalFrameMs = 0.0;
+	double ismDefaultMs = 0.0;
+	uint32_t ismDefaultFrames = 0;
+	double ismCinematicMs = 0.0;
+	uint32_t ismCinematicFrames = 0;
 	uint32_t lastDraws = 0;
 	uint32_t lastPp = 0;
 	uint32_t bloomOnDraws = 0;
@@ -1631,6 +1654,10 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 		}
 
 		TuneParams frameTune = state.tune;
+		if (smoke && frames >= 20 && frames < 40)
+		{
+			frameTune.ismSteps = 48.0f;
+		}
 		if (smoke && frames >= 50)
 		{
 			frameTune.skyEnabled = false;
@@ -1646,7 +1673,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 		const bool flareOn = frameTune.flareEnabled && !state.debugPoints && frameTune.flareIntensity > 0.001f;
 		if (!UpdateFrameConstants(frameCb, *renderContext, state) ||
 			!UpdateSkyConstants(skyCb, *renderContext, state) ||
-			!UpdateIsmConstants(ismCb, *renderContext, state) ||
+			!UpdateIsmConstants(ismCb, *renderContext, state, frameTune) ||
 			!UpdateGlowConstants(glowCb, *renderContext, frameTune))
 		{
 			ok = false;
@@ -1800,7 +1827,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 		}
 		if (ismOn)
 		{
-			if (!UpdateIsmConstants(ismCb, *renderContext, state) ||
+			if (!UpdateIsmConstants(ismCb, *renderContext, state, frameTune) ||
 				!DrawFullscreen(
 					*renderContext,
 					fsLayout,
@@ -1860,6 +1887,16 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 		fpsWindowMs += frameMs;
 		++fpsWindowFrames;
 		totalFrameMs += frameMs;
+		if (smoke && frames <= 20)
+		{
+			ismDefaultMs += frameMs;
+			++ismDefaultFrames;
+		}
+		else if (smoke && frames <= 40)
+		{
+			ismCinematicMs += frameMs;
+			++ismCinematicFrames;
+		}
 
 		if (frames == 1)
 		{
@@ -1901,6 +1938,14 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 	{
 		const double avgMs = totalFrameMs / double(frames);
 		const double fps = (avgMs > 0.0) ? (1000.0 / avgMs) : 0.0;
+		if (ismDefaultFrames > 0 && ismCinematicFrames > 0)
+		{
+			Log(stdout,
+				"ism_qpc: default_steps=%d avg_ms=%.2f cinematic_steps=48 avg_ms=%.2f (immediate present; not a GPU profiler)\n",
+				ism::QualitySteps(TuneDefaults().ismSteps),
+				ismDefaultMs / double(ismDefaultFrames),
+				ismCinematicMs / double(ismCinematicFrames));
+		}
 		Log(stdout, "smoke: frames=%u systems=%u connections=%u known_space=%u other_space=%u bloom_on_draws=%u bloom_on_pp=%u bloom_off_creator_draws=%u bloom_off_creator_pp=%u creator_off_draws=%u creator_off_pp=%u star_draws=1 gate_draws=1 bloom_on_frames=%u avg_frame_ms=%.2f avg_fps=%.1f path=TrinityAL_DX11/creator-mode dataset=SDE3464040\n",
 			frames,
 			systemCount,

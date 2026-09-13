@@ -177,13 +177,13 @@ They replace the first-lab starting preset after a human tuning pass.
 | Star colour saturation | 2.50 |
 | Bloom enabled | on |
 | Bloom threshold | 0.06 |
-| Bloom strength | 1.03 |
-| Bloom radius | 1.60 |
+| Bloom strength | 0.89 |
+| Bloom radius | 1.80 |
 | Near-star attenuation (gain) | 1.80 |
 | Far-star attenuation (gain) | 0.57 |
-| Gate base opacity | 0.62 |
-| Gate distance attenuation | 1.55 |
-| Exposure | 2.09 |
+| Gate base opacity | 0.19 |
+| Gate distance attenuation | 1.61 |
+| Exposure | 2.18 |
 
 EO-Map bloom (0.25 / 0.25 / 0) is a Three.js UnrealBloom reference, not a
 Carbon constant. The locked threshold is lower than the first-lab 0.90 because

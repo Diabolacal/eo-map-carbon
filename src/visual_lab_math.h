@@ -129,7 +129,7 @@ inline bool ValidateVisualLabMath(std::string& error, char* logBuf, size_t logBu
 		error = "gate shader RGB is not a constant light grey";
 		return false;
 	}
-	if (nearGate.blended.r < 0.15f || nearGate.blended.g < 0.15f || nearGate.blended.b < 0.15f)
+	if (nearGate.blended.r < 0.08f || nearGate.blended.g < 0.08f || nearGate.blended.b < 0.08f)
 	{
 		error = "near gate blended contribution is too dark (black-line regression)";
 		return false;

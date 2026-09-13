@@ -168,6 +168,7 @@ add_executable(eo-map-carbon-neweden WIN32
     src/tune_params.h
     src/tune_panel.cpp
     src/visual_lab_math.h
+    src/ism_math.h
     src/tune_panel.h
     "${Starfield_vs_HEADER}"
     "${StarColor_ps_HEADER}"

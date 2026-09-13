@@ -95,7 +95,11 @@ const SliderDesc kSliders[] = {
 	{ TAB_SKY, 2209, 2210, L"BG star brightness", 0.00f, 2.00f, &TuneParams::skyStarBright },
 
 	{ TAB_ISM, 2301, 2302, L"Density", 0.00f, 4.00f, &TuneParams::ismDensity },
-	{ TAB_ISM, 2303, 2304, L"Scale", 0.20f, 4.00f, &TuneParams::ismScale },
+	{ TAB_ISM, 2303, 2304, L"Scale (structure)", 0.20f, 4.00f, &TuneParams::ismScale },
+	{ TAB_ISM, 2331, 2332, L"Radius / extent", 12.00f, 80.00f, &TuneParams::ismRadius },
+	{ TAB_ISM, 2333, 2334, L"Thickness", 1.00f, 24.00f, &TuneParams::ismThickness },
+	{ TAB_ISM, 2335, 2336, L"Edge softness", 0.40f, 2.50f, &TuneParams::ismEdgeSoft },
+	{ TAB_ISM, 2337, 2338, L"Lobe strength", 0.00f, 2.00f, &TuneParams::ismLobe },
 	{ TAB_ISM, 2305, 2306, L"Detail / ridge", 0.00f, 1.00f, &TuneParams::ismDetail },
 	{ TAB_ISM, 2307, 2308, L"Contrast", 0.50f, 6.00f, &TuneParams::ismContrast },
 	{ TAB_ISM, 2309, 2310, L"Emission", 0.00f, 0.60f, &TuneParams::ismEmission },
@@ -108,7 +112,8 @@ const SliderDesc kSliders[] = {
 	{ TAB_ISM, 2323, 2324, L"Light-wisp strength", 0.00f, 1.00f, &TuneParams::ismLightLane },
 	{ TAB_ISM, 2325, 2326, L"Light-wisp scale", 0.20f, 4.00f, &TuneParams::ismLightScale },
 	{ TAB_ISM, 2327, 2328, L"Star scatter", 0.00f, 2.00f, &TuneParams::ismScatter },
-	{ TAB_ISM, 2329, 2330, L"Quality steps", 4.00f, 8.00f, &TuneParams::ismSteps },
+	{ TAB_ISM, 2329, 2330, L"Quality steps", 8.00f, 48.00f, &TuneParams::ismSteps },
+	{ TAB_ISM, 2339, 2340, L"Debug view", 0.00f, 6.00f, &TuneParams::ismDebug },
 
 	{ TAB_GLOW, 2401, 2402, L"Glow intensity", 0.00f, 2.00f, &TuneParams::glowIntensity },
 	{ TAB_GLOW, 2403, 2404, L"Glow scale", 0.50f, 6.00f, &TuneParams::glowScale },
@@ -598,6 +603,18 @@ int PopulatePage(HWND page, HINSTANCE instance, int tab)
 	if (tab == TAB_COLOUR)
 	{
 		MakeLabel(page, instance, 12, y, 400, 48, L"Region tint uses Contract A region_id and EO-Map's 11-stop atlas. Off by default so stellar colour stays intact.");
+	}
+	if (tab == TAB_ISM)
+	{
+		MakeLabel(
+			page,
+			instance,
+			12,
+			y,
+			400,
+			64,
+			L"Radius/Thickness/Edge size the galactic disc. Scale is noise structure, not size. Debug: 0 final, 1 envelope, 2 density, 3 dark lanes, 4 emission, 5 transmittance.");
+		y += 68;
 	}
 	if (tab == TAB_SKY)
 	{

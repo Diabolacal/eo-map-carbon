@@ -25,6 +25,10 @@ cbuffer cb0 : register(b0)
 	float ismMinT;
 	float ismRedden;
 	float ismEnable;
+	float ismDebug;
+	float pad0;
+	float pad1;
+	float pad2;
 };
 
 struct VS_OUTPUT
@@ -38,6 +42,11 @@ float4 main(VS_OUTPUT input) : SV_Target
 	float3 scene = sceneTex.Sample(sampl, input.TexCoord).rgb;
 	float3 bloom = bloomTex.Sample(sampl, input.TexCoord).rgb * float3(bloomTintR, bloomTintG, bloomTintB);
 	float4 ism = ismTex.Sample(sampl, input.TexCoord);
+
+	if (ismEnable > 0.5 && ismDebug > 0.5 && ismDebug < 5.5)
+	{
+		return float4(saturate(ism.rgb + scene * 0.12), 1.0);
+	}
 
 	float3 Text = 1.0;
 	float3 Tstar = 1.0;
