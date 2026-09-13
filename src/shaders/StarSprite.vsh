@@ -22,7 +22,7 @@ struct VS_OUTPUT
 cbuffer cb0 : register(b0)
 {
 	float4x4 viewProj;
-	float4 viewRight;
+	float4 viewRight; // xyz = camera right, w = star colour saturation
 	float4 viewUp;
 	float4 cameraPos;   // xyz, w = orbit distance
 	float4 sizeParams;  // x=sizeMul, y=minPx, z=maxPx, w=tanHalfFovY
@@ -52,9 +52,13 @@ VS_OUTPUT main(VS_INPUT input)
 		+ viewRight.xyz * (input.Corner.x * worldHalf)
 		+ viewUp.xyz * (input.Corner.y * worldHalf);
 
+	float lum = dot(input.ColorEmissive.rgb, float3(0.2126, 0.7152, 0.0722));
+	float3 chroma = saturate(lum + (input.ColorEmissive.rgb - lum) * viewRight.w);
+	float coreGain = 0.82 + 0.18 * input.ColorEmissive.a;
+
 	output.Position = mul(float4(world, 1.0), viewProj);
 	output.Corner = input.Corner;
-	output.Color = input.ColorEmissive.rgb;
-	output.Intensity = input.ColorEmissive.a * fadeParams.w * depthGain * coverage;
+	output.Color = chroma;
+	output.Intensity = fadeParams.w * depthGain * coverage * coreGain;
 	return output;
 }

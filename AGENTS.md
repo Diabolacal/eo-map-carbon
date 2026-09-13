@@ -176,7 +176,7 @@ New Eden:
 .\scripts\run-neweden.ps1
 ```
 
-Milestone 1B geometry and Milestone 1C stargate topology are already human-verified. Re-run only if the host or Carbon changes. Expect a Win32 window titled **EO-Map Carbon New Eden visual lab (TrinityAL DX11)** with sized temperature-coloured stars, faded gate lines, optional bloom, and a developer slider panel. Same orbit / pan / zoom as the starfield. Automated `--smoke` loads the pinned Contract A systems, undirected gates, and star temperatures, checks 5485 / 6989 / Jita 7305 K, presents 40 bloom-on + 20 bloom-off frames, and still cannot claim pixels or aesthetics.
+Milestone 1B geometry and Milestone 1C stargate topology are already human-verified. Re-run only if the host or Carbon changes. Expect a Win32 window titled **EO-Map Carbon New Eden visual lab (TrinityAL DX11)** with sized temperature-coloured stars, faded gate lines, optional bloom, and a developer slider panel. Same orbit / pan / zoom as the starfield. Automated `--smoke` loads the pinned Contract A systems, undirected gates, and star temperatures, checks 5485 / 6989 / Jita 7305 K plus the gate/chroma numeric contracts, presents 40 bloom-on + 20 bloom-off frames, and still cannot claim pixels or aesthetics.
 
 ```powershell
 .\scripts\run-visual-lab.ps1

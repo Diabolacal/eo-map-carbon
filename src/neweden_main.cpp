@@ -21,8 +21,8 @@ typedef HWND Tr2WindowHandle;
 #include "star_color.h"
 #include "tune_panel.h"
 #include "tune_params.h"
+#include "visual_lab_math.h"
 
-#include <algorithm>
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -73,7 +73,7 @@ struct StarInstance
 struct FrameConstants
 {
 	orbit::Mat4 viewProj;
-	float viewRight[4];
+	float viewRight[4]; // xyz = camera right, w = star colour saturation
 	float viewUp[4];
 	float cameraPos[4];
 	float sizeParams[4];
@@ -601,7 +601,7 @@ bool UpdateFrameConstants(
 	data->viewRight[0] = right.x;
 	data->viewRight[1] = right.y;
 	data->viewRight[2] = right.z;
-	data->viewRight[3] = 0.0f;
+	data->viewRight[3] = state.tune.starSaturation;
 	data->viewUp[0] = up.x;
 	data->viewUp[1] = up.y;
 	data->viewUp[2] = up.z;
@@ -773,6 +773,16 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 	Log(stdout, "anchor check: Jita/Amarr/Dodixie/Rens/Hek scene coordinates match EO-Map transform\n");
 	Log(stdout, "graph check: endpoints in catalogue, Jita/Amarr/Dodixie/Rens/Hek/Zarzakh adjacency, Jita-Amarr hops=11, Niarja unreachable\n");
 	Log(stdout, "visual check: 5485 temperatures, ids match catalogue, Jita F / 7305 K\n");
+
+	std::string mathError;
+	char mathLog[768] = {};
+	if (!vislab::ValidateVisualLabMath(mathError, mathLog, sizeof(mathLog)))
+	{
+		Log(stderr, "FAILED visual lab math: %s\n", mathError.c_str());
+		CloseSmokeLog();
+		return 1;
+	}
+	Log(stdout, "%s", mathLog);
 
 	unsigned adapterCount = 0;
 	if (Failed("GetAdapterCount", Tr2VideoAdapterInfo::GetAdapterCount(adapterCount)) || adapterCount == 0)
@@ -1227,6 +1237,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 			Failed("RS_ALPHABLENDENABLE gates", renderContext->SetRenderState(RS_ALPHABLENDENABLE, 1)) ||
 			Failed("RS_SRCBLEND gates", renderContext->SetRenderState(RS_SRCBLEND, BM_SRCALPHA)) ||
 			Failed("RS_DESTBLEND gates", renderContext->SetRenderState(RS_DESTBLEND, BM_INVSRCALPHA)) ||
+			// Gate RGB stays unpremultiplied light grey; alpha is the only fade.
 			Failed("Set gate layout", renderContext->SetVertexLayout(pointLayout)) ||
 			Failed("Set gate program", renderContext->SetShaderProgram(gateProgram)) ||
 			Failed("Set gate stream", renderContext->SetStreamSource(0, gateVertexBuffer, 0, sizeof(StarVertex))) ||

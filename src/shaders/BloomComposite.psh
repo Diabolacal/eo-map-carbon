@@ -24,9 +24,13 @@ float4 main(VS_OUTPUT input) : SV_Target
 {
 	float3 scene = sceneTex.Sample(sampl, input.TexCoord).rgb;
 	float3 bloom = bloomTex.Sample(sampl, input.TexCoord).rgb;
-	float3 hdr = scene + bloom * strength;
-	hdr *= max(exposure, 0.01);
-	// Mild Reinhard so HDR cores compress without flattening the map.
-	float3 mapped = hdr / (1.0 + hdr * 0.35);
+	float3 hdr = (scene + bloom * strength) * max(exposure, 0.01);
+	// Luminance Reinhard keeps channel ratios. Per-channel Reinhard plus HDR
+	// emissive was collapsing cool/warm stars onto white.
+	float lum = dot(hdr, float3(0.2126, 0.7152, 0.0722));
+	float mappedLum = lum / (1.0 + lum * 0.35);
+	float3 mapped = hdr * (mappedLum / max(lum, 1e-5));
+	float peak = max(mapped.r, max(mapped.g, mapped.b));
+	mapped *= (peak > 1.0) ? (1.0 / peak) : 1.0;
 	return float4(mapped, 1.0);
 }

@@ -11,6 +11,7 @@ struct TuneParams
 {
 	float starSize = 1.00f;
 	float starBrightness = 1.00f;
+	float starSaturation = 1.70f;
 	bool bloomEnabled = true;
 	float bloomThreshold = 0.90f;
 	float bloomStrength = 0.55f;
@@ -59,6 +60,7 @@ inline int FormatTuneText(char* buf, size_t n, const TuneParams& p)
 		"; eo-map-carbon visual lab dump (not loaded on startup)\r\n"
 		"starSize=%.2f\r\n"
 		"starBrightness=%.2f\r\n"
+		"starSaturation=%.2f\r\n"
 		"bloomEnabled=%d\r\n"
 		"bloomThreshold=%.2f\r\n"
 		"bloomStrength=%.2f\r\n"
@@ -70,6 +72,7 @@ inline int FormatTuneText(char* buf, size_t n, const TuneParams& p)
 		"exposure=%.2f\r\n",
 		p.starSize,
 		p.starBrightness,
+		p.starSaturation,
 		p.bloomEnabled ? 1 : 0,
 		p.bloomThreshold,
 		p.bloomStrength,

@@ -14,6 +14,8 @@ enum ControlId
 	IDC_STAR_SIZE_VAL = 1002,
 	IDC_STAR_BRIGHT = 1011,
 	IDC_STAR_BRIGHT_VAL = 1012,
+	IDC_STAR_SAT = 1015,
+	IDC_STAR_SAT_VAL = 1016,
 	IDC_BLOOM_ENABLE = 1021,
 	IDC_BLOOM_THRESH = 1031,
 	IDC_BLOOM_THRESH_VAL = 1032,
@@ -48,6 +50,7 @@ struct SliderDesc
 const SliderDesc kSliders[] = {
 	{ IDC_STAR_SIZE, IDC_STAR_SIZE_VAL, L"Star size", 0.10f, 8.00f, &TuneParams::starSize },
 	{ IDC_STAR_BRIGHT, IDC_STAR_BRIGHT_VAL, L"Star brightness", 0.00f, 4.00f, &TuneParams::starBrightness },
+	{ IDC_STAR_SAT, IDC_STAR_SAT_VAL, L"Star colour sat", 0.50f, 3.00f, &TuneParams::starSaturation },
 	{ IDC_BLOOM_THRESH, IDC_BLOOM_THRESH_VAL, L"Bloom threshold", 0.00f, 2.00f, &TuneParams::bloomThreshold },
 	{ IDC_BLOOM_STRENGTH, IDC_BLOOM_STRENGTH_VAL, L"Bloom strength", 0.00f, 4.00f, &TuneParams::bloomStrength },
 	{ IDC_BLOOM_RADIUS, IDC_BLOOM_RADIUS_VAL, L"Bloom radius", 0.10f, 8.00f, &TuneParams::bloomRadius },
@@ -261,7 +264,7 @@ bool TunePanel_Create(HINSTANCE instance, HWND owner, TuneParams* params, TunePa
 	RECT ownerRect = {};
 	GetWindowRect(owner, &ownerRect);
 	const int width = 440;
-	const int height = 760;
+	const int height = 810;
 	out.hwnd = CreateWindowExW(
 		WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT,
 		kPanelClass,

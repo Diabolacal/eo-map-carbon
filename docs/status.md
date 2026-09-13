@@ -1,12 +1,14 @@
 # Current status
 
-Last updated 2026-09-13 after the visual rendering lab landed on `feat/visual-rendering-lab`.
+Last updated 2026-09-13 after a visual-lab follow-up for black gates and washed-out star colour.
 
 ## Outcome
 
 Milestones 0 / 1A / 1B / 1C remain **PROVEN** (human pixel verification).
 
-The visual rendering lab is **READY FOR HUMAN TUNING**. Automated smoke proves init, instanced star draws, bloom on/off, Present, and a clean exit. It cannot claim pixels or aesthetics.
+The visual rendering lab is **READY FOR HUMAN TUNING**. Automated smoke proves init, instanced star draws, bloom on/off, Present, numeric gate/chroma contracts, and a clean exit. It cannot claim pixels or aesthetics.
+
+Human follow-up after the first lab look: gate lines had gone black because `GateLine.psh` premultiplied a too-dark grey by alpha and then blended with `SRCALPHA` (contribution ~ `a²`), and far-gate attenuation multiplied RGB toward black. Stars read white because full 1–6× emissive plus per-channel Reinhard clipped HDR cores. Gates now keep a constant unpremultiplied light grey (`0.55`) and fade only in alpha. Stars apply a live chroma boost (default saturation `1.70`), a modest core gain, luminance Reinhard, and a hue-preserving peak clamp.
 
 ## Visual rendering lab
 
@@ -162,7 +164,7 @@ The 0.25 ms / 4051 fps figure is QPC around BeginScene through Present with `PRE
 
 ## Known gaps
 
-- Visual look is not proven. Defaults are a starting preset for human sliders.
+- Visual look is not proven. Defaults are a starting preset for human sliders, now including Star colour sat.
 - `EveSpriteSet` / `Tr2QuadRenderer` / `Tr2PPBloomEffect` cannot be used from this TrinityAL-only host (Blue / `res:/` / Eve scene).
 - Gate lines remain 1 px. There is still no DX11 line-width API.
 - W-space is intentionally omitted.

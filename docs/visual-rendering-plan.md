@@ -47,7 +47,8 @@ Verified TrinityAL pieces instead:
   before drawing the scene so `sceneRT` is not still a PS SRV.
 
 Passes (bloom ON): extract at ½ res → Gaussian H → Gaussian V → composite
-`scene + bloom * strength` with mild Reinhard and exposure.
+`scene + bloom * strength` with exposure, luminance Reinhard, and a
+hue-preserving peak clamp. Per-channel Reinhard washed stars to white.
 
 Bloom OFF: skip extract/blur; blit `sceneRT` through the same composite shader
 with strength 0.
@@ -160,6 +161,7 @@ bloom OFF:
 | --- | --- |
 | Star size multiplier | 1.00 |
 | Star brightness | 1.00 |
+| Star colour saturation | 1.70 |
 | Bloom enabled | on |
 | Bloom threshold | 0.90 |
 | Bloom strength | 0.55 |
