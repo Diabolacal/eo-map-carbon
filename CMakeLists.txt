@@ -1,7 +1,7 @@
 # Copyright © 2026 Michael (eo-map-carbon experiment)
 cmake_minimum_required(VERSION 3.31)
 
-project(eo-map-carbon-triangle LANGUAGES CXX)
+project(eo-map-carbon LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -54,24 +54,8 @@ endfunction()
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 compile_hlsl("${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/PositionOnly.vsh" vs_5_0 PositionOnly_vs)
 compile_hlsl("${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/ConstantColor.psh" ps_5_0 ConstantColor_ps)
-
-add_executable(eo-map-carbon-triangle WIN32
-    src/triangle_main.cpp
-    "${PositionOnly_vs_HEADER}"
-    "${ConstantColor_ps_HEADER}"
-)
-target_include_directories(eo-map-carbon-triangle PRIVATE
-    "${_generated_dir}"
-    "${TRINITY_SOURCE_DIR}/trinityal"
-    "${TRINITY_SOURCE_DIR}/trinityal/include"
-)
-
-target_compile_definitions(eo-map-carbon-triangle PRIVATE
-    TRINITY_PLATFORM=2
-    TRINITY_AL_WITH_BLUE_EXPOSURE=0
-    NOMINMAX
-    WIN32_LEAN_AND_MEAN
-)
+compile_hlsl("${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/Starfield.vsh" vs_5_0 Starfield_vs)
+compile_hlsl("${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/StarColor.psh" ps_5_0 StarColor_ps)
 
 # TrinityAL_dx11 is a static lib produced by the Trinity checkout.
 set(_al_lib_debug "${TRINITY_BUILD_DIR}/carbon/autobuild/TrinityAL/Windows/x64/v141/TrinityAL_dx11_debug.lib")
@@ -99,30 +83,56 @@ find_package(nvidia-streamline-dlss-fg CONFIG REQUIRED)
 find_package(nvidia-streamline-nis CONFIG REQUIRED)
 find_package(amd-fidelityfx-fsr REQUIRED)
 
-target_link_libraries(eo-map-carbon-triangle PRIVATE
-    TrinityAL_dx11
-    CcpCore
-    CcpImageIO
-    d3d11
-    dxgi
-    dxguid
-    NVIDIA::Aftermath
-    NVIDIA::Streamline
-    NVIDIA::Streamline::dlss-sr
-    NVIDIA::Streamline::dlss-fg
-    NVIDIA::Streamline::nis
-    AMD::FidelityFX::fsr
-    legacy_stdio_definitions
-)
+function(eo_map_carbon_app target)
+    target_include_directories(${target} PRIVATE
+        "${_generated_dir}"
+        "${TRINITY_SOURCE_DIR}/trinityal"
+        "${TRINITY_SOURCE_DIR}/trinityal/include"
+    )
+    target_compile_definitions(${target} PRIVATE
+        TRINITY_PLATFORM=2
+        TRINITY_AL_WITH_BLUE_EXPOSURE=0
+        NOMINMAX
+        WIN32_LEAN_AND_MEAN
+    )
+    target_link_libraries(${target} PRIVATE
+        TrinityAL_dx11
+        CcpCore
+        CcpImageIO
+        d3d11
+        dxgi
+        dxguid
+        NVIDIA::Aftermath
+        NVIDIA::Streamline
+        NVIDIA::Streamline::dlss-sr
+        NVIDIA::Streamline::dlss-fg
+        NVIDIA::Streamline::nis
+        AMD::FidelityFX::fsr
+        legacy_stdio_definitions
+    )
+    set_target_properties(${target} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
+    )
+    add_custom_command(
+        TARGET ${target} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_RUNTIME_DLLS:${target}>
+            $<TARGET_FILE_DIR:${target}>
+        COMMAND_EXPAND_LISTS
+    )
+endfunction()
 
-set_target_properties(eo-map-carbon-triangle PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
+add_executable(eo-map-carbon-triangle WIN32
+    src/triangle_main.cpp
+    "${PositionOnly_vs_HEADER}"
+    "${ConstantColor_ps_HEADER}"
 )
+eo_map_carbon_app(eo-map-carbon-triangle)
 
-add_custom_command(
-    TARGET eo-map-carbon-triangle POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_RUNTIME_DLLS:eo-map-carbon-triangle>
-        $<TARGET_FILE_DIR:eo-map-carbon-triangle>
-    COMMAND_EXPAND_LISTS
+add_executable(eo-map-carbon-starfield WIN32
+    src/starfield_main.cpp
+    src/orbit_camera.h
+    "${Starfield_vs_HEADER}"
+    "${StarColor_ps_HEADER}"
 )
+eo_map_carbon_app(eo-map-carbon-starfield)

@@ -1,89 +1,104 @@
 # Current status
 
-Last updated 2026-09-13 after a real configure/build/run on this machine.
+Last updated 2026-09-13 after configure/build/smoke on this machine.
 
 ## Outcome
 
-**PARTIALLY PROVEN**
+**PROVEN PENDING HUMAN VISUAL**
 
-Public TrinityAL DX11 can be configured, compiled, linked, launched, and driven through `CreateDevice` + `DrawPrimitive` + `Present` from an external C++ host. Pixel contents of the swap chain have not been captured; a human still has to look at the window.
+Milestone 0 (red triangle) is human-verified and still builds. Milestone 1A adds a second TrinityAL DX11 host that creates 25,000 deterministic synthetic stars and draws them in one `TOP_POINTS` call with an orbit/zoom camera. Automated smoke initialises the renderer, builds the full starfield, presents 60 frames, and exits 0. Pixel contents of the starfield have not been captured; a human still has to look at the window.
 
-This is not a stub. The executable links `TrinityAL_dx11_debug.lib` and calls TrinityAL APIs from `trinityal/tests`.
+## Milestone 0 — triangle
 
-## Evidence log
+**PROVEN**, including human pixel verification.
+
+The frozen diagnostic target is unchanged: `eo-map-carbon-triangle`, `src/triangle_main.cpp`, the two original shaders, `.\scripts\run-triangle.ps1`.
 
 | Gate | Result | Evidence |
 | --- | --- | --- |
-| A. configure | **pass** | `cmake --preset local-dx11-debug` wrote `C:\dev\carbon-upstream\trinity\.cmake-build-local-dx11-debug` (Ninja, MSVC 19.16.27054, `BUILD_DX11=ON`, `WITH_GRANNY=OFF`). Our host: `cmake --preset triangle-debug` wrote `.cmake-build-triangle-debug`. |
-| B. compile | **pass** | `TrinityAL_dx11` compiled (~131 objs). `eo-map-carbon-triangle` compiled (`triangle_main.cpp.obj`). C5030 from v143 ATL on v141 is a warning, not an error. |
-| C. link | **pass** | `TrinityAL_dx11_debug.lib`, `TrinityALTest_dx11_debug.exe`, `.cmake-build-triangle-debug\bin\eo-map-carbon-triangle.exe` (1223680 bytes after the smoke-log rebuild). |
-| D. launch | **pass** | `eo-map-carbon-triangle.exe --smoke` started, created `HWND 0000000000480DBA`, process exit 0. |
-| E. renderer init | **pass** | Log: `adapter count: 3` then `TrinityAL CreateDevice succeeded`. Upstream `RenderContextCreation.CanCreateRenderContext` **PASSED** (349 ms). |
-| F. visible rendering | **API pass / pixels unverified** | Log: `first Present completed` then `smoke test reached 30 frames, exiting`. Upstream `Rendering.CanRenderASingleTriangle` **PASSED** (3 ms). No backbuffer capture in this host. Human must confirm a red triangle. |
+| A. configure | **pass** | `cmake --preset triangle-debug` |
+| B. compile | **pass** | `ninja: no work to do` after the CMake share-helper refactor (triangle sources untouched) |
+| C. link | **pass** | existing `eo-map-carbon-triangle.exe` |
+| D–F. smoke | **pass** | `--smoke` exit 0; `CreateDevice succeeded`; `first Present completed`; 30 frames |
+| G. pixels | **pass (human)** | red triangle on dark blue-grey, previously confirmed |
 
-### TrinityALTest (from the TrinityALTest output directory)
+Upstream `Rendering.CanRenderASingleTriangle` still **PASSED** (3 ms) after this work.
+
+## Milestone 1A — synthetic starfield
+
+**PROVEN PENDING HUMAN VISUAL**
+
+| Gate | Result | Evidence |
+| --- | --- | --- |
+| A. configure | **pass** | `.\scripts\build-starfield.ps1` / `cmake --preset triangle-debug` |
+| B. compile | **pass** | `starfield_main.cpp.obj`; C5030 from v143 ATL on v141 is a warning |
+| C. link | **pass** | `.cmake-build-triangle-debug\bin\eo-map-carbon-starfield.exe` |
+| D. launch | **pass** | `--smoke` created `HWND`, process exit 0 |
+| E. renderer init | **pass** | `adapter count: 3` then `TrinityAL CreateDevice succeeded` |
+| F. starfield construct | **pass** | `star count: 25000`; vertex buffer create succeeded (otherwise smoke exits 1) |
+| G. present | **API pass / pixels unverified** | `first Present completed`; `smoke test reached 60 frames, exiting` |
+| H. pixels / orbit / zoom | **unverified** | human must run `.\scripts\run-starfield.ps1` |
+
+### Starfield smoke log
+
+File: `.cmake-build-triangle-debug\bin\eo-map-carbon-starfield-smoke.log` (gitignored)
 
 ```
-TrinityALTest_dx11_debug.exe --gtest_filter=RenderContextCreation.CanCreateRenderContext
-[  PASSED  ] 1 test.   (349 ms)
-
-TrinityALTest_dx11_debug.exe --gtest_filter=Rendering.CanRenderASingleTriangle
-[  PASSED  ] 1 test.   (3 ms)
-```
-
-### Our host smoke log
-
-File: `.cmake-build-triangle-debug\bin\eo-map-carbon-triangle-smoke.log` (gitignored)
-
-```
-eo-map-carbon-triangle starting
+eo-map-carbon-starfield starting
 renderer: TrinityAL DX11
+path: TOP_POINTS DrawPrimitive (one call)
+star count: 25000
+draw calls per frame: 1
 adapter count: 3
-window hwnd=0000000000480DBA 1280x720
+window hwnd=0000000000700AA2 1280x720
 TrinityAL CreateDevice succeeded
-Rendering a red triangle. Close the window to exit.
+Rendering 25000 synthetic stars via TOP_POINTS. Left-drag orbits, wheel zooms. Close the window to exit.
 first Present completed
-smoke test reached 30 frames, exiting
-exiting after 30 frames
+camera eye=70.4,53.8,114.8 distance=145.0
+smoke test reached 60 frames, exiting
+smoke: frames=60 stars=25000 draw_calls/frame=1 avg_frame_ms=0.27 avg_fps=3762.4 path=TrinityAL_DX11/TOP_POINTS
+exiting after 60 frames
 ```
 
 Process exit code: 0.
 
-## Dependency / build approach
+The 0.27 ms / 3762 fps figure is QPC around BeginScene through Present with `PRESENT_INTERVAL_IMMEDIATE` in `--smoke` only. It is not a vsync-capped interactive measurement. Interactive mode uses `PRESENT_INTERVAL_ONE`.
 
-- Clone `https://github.com/carbonengine/trinity` to `C:\dev\carbon-upstream\trinity` (`--recurse-submodules`). Not a submodule of this repo.
-- Trinity vcpkg (registry + vendored vcpkg submodule) installs public packages into the Trinity build dir.
-- Overlay `overlays/vcpkg/fxc` replaces the CCP prebuilt-SDK download of `fxc`.
-- Our CMake uses Trinity's vcpkg toolchain with `VCPKG_MANIFEST_MODE=OFF` and `VCPKG_INSTALLED_DIR=<trinity>/.cmake-build-local-dx11-debug/vcpkg_installed`.
-- Application language: native C++. Blue/Python/exefile not used.
-- Renderer path: TrinityAL DX11 (`Tr2PrimaryRenderContextAL::CreateDevice`, `BeginScene` / `Clear` / `DrawPrimitive` / `EndScene` / `Present`).
+## Architecture actually used (1A)
 
-## Remaining public-build friction (workarounds exist)
+- Same Win32 + TrinityAL DX11 bootstrap as the triangle.
+- Stars: 25,000 deterministic `float3` + intensity vertices in one immutable `Tr2BufferAL`.
+- Draw: `SetTopology(TOP_POINTS)` then `DrawPrimitive(0, 25000)`. One call per frame.
+- Camera: host orbit math (RH look-at + perspective) written into `Tr2ConstantBufferAL` and bound with `SetConstants(..., VERTEX_SHADER, 0)`.
+- Depth: `Tr2TextureAL` `PIXEL_FORMAT_D24_UNORM_S8_UINT` + `SetDepthStencil`. `CreateDevice` does not create a depth surface.
+- Resize: `SetPresentParameters` (same as `SwapChainResizing` tests) then recreate the depth texture. Viewport is reset inside TrinityAL `CreateBackBuffers`.
+- Input: raw Win32 (`WM_LBUTTON*`, `WM_MOUSEMOVE`, `WM_MOUSEWHEEL`). TrinityAL has no input helper.
 
-These did **not** stop the bootstrap on this machine, but they are still real external-developer costs:
-
-1. **fxc CDN** `vcpkg-prebuilt-sdks.ccpgames.com` does not resolve. Overlay copies Windows SDK `fxc.exe`. Smallest upstream change: host FXC from a public Microsoft source or document the SDK copy.
-2. **SSH git URLs** in public Carbon portfiles. Workaround: git `insteadOf` HTTPS. Smallest upstream change: use `https://github.com/` in portfiles.
-3. **v141 ATL missing** from VS 2022 Build Tools. Workaround: junction v143 ATL + `CMAKE_COMPILE_WARNING_AS_ERROR=OFF`. Smallest upstream change: stop requiring ATL for CcpCore, or document a supported ATL install.
-4. **Windows SDK 10.0.17763.0** is pinned. A modern box may not have it until the standalone SDK is installed.
-5. **Granny** remains internal (same dead CDN). Not needed for this triangle.
-6. **`carbon-trinity` vcpkg port** is stale (4.0.2 / SSH vs GitHub v6.0.0). Do not consume Trinity through that port today.
+`TOP_POINTS` is a real TrinityAL topology (DX11 `POINTLIST`). `DrawPrimitive` primitive count is the point count. `RS_POINTSIZE` / point sprites are stored and ignored on DX11, so stars are hardware 1-pixel points. That is acceptable for this smoke. Full Trinity's later many-object path for sized sprites is instanced triangles (`EveSpriteSet` / `Tr2QuadRenderer`); that is not TrinityAL-only and was not used here.
 
 ## Known gaps
 
-- No GPU readback / screenshot in our host, so gate F is not pixel-proven.
-- Debug CRT is `/MD` (`_ITERATOR_DEBUG_LEVEL=0`). Mixing with `/MDd` consumers will LNK2038.
-- Global git `insteadOf` is mutated by the configure script.
-- Hardcoded paths assume `C:\dev\eo-map-carbon` and `C:\dev\carbon-upstream\trinity`.
-- Trinity user preset disables warnings-as-errors because of the ATL junction.
-- Streamline/DLSS/Aftermath are pulled because they are PUBLIC deps of `TrinityAL_dx11`; this triangle does not use them.
+- No GPU readback / screenshot, so starfield pixels, orbit, and zoom are not proven until a human looks.
+- Point size is not controllable through TrinityAL on DX11. Later New Eden stars that need size should move to the verified instanced-triangle path, not `RS_POINTSIZE`.
+- Metal marks `TOP_POINTS` `validType=false`. This host is DX11-only.
+- No TrinityAL test draws `TOP_POINTS`. Behaviour is taken from the enum, the DX11 topology table, `ComputeVertexCount`, and Trinity's debug point-cloud submit.
+- Resize is implemented from verified APIs but was not interactively exercised in smoke.
+- Debug CRT is `/MD`. Global git `insteadOf` is still mutated by configure. Paths still assume `C:\dev\eo-map-carbon` and `C:\dev\carbon-upstream\trinity`.
 - No New Eden / map functionality (intentionally out of scope).
 
 ## Human smoke required
 
+Primary command:
+
 ```powershell
 cd C:\dev\eo-map-carbon
-.\scripts\run-triangle.ps1
+.\scripts\run-starfield.ps1
 ```
 
-Look for: window title **EO-Map Carbon triangle (TrinityAL DX11)**, **red triangle**, dark blue-grey clear colour, stays until closed.
+Expect a Win32 window titled **EO-Map Carbon starfield (TrinityAL DX11)** filled with thousands of white/grey stars on a near-black background. Left-drag should orbit around the origin. Mouse wheel should change camera distance. Closing the window should exit cleanly.
+
+Triangle diagnostic (still valid):
+
+```powershell
+.\scripts\run-triangle.ps1
+```

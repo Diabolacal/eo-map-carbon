@@ -1,4 +1,4 @@
-# Configure and build our TrinityAL triangle host.
+# Configure and build the TrinityAL synthetic starfield host.
 
 $ErrorActionPreference = "Stop"
 $RepoRoot = Resolve-Path "$PSScriptRoot\.."
@@ -20,7 +20,7 @@ Push-Location $RepoRoot
 try {
     cmake --preset triangle-debug
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    cmake --build --preset triangle-debug --target eo-map-carbon-triangle --parallel 12
+    cmake --build --preset starfield-debug --parallel 12
     exit $LASTEXITCODE
 }
 finally {

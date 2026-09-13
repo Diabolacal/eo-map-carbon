@@ -30,6 +30,12 @@
       "name": "triangle-debug",
       "configurePreset": "triangle-debug",
       "configuration": "Debug"
+    },
+    {
+      "name": "starfield-debug",
+      "configurePreset": "triangle-debug",
+      "configuration": "Debug",
+      "targets": ["eo-map-carbon-starfield"]
     }
   ]
 }

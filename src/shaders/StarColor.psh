@@ -1,0 +1,13 @@
+// Per-vertex intensity passed through as a light grey/white star colour.
+
+struct VS_OUTPUT
+{
+	float4 Position : SV_Position;
+	float Intensity : TEXCOORD;
+};
+
+float4 main(VS_OUTPUT input) : SV_Target
+{
+	float i = input.Intensity;
+	return float4(i, i, i, 1.0);
+}

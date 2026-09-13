@@ -12,10 +12,11 @@ A Windows-native experiment that:
 
 1. Consumes public Carbon repositories (`carbonengine/trinity` and the packages its vcpkg manifest pulls).
 2. Builds Trinity's C++ abstraction layer **TrinityAL** with the **Direct3D 11** backend.
-3. Opens a Win32 window.
-4. Draws one red triangle using TrinityAL APIs that exist in `trinityal/tests`.
+3. Opens a native Win32 window.
+4. Draws a human-verified red triangle (`eo-map-carbon-triangle`) using TrinityAL APIs from `trinityal/tests`.
+5. Draws a synthetic 3D starfield of 25,000 points (`eo-map-carbon-starfield`) through the same TrinityAL DX11 path.
 
-The visual sophistication is irrelevant. The question is whether Carbon/Trinity can be consumed at all.
+The visual sophistication is still low. The question is whether Carbon/Trinity can be consumed, then whether many points can be drawn in 3D without leaving TrinityAL.
 
 ## What this is not
 
@@ -23,7 +24,7 @@ The visual sophistication is irrelevant. The question is whether Carbon/Trinity 
 - A replacement of Trinity with SDL / OpenGL / raw DirectX / Three.js.
 - A fork of Carbon. Trinity is cloned **outside** this repository.
 
-Longer-term map milestones (point cloud, picking, a route) are context only. They are not implemented here.
+New Eden data, picking, labels, and routing are still later. They are not implemented here.
 
 ## Carbon architecture actually used
 
@@ -31,7 +32,7 @@ Public Carbon docs (`carbonengine/documentation`) still have an empty Getting St
 
 - Carbon components are built with **CMake presets + vcpkg**, using `carbonengine/vcpkg-registry` overlay triplets (`v141`, Windows SDK `10.0.17763.0`).
 - A full Carbon **game** is a Python/Blue process hosted by `exefile`. That is **not** required for this experiment.
-- **TrinityAL** (`trinityal/`, `TRINITY_AL_WITH_BLUE_EXPOSURE=0`) is a C++ layer that creates a D3D device from an `HWND` and draws primitives. The in-tree `TrinityALTest_dx11` already does this.
+- **TrinityAL** (`trinityal/`, `TRINITY_AL_WITH_BLUE_EXPOSURE=0`) is a C++ layer that creates a D3D device from an `HWND` and draws primitives. The in-tree `TrinityALTest_dx11` already does this. The starfield uses `TOP_POINTS` (DX11 `POINTLIST`) plus a `Tr2ConstantBufferAL` for the view-projection matrix. `CreateDevice` does not create a depth buffer; that is a separate `Tr2TextureAL`.
 - Renderer backends default to **OFF**. DX11 is enabled explicitly (`-DBUILD_DX11=ON`).
 - Granny (`WITH_GRANNY`) is internal-only. It stays **OFF**.
 - There is no public hello-world app. The bootstrap is the TrinityAL tests plus this tiny host.
@@ -100,10 +101,13 @@ git clone --recurse-submodules https://github.com/carbonengine/trinity.git C:\de
 # 5. Upstream triangle test (gtest; no interactive window by default)
 & C:\dev\carbon-upstream\trinity\.cmake-build-local-dx11-debug\carbon\autobuild\TrinityALTest\Windows\x64\v141\TrinityALTest_dx11_debug.exe --gtest_filter=Rendering.CanRenderASingleTriangle
 
-# 6. Build and run our host
+# 6. Build and run the hosts
 .\scripts\build-triangle.ps1
 .\scripts\run-triangle.ps1
 .\scripts\run-triangle.ps1 -Smoke
+.\scripts\build-starfield.ps1
+.\scripts\run-starfield.ps1
+.\scripts\run-starfield.ps1 -Smoke
 ```
 
 `CMakeUserPresets.json` in the Trinity checkout is local (gitignored by Trinity). This repo keeps the template at `cmake/trinity-CMakeUserPresets.json`.
@@ -112,13 +116,21 @@ Our triangle CMake consumes Trinity's already-installed vcpkg prefix (`VCPKG_MAN
 
 ## Human smoke test
 
-Launch without `-Smoke`:
+Milestone 0 diagnostic:
 
 ```powershell
 .\scripts\run-triangle.ps1
 ```
 
-You should see a Win32 window titled **EO-Map Carbon triangle (TrinityAL DX11)** containing a **red triangle** on a dark blue-grey background. It stays up until you close the window.
+Win32 window titled **EO-Map Carbon triangle (TrinityAL DX11)**, red triangle on a dark blue-grey background, until you close it.
+
+Milestone 1A (primary):
+
+```powershell
+.\scripts\run-starfield.ps1
+```
+
+Win32 window titled **EO-Map Carbon starfield (TrinityAL DX11)**. Thousands of white/grey stars on a near-black background. Left-drag orbits around the origin. Mouse wheel changes camera distance. Close the window to exit.
 
 A console/log line `first Present completed` means `Present` returned success. It does not by itself prove pixels.
 
