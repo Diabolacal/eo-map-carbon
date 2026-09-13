@@ -1,4 +1,4 @@
-# Launch the New Eden point-cloud host. Use -Smoke for a timed auto-exit.
+# Launch the New Eden systems + stargate host. Use -Smoke for a timed auto-exit.
 
 param(
     [switch]$Smoke
@@ -9,6 +9,7 @@ $RepoRoot = Resolve-Path "$PSScriptRoot\.."
 $binDir = Join-Path $RepoRoot ".cmake-build-triangle-debug\bin"
 $ours = Join-Path $binDir "eo-map-carbon-neweden.exe"
 $catalog = Join-Path $binDir "new_eden_systems.bin"
+$gates = Join-Path $binDir "new_eden_stargates.bin"
 $upstreamTestDir = "C:\dev\carbon-upstream\trinity\.cmake-build-local-dx11-debug\carbon\autobuild\TrinityALTest\Windows\x64\v141"
 
 if (-not (Test-Path $ours)) {
@@ -17,6 +18,10 @@ if (-not (Test-Path $ours)) {
 
 if (-not (Test-Path $catalog)) {
     Write-Error "new_eden_systems.bin is missing from $binDir. Rebuild with .\scripts\build-neweden.ps1."
+}
+
+if (-not (Test-Path $gates)) {
+    Write-Error "new_eden_stargates.bin is missing from $binDir. Rebuild with .\scripts\build-neweden.ps1."
 }
 
 if (-not (Test-Path (Join-Path $binDir "CcpCore_debug.dll")) -and (Test-Path $upstreamTestDir)) {

@@ -141,6 +141,9 @@ add_executable(eo-map-carbon-neweden WIN32
     src/neweden_main.cpp
     src/new_eden_catalog.cpp
     src/new_eden_catalog.h
+    src/new_eden_gates.cpp
+    src/new_eden_gates.h
+    src/new_eden_gates_expect.h
     src/new_eden_anchors.h
     src/orbit_camera.h
     "${Starfield_vs_HEADER}"
@@ -152,5 +155,8 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${CMAKE_CURRENT_SOURCE_DIR}/data/new_eden_systems.bin"
         "$<TARGET_FILE_DIR:eo-map-carbon-neweden>/new_eden_systems.bin"
-    COMMENT "Copy New Eden catalogue next to eo-map-carbon-neweden"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_CURRENT_SOURCE_DIR}/data/new_eden_stargates.bin"
+        "$<TARGET_FILE_DIR:eo-map-carbon-neweden>/new_eden_stargates.bin"
+    COMMENT "Copy New Eden catalogue and stargate graph next to eo-map-carbon-neweden"
 )

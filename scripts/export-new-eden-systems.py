@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-"""Export New Eden known-space coordinates from EO-Map's Contract A artefact.
+"""Export New Eden known-space coordinates and stargates from EO-Map Contract A.
 
 This does not reinterpret the SDE. It reads the sibling EO-Map pinned universe
-database (map_data_eo_3464040.db, builder 1.5.0) and writes a slim static
-handoff for the Carbon host:
+database (map_data_eo_3464040.db, builder 1.5.0) and writes slim static
+handoffs for the Carbon host:
 
   data/new_eden_systems.bin
   data/new_eden_systems.manifest.json
   src/new_eden_anchors.h
+  data/new_eden_stargates.bin
+  data/new_eden_stargates.manifest.json
+  src/new_eden_gates_expect.h
 
 Runtime Carbon never opens SQLite, never talks to ESI, and never loads the
 EO-Map web app.
@@ -21,6 +24,13 @@ about 1,300 LY away (see eve-frontier-map/src/config/eveOnlineMap.ts and
 wormholeHome.ts). This milestone exports known-space only so the first native
 view is the recognisable New Eden geometry.
 
+Gates come from the same artefact's `stargates` table (13,978 directed rows,
+already known-space only). Carbon stores unique undirected pairs
+`source_id < dest_id` (6,989). That matches EO-Map's topology artefact
+`gateEdges: 6989`. Bidirectional SDE rows would otherwise stack two identical
+3D segments. W-space, wormholes, jump bridges, and Ansiblex are not in this
+table and are not exported.
+
 Coordinates
 -----------
 Contract A already converted raw SDE metres with
@@ -28,13 +38,15 @@ Contract A already converted raw SDE metres with
 and stored that as position_x/y/z (light years). The live EO-Map display
 mapping in src/utils/universeCoordinates.ts is
     scene = (db.x, -db.z, -db.y)
-The binary stores Contract A position_* unchanged. The Carbon host applies the
-same display mapping before upload. No extra scale, centre, or axis swap.
+The systems binary stores Contract A position_* unchanged. Gate records store
+system ids only; the host looks up the already-mapped scene positions. No
+extra scale, centre, axis swap, or 2D layout.
 """
 
 from __future__ import annotations
 
 import argparse
+import collections
 import hashlib
 import json
 import math
@@ -62,6 +74,28 @@ WORMHOLE_SYSTEM_MIN = 31_000_000
 WORMHOLE_SYSTEM_MAX = 31_999_999
 EXPECTED_KNOWN_SPACE = 5485
 EXPECTED_W_SPACE = 2604
+EXPECTED_DIRECTED_STARGATES = 13978
+EXPECTED_UNDIRECTED_EDGES = 6989
+EXPECTED_JITA_AMARR_HOPS = 11
+EXPECTED_JITA_REACHABLE = 5228
+
+GATE_MAGIC = b"NEGATE1\0"
+GATE_VERSION = 1
+GATE_RECORD_SIZE = 8
+GATE_HEADER_STRUCT = struct.Struct("<8sHHIII32s8s")
+GATE_RECORD_STRUCT = struct.Struct("<II")
+EXPECTED_GATE_HEADER_SIZE = 64
+EXPECTED_GATE_RECORD_SIZE = 8
+
+JITA_ID = 30000142
+AMARR_ID = 30002187
+NIARJA_ID = 30003504  # Pochven; EO-Map marks it unreachable from the main graph
+THERA_ID = 31000005
+
+# EO-Map tools/eve-online-sde/test_contract_a.py test_named_gate_neighbours
+JITA_NEIGHBOR_NAMES = frozenset(
+    {"Ikuchi", "Maurasi", "Muvolailen", "New Caldari", "Niyabainen", "Perimeter", "Sobaseki"}
+)
 
 ANCHOR_IDS = (
     30000142,  # Jita
@@ -69,6 +103,15 @@ ANCHOR_IDS = (
     30002659,  # Dodixie
     30002510,  # Rens
     30002053,  # Hek
+)
+
+HUB_NEIGHBOR_IDS = (
+    JITA_ID,
+    AMARR_ID,
+    30002659,  # Dodixie
+    30002510,  # Rens
+    30002053,  # Hek
+    30100000,  # Zarzakh — four real static gates; still drawn
 )
 
 # Live EO-Map app transform. Do not use the stale metadata string in the
@@ -305,6 +348,272 @@ def write_anchors_header(dest: Path, document: dict) -> None:
     dest.write_text("\n".join(lines), encoding="utf-8")
 
 
+def hop_distance(adjacency: dict[int, set[int]], origin: int, destination: int) -> int | None:
+    if origin == destination:
+        return 0
+    dist = {origin: 0}
+    queue = collections.deque([origin])
+    while queue:
+        current = queue.popleft()
+        here = dist[current]
+        for nxt in adjacency.get(current, ()):
+            if nxt in dist:
+                continue
+            dist[nxt] = here + 1
+            if nxt == destination:
+                return dist[nxt]
+            queue.append(nxt)
+    return None
+
+
+def reachable_count(adjacency: dict[int, set[int]], origin: int) -> int:
+    seen = {origin}
+    queue = collections.deque([origin])
+    while queue:
+        current = queue.popleft()
+        for nxt in adjacency.get(current, ()):
+            if nxt not in seen:
+                seen.add(nxt)
+                queue.append(nxt)
+    return len(seen)
+
+
+def load_gates(
+    db_path: Path, known_ids: set[int]
+) -> tuple[list[tuple[int, int]], dict[int, list[tuple[int, str]]], dict[str, int]]:
+    connection = sqlite3.connect(f"file:{db_path.as_posix()}?mode=ro", uri=True)
+    try:
+        directed = connection.execute("SELECT count(*) FROM stargates").fetchone()[0]
+        self_edges = connection.execute(
+            "SELECT count(*) FROM stargates WHERE source_system_id = destination_system_id"
+        ).fetchone()[0]
+        wspace = connection.execute(
+            "SELECT count(*) FROM stargates WHERE source_system_id BETWEEN ? AND ? "
+            "OR destination_system_id BETWEEN ? AND ?",
+            (WORMHOLE_SYSTEM_MIN, WORMHOLE_SYSTEM_MAX, WORMHOLE_SYSTEM_MIN, WORMHOLE_SYSTEM_MAX),
+        ).fetchone()[0]
+        nonreciprocal = connection.execute(
+            "SELECT count(*) FROM stargates a LEFT JOIN stargates b "
+            "ON a.source_system_id = b.destination_system_id "
+            "AND a.destination_system_id = b.source_system_id WHERE b.id IS NULL"
+        ).fetchone()[0]
+        if directed != EXPECTED_DIRECTED_STARGATES:
+            raise RuntimeError(f"unexpected directed stargate count {directed}")
+        if self_edges:
+            raise RuntimeError(f"self-edges in Contract A stargates: {self_edges}")
+        if wspace:
+            raise RuntimeError(f"W-space stargate rows in Contract A: {wspace}")
+        if nonreciprocal:
+            raise RuntimeError(f"non-reciprocal stargate rows: {nonreciprocal}")
+
+        directed_rows = list(
+            connection.execute("SELECT source_system_id, destination_system_id FROM stargates")
+        )
+        hub_neighbors: dict[int, list[tuple[int, str]]] = {}
+        for hub_id in HUB_NEIGHBOR_IDS:
+            rows = list(
+                connection.execute(
+                    "SELECT s.id, s.name FROM stargates g JOIN systems s "
+                    "ON s.id = g.destination_system_id WHERE g.source_system_id = ? "
+                    "ORDER BY s.id ASC",
+                    (hub_id,),
+                )
+            )
+            hub_neighbors[hub_id] = [(int(sid), str(name)) for sid, name in rows]
+    finally:
+        connection.close()
+
+    adjacency: dict[int, set[int]] = collections.defaultdict(set)
+    undirected: dict[tuple[int, int], None] = {}
+    for source, dest in directed_rows:
+        source = int(source)
+        dest = int(dest)
+        if source == dest:
+            raise RuntimeError(f"self-edge {source}")
+        if source not in known_ids or dest not in known_ids:
+            raise RuntimeError(f"stargate {source}->{dest} is not in the known-space export")
+        if not (NEW_EDEN_SYSTEM_MIN <= source <= NEW_EDEN_SYSTEM_MAX):
+            raise RuntimeError(f"source {source} is outside known-space")
+        if not (NEW_EDEN_SYSTEM_MIN <= dest <= NEW_EDEN_SYSTEM_MAX):
+            raise RuntimeError(f"destination {dest} is outside known-space")
+        adjacency[source].add(dest)
+        adjacency[dest].add(source)
+        pair = (source, dest) if source < dest else (dest, source)
+        undirected[pair] = None
+
+    edges = list(undirected.keys())
+    edges.sort()
+    if len(edges) != EXPECTED_UNDIRECTED_EDGES:
+        raise RuntimeError(f"undirected edge count {len(edges)} != {EXPECTED_UNDIRECTED_EDGES}")
+
+    jita_names = {name for _sid, name in hub_neighbors[JITA_ID]}
+    if jita_names != JITA_NEIGHBOR_NAMES:
+        raise RuntimeError(f"Jita neighbours {sorted(jita_names)} != EO-Map pin {sorted(JITA_NEIGHBOR_NAMES)}")
+
+    hops = hop_distance(adjacency, JITA_ID, AMARR_ID)
+    if hops != EXPECTED_JITA_AMARR_HOPS:
+        raise RuntimeError(f"Jita-Amarr hops {hops} != EO-Map pin {EXPECTED_JITA_AMARR_HOPS}")
+    if hop_distance(adjacency, JITA_ID, THERA_ID) is not None:
+        raise RuntimeError("Thera must not be on the static known-space gate graph")
+    if hop_distance(adjacency, JITA_ID, NIARJA_ID) is not None:
+        raise RuntimeError("Niarja (Pochven) must stay disconnected from Jita on static gates")
+    jita_reachable = reachable_count(adjacency, JITA_ID)
+    if jita_reachable != EXPECTED_JITA_REACHABLE:
+        raise RuntimeError(f"Jita reachable {jita_reachable} != EO-Map main component {EXPECTED_JITA_REACHABLE}")
+
+    stats = {
+        "directed": directed,
+        "undirected": len(edges),
+        "jita_amarr_hops": hops,
+        "jita_reachable": jita_reachable,
+        "self_edges": self_edges,
+        "wspace_edges": wspace,
+        "nonreciprocal": nonreciprocal,
+    }
+    return edges, hub_neighbors, stats
+
+
+def write_gate_binary(edges: list[tuple[int, int]], source_sha: bytes, dest: Path) -> bytes:
+    records = bytearray()
+    seen: set[tuple[int, int]] = set()
+    for source, dest_id in edges:
+        if source >= dest_id:
+            raise RuntimeError(f"edge not canonical: {source},{dest_id}")
+        if (source, dest_id) in seen:
+            raise RuntimeError(f"duplicate undirected edge {source},{dest_id}")
+        seen.add((source, dest_id))
+        records.extend(GATE_RECORD_STRUCT.pack(source, dest_id))
+    header = GATE_HEADER_STRUCT.pack(
+        GATE_MAGIC,
+        GATE_VERSION,
+        GATE_RECORD_SIZE,
+        len(edges),
+        PINNED_SDE_BUILD,
+        0,
+        source_sha,
+        b"\0" * 8,
+    )
+    if GATE_HEADER_STRUCT.size != EXPECTED_GATE_HEADER_SIZE or GATE_RECORD_STRUCT.size != EXPECTED_GATE_RECORD_SIZE:
+        raise RuntimeError("gate binary layout drift")
+    blob = header + bytes(records)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(blob)
+    return blob
+
+
+def write_gate_manifest(
+    dest: Path,
+    *,
+    source_sha: str,
+    metadata: dict[str, str],
+    edges: list[tuple[int, int]],
+    hub_neighbors: dict[int, list[tuple[int, str]]],
+    stats: dict[str, int],
+    binary_sha: str,
+    binary_bytes: int,
+    names_by_id: dict[int, str],
+) -> dict:
+    hubs = []
+    for hub_id in HUB_NEIGHBOR_IDS:
+        hubs.append(
+            {
+                "id": hub_id,
+                "name": names_by_id[hub_id],
+                "neighbors": [{"id": sid, "name": name} for sid, name in hub_neighbors[hub_id]],
+            }
+        )
+    document = {
+        "artifact": {
+            "filename": "new_eden_stargates.bin",
+            "bytes": binary_bytes,
+            "sha256": binary_sha,
+            "format": "NEGATE1",
+            "version": GATE_VERSION,
+        },
+        "source": {
+            "kind": "EO-Map Contract A universe artefact (export, not a second SDE interpretation)",
+            "sibling_path": "../eo-map/eve-frontier-map/public/map_data_eo_3464040.db",
+            "filename": PINNED_DB_NAME,
+            "sha256": source_sha,
+            "table": "stargates",
+            "builder_version": metadata.get("builder_version", PINNED_BUILDER_VERSION),
+            "sde_build": int(metadata.get("sde_build", PINNED_SDE_BUILD)),
+        },
+        "selection": {
+            "space": "new-eden-known-space",
+            "id_range": [NEW_EDEN_SYSTEM_MIN, NEW_EDEN_SYSTEM_MAX],
+            "hidden": 0,
+            "directed_stargate_rows_in_source": stats["directed"],
+            "undirected_edges_exported": stats["undirected"],
+            "deduplication": "unique (min(src,dst), max(src,dst)); fully reciprocal so A-B and B-A collapse to one segment",
+            "self_edges": stats["self_edges"],
+            "wspace_edges": stats["wspace_edges"],
+            "nonreciprocal_rows": stats["nonreciprocal"],
+            "wormhole_space_exported": 0,
+            "reason": (
+                "Contract A stargates are already known-space only. Carbon draws one "
+                "straight 3D segment per unique pair using the 1B system positions."
+            ),
+        },
+        "validation": {
+            "jita_id": JITA_ID,
+            "amarr_id": AMARR_ID,
+            "niarja_id": NIARJA_ID,
+            "jita_amarr_hops": stats["jita_amarr_hops"],
+            "jita_reachable_including_jita": stats["jita_reachable"],
+            "jita_neighbors_source": "tools/eve-online-sde/test_contract_a.py test_named_gate_neighbours",
+            "jita_amarr_hops_source": "eve-frontier-map/src/eo/routeDistance/__tests__/hopCount.test.ts",
+            "main_component_source": "eve-frontier-map/scripts/generate-gate-topology.mjs EXPECTED.counts",
+        },
+        "hubs": hubs,
+        "coordinate_contract": {
+            "binary_stores": "undirected known-space system id pairs",
+            "host_display_transform": "(x, -z, -y) applied to the matching 1B system positions",
+            "geometry": "straight 3D segment between scene positions; no 2D layout, curves, or midpoints",
+        },
+        "generator": "scripts/export-new-eden-systems.py",
+    }
+    dest.write_text(json.dumps(document, indent=2, sort_keys=False) + "\n", encoding="utf-8")
+    return document
+
+
+def write_gates_header(dest: Path, document: dict) -> None:
+    validation = document["validation"]
+    selection = document["selection"]
+    lines = [
+        "// Generated by scripts/export-new-eden-systems.py. Do not edit by hand.",
+        "#pragma once",
+        "",
+        "#include <cstdint>",
+        "",
+        "namespace neweden",
+        "{",
+        f"constexpr uint32_t kExpectedEdgeCount = {selection['undirected_edges_exported']};",
+        f"constexpr uint32_t kExpectedDirectedStargateCount = {selection['directed_stargate_rows_in_source']};",
+        f"constexpr uint32_t kExpectedJitaAmarrHops = {validation['jita_amarr_hops']};",
+        f"constexpr uint32_t kExpectedJitaReachable = {validation['jita_reachable_including_jita']};",
+        f"constexpr uint32_t kJitaId = {validation['jita_id']};",
+        f"constexpr uint32_t kAmarrId = {validation['amarr_id']};",
+        f"constexpr uint32_t kNiarjaId = {validation['niarja_id']};",
+        "",
+        "struct NeighborExpect",
+        "{",
+        "	uint32_t id;",
+        "	const char* name;",
+        "};",
+        "",
+    ]
+    for hub in document["hubs"]:
+        ident = "".join(ch if ch.isalnum() else "" for ch in hub["name"])
+        lines.append(f"constexpr NeighborExpect k{ident}Neighbors[] = {{")
+        for neighbor in hub["neighbors"]:
+            lines.append(f"	{{ {neighbor['id']}, \"{neighbor['name']}\" }},")
+        lines.append("};")
+        lines.append("")
+    lines.extend(["}", ""])
+    dest.write_text("\n".join(lines), encoding="utf-8")
+
+
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(description=__doc__)
@@ -312,12 +621,20 @@ def main() -> int:
     parser.add_argument("--out-bin", type=Path, default=repo_root / "data" / "new_eden_systems.bin")
     parser.add_argument("--out-manifest", type=Path, default=repo_root / "data" / "new_eden_systems.manifest.json")
     parser.add_argument("--out-header", type=Path, default=repo_root / "src" / "new_eden_anchors.h")
+    parser.add_argument("--out-gates-bin", type=Path, default=repo_root / "data" / "new_eden_stargates.bin")
+    parser.add_argument("--out-gates-manifest", type=Path, default=repo_root / "data" / "new_eden_stargates.manifest.json")
+    parser.add_argument("--out-gates-header", type=Path, default=repo_root / "src" / "new_eden_gates_expect.h")
     parser.add_argument("--allow-db-mismatch", action="store_true")
     args = parser.parse_args()
 
     if HEADER_STRUCT.size != EXPECTED_HEADER_SIZE or RECORD_STRUCT.size != EXPECTED_RECORD_SIZE:
         raise RuntimeError(
             f"struct sizes {HEADER_STRUCT.size}/{RECORD_STRUCT.size} != {EXPECTED_HEADER_SIZE}/{EXPECTED_RECORD_SIZE}"
+        )
+    if GATE_HEADER_STRUCT.size != EXPECTED_GATE_HEADER_SIZE or GATE_RECORD_STRUCT.size != EXPECTED_GATE_RECORD_SIZE:
+        raise RuntimeError(
+            f"gate struct sizes {GATE_HEADER_STRUCT.size}/{GATE_RECORD_STRUCT.size} != "
+            f"{EXPECTED_GATE_HEADER_SIZE}/{EXPECTED_GATE_RECORD_SIZE}"
         )
     if not args.db.is_file():
         raise SystemExit(f"Contract A database not found: {args.db}")
@@ -349,16 +666,41 @@ def main() -> int:
     )
     write_anchors_header(args.out_header, document)
 
+    known_ids = {int(row[0]) for row in rows}
+    names_by_id = {int(row[0]): str(row[1]) for row in rows}
+    edges, hub_neighbors, gate_stats = load_gates(args.db, known_ids)
+    gate_blob = write_gate_binary(edges, source_sha_bytes, args.out_gates_bin)
+    gate_sha = hashlib.sha256(gate_blob).hexdigest()
+    gate_document = write_gate_manifest(
+        args.out_gates_manifest,
+        source_sha=source_sha,
+        metadata=metadata,
+        edges=edges,
+        hub_neighbors=hub_neighbors,
+        stats=gate_stats,
+        binary_sha=gate_sha,
+        binary_bytes=len(gate_blob),
+        names_by_id=names_by_id,
+    )
+    write_gates_header(args.out_gates_header, gate_document)
+
     centre = document["scene_aabb"]["centre"]
     print(f"source db       : {args.db}")
     print(f"source sha256   : {source_sha}")
     print(f"builder/sde     : {metadata.get('builder_version')} / {metadata.get('sde_build')}")
     print(f"known-space     : {len(rows)}")
     print(f"w-space omitted : {wormhole}")
+    print(f"directed gates  : {gate_stats['directed']}")
+    print(f"undirected edges: {gate_stats['undirected']}")
+    print(f"Jita-Amarr hops : {gate_stats['jita_amarr_hops']}")
+    print(f"Jita reachable  : {gate_stats['jita_reachable']}")
     print(f"scene centre    : ({centre['x']:.6f}, {centre['y']:.6f}, {centre['z']:.6f})")
     print(f"binary          : {args.out_bin} ({len(blob)} bytes, {binary_sha})")
     print(f"manifest        : {args.out_manifest}")
     print(f"anchors header  : {args.out_header}")
+    print(f"gates binary    : {args.out_gates_bin} ({len(gate_blob)} bytes, {gate_sha})")
+    print(f"gates manifest  : {args.out_gates_manifest}")
+    print(f"gates header    : {args.out_gates_header}")
     return 0
 
 

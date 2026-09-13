@@ -1,6 +1,6 @@
-// Standalone TrinityAL DX11 New Eden point-cloud host (Milestone 1B).
-// Same window / device / Present / TOP_POINTS path as the frozen 1A starfield.
-// Stars come from the exported EO-Map Contract A artefact, not a synthetic RNG.
+// Standalone TrinityAL DX11 New Eden host (Milestone 1C).
+// Systems stay on the proven 1B TOP_POINTS path. Gates are one static TOP_LINES
+// buffer of unique undirected Contract A pairs. Camera controls are unchanged.
 
 #include <Windows.h>
 #include <windowsx.h>
@@ -15,6 +15,7 @@ typedef HWND Tr2WindowHandle;
 
 #include "new_eden_anchors.h"
 #include "new_eden_catalog.h"
+#include "new_eden_gates.h"
 #include "orbit_camera.h"
 
 #include <cmath>
@@ -22,6 +23,7 @@ typedef HWND Tr2WindowHandle;
 #include <cstdio>
 #include <cstdarg>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 using namespace Tr2RenderContextEnum;
@@ -34,7 +36,8 @@ const wchar_t* kWindowClass = L"eo-map-carbon-neweden";
 const wchar_t* kWindowTitle = L"EO-Map Carbon New Eden (TrinityAL DX11)";
 const uint32_t kDefaultWidth = 1280;
 const uint32_t kDefaultHeight = 720;
-const uint32_t kDrawCallsPerFrame = 1;
+const uint32_t kDrawCallsPerFrame = 2;
+const float kGateIntensity = 0.22f;
 const uint32_t kSmokeFrames = 60;
 const char* kDatasetId = "map_data_eo_3464040.db builder=1.5.0 SDE=3464040";
 
@@ -302,6 +305,27 @@ std::vector<StarVertex> MakeSystemVertices(const neweden::Catalog& catalog)
 	return stars;
 }
 
+std::vector<StarVertex> MakeGateVertices(const neweden::Catalog& catalog, const neweden::Graph& graph)
+{
+	std::unordered_map<uint32_t, const neweden::System*> byId;
+	byId.reserve(catalog.systems.size());
+	for (const neweden::System& system : catalog.systems)
+	{
+		byId.emplace(system.id, &system);
+	}
+
+	std::vector<StarVertex> lines;
+	lines.reserve(graph.edges.size() * 2);
+	for (const neweden::Edge& edge : graph.edges)
+	{
+		const neweden::System* source = byId.at(edge.sourceId);
+		const neweden::System* dest = byId.at(edge.destId);
+		lines.push_back({ source->sceneX, source->sceneY, source->sceneZ, kGateIntensity });
+		lines.push_back({ dest->sceneX, dest->sceneY, dest->sceneZ, kGateIntensity });
+	}
+	return lines;
+}
+
 bool CreateDepthBuffer(Tr2PrimaryRenderContextAL& renderContext, Tr2TextureAL& depthBuffer, uint32_t width, uint32_t height)
 {
 	depthBuffer = Tr2TextureAL();
@@ -379,7 +403,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 
 	Log(stdout, "eo-map-carbon-neweden starting\n");
 	Log(stdout, "renderer: TrinityAL DX11\n");
-	Log(stdout, "path: TOP_POINTS DrawPrimitive (one call)\n");
+	Log(stdout, "path: TOP_LINES + TOP_POINTS DrawPrimitive (two calls)\n");
 	Log(stdout, "draw calls per frame: %u\n", kDrawCallsPerFrame);
 
 	neweden::Catalog catalog;
@@ -396,7 +420,22 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 		CloseSmokeLog();
 		return 1;
 	}
+	neweden::Graph graph;
+	std::string graphError;
+	if (!neweden::FindAndLoadGraph(graph, graphError))
+	{
+		Log(stderr, "FAILED load New Eden stargate graph: %s\n", graphError.c_str());
+		CloseSmokeLog();
+		return 1;
+	}
+	if (!neweden::ValidateGraph(catalog, graph, graphError))
+	{
+		Log(stderr, "FAILED New Eden stargate check: %s\n", graphError.c_str());
+		CloseSmokeLog();
+		return 1;
+	}
 	const uint32_t systemCount = uint32_t(catalog.systems.size());
+	const uint32_t edgeCount = uint32_t(graph.edges.size());
 	Log(stdout, "dataset: %s\n", kDatasetId);
 	Log(stdout, "dataset file: %s\n", catalog.loadedPath.c_str());
 	Log(stdout, "dataset source sha256: %s\n", catalog.sourceSha256.c_str());
@@ -404,7 +443,10 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 		systemCount,
 		catalog.knownSpaceCount,
 		catalog.otherSpaceCount);
+	Log(stdout, "stargate file: %s\n", graph.loadedPath.c_str());
+	Log(stdout, "connection count: %u (undirected; source directed rows=13978)\n", edgeCount);
 	Log(stdout, "anchor check: Jita/Amarr/Dodixie/Rens/Hek scene coordinates match EO-Map transform\n");
+	Log(stdout, "graph check: endpoints in catalogue, Jita/Amarr/Dodixie/Rens/Hek/Zarzakh adjacency, Jita-Amarr hops=11, Niarja unreachable\n");
 
 	unsigned adapterCount = 0;
 	if (Failed("GetAdapterCount", Tr2VideoAdapterInfo::GetAdapterCount(adapterCount)) || adapterCount == 0)
@@ -524,9 +566,23 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 	}
 
 	const std::vector<StarVertex> stars = MakeSystemVertices(catalog);
+	const std::vector<StarVertex> gates = MakeGateVertices(catalog, graph);
 	const uint32_t stride = sizeof(StarVertex);
+	const uint32_t gateVertexCount = uint32_t(gates.size());
+	if (gateVertexCount != edgeCount * 2)
+	{
+		Log(stderr, "FAILED gate vertex count %u != 2 * %u connections\n", gateVertexCount, edgeCount);
+		CloseSmokeLog();
+		return 1;
+	}
 	Tr2BufferAL vertexBuffer;
 	if (Failed("Create vertex buffer", vertexBuffer.Create(stride, systemCount, Tr2GpuUsage::VERTEX_BUFFER, Tr2CpuUsage::NONE, stars.data(), *renderContext)))
+	{
+		CloseSmokeLog();
+		return 1;
+	}
+	Tr2BufferAL gateVertexBuffer;
+	if (Failed("Create gate vertex buffer", gateVertexBuffer.Create(stride, gateVertexCount, Tr2GpuUsage::VERTEX_BUFFER, Tr2CpuUsage::NONE, gates.data(), *renderContext)))
 	{
 		CloseSmokeLog();
 		return 1;
@@ -549,7 +605,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 		return 1;
 	}
 
-	Log(stdout, "Rendering %u New Eden systems via TOP_POINTS. Left-drag orbits, right-drag pans, wheel zooms. Close the window to exit.\n", systemCount);
+	Log(stdout, "Rendering %u New Eden systems via TOP_POINTS and %u stargate connections via TOP_LINES. Left-drag orbits, right-drag pans, wheel zooms. Close the window to exit.\n", systemCount, edgeCount);
 
 	LARGE_INTEGER qpcFreq = {};
 	QueryPerformanceFrequency(&qpcFreq);
@@ -594,11 +650,6 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 			ok = false;
 			break;
 		}
-		if (Failed("SetStreamSource", renderContext->SetStreamSource(0, vertexBuffer, 0, stride)))
-		{
-			ok = false;
-			break;
-		}
 		if (Failed("SetConstants", renderContext->SetConstants(cameraCb, VERTEX_SHADER, 0)))
 		{
 			ok = false;
@@ -610,11 +661,6 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 			break;
 		}
 		if (Failed("SetShaderProgram", renderContext->SetShaderProgram(shaderProgram)))
-		{
-			ok = false;
-			break;
-		}
-		if (Failed("SetTopology", renderContext->SetTopology(TOP_POINTS)))
 		{
 			ok = false;
 			break;
@@ -639,7 +685,32 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 			ok = false;
 			break;
 		}
-		if (Failed("DrawPrimitive", renderContext->DrawPrimitive(0, systemCount)))
+		if (Failed("SetStreamSource gates", renderContext->SetStreamSource(0, gateVertexBuffer, 0, stride)))
+		{
+			ok = false;
+			break;
+		}
+		if (Failed("SetTopology TOP_LINES", renderContext->SetTopology(TOP_LINES)))
+		{
+			ok = false;
+			break;
+		}
+		if (Failed("DrawPrimitive gates", renderContext->DrawPrimitive(0, edgeCount)))
+		{
+			ok = false;
+			break;
+		}
+		if (Failed("SetStreamSource points", renderContext->SetStreamSource(0, vertexBuffer, 0, stride)))
+		{
+			ok = false;
+			break;
+		}
+		if (Failed("SetTopology TOP_POINTS", renderContext->SetTopology(TOP_POINTS)))
+		{
+			ok = false;
+			break;
+		}
+		if (Failed("DrawPrimitive points", renderContext->DrawPrimitive(0, systemCount)))
 		{
 			ok = false;
 			break;
@@ -681,8 +752,9 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 		{
 			const double avgMs = fpsWindowMs / double(fpsWindowFrames);
 			const double fps = (avgMs > 0.0) ? (1000.0 / avgMs) : 0.0;
-			Log(stdout, "perf: systems=%u draw_calls=%u frame=%.2fms (%.0f fps) renderer=TrinityAL_DX11 TOP_POINTS dataset=SDE3464040\n",
+			Log(stdout, "perf: systems=%u connections=%u draw_calls=%u (1 line + 1 point) frame=%.2fms (%.0f fps) renderer=TrinityAL_DX11 TOP_LINES+TOP_POINTS dataset=SDE3464040\n",
 				systemCount,
+				edgeCount,
 				kDrawCallsPerFrame,
 				avgMs,
 				fps);
@@ -700,9 +772,10 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 	{
 		const double avgMs = totalFrameMs / double(frames);
 		const double fps = (avgMs > 0.0) ? (1000.0 / avgMs) : 0.0;
-		Log(stdout, "smoke: frames=%u systems=%u known_space=%u other_space=%u draw_calls/frame=%u avg_frame_ms=%.2f avg_fps=%.1f path=TrinityAL_DX11/TOP_POINTS dataset=SDE3464040\n",
+		Log(stdout, "smoke: frames=%u systems=%u connections=%u known_space=%u other_space=%u draw_calls/frame=%u point_draws=1 gate_draws=1 avg_frame_ms=%.2f avg_fps=%.1f path=TrinityAL_DX11/TOP_LINES+TOP_POINTS dataset=SDE3464040\n",
 			frames,
 			systemCount,
+			edgeCount,
 			catalog.knownSpaceCount,
 			catalog.otherSpaceCount,
 			kDrawCallsPerFrame,

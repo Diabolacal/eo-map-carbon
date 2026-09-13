@@ -1,0 +1,212 @@
+{
+  "artifact": {
+    "filename": "new_eden_stargates.bin",
+    "bytes": 55976,
+    "sha256": "b8c0a999970837e16bc741d72c397ef9f0ebe370b7cb9d5a58c830b8a6b37451",
+    "format": "NEGATE1",
+    "version": 1
+  },
+  "source": {
+    "kind": "EO-Map Contract A universe artefact (export, not a second SDE interpretation)",
+    "sibling_path": "../eo-map/eve-frontier-map/public/map_data_eo_3464040.db",
+    "filename": "map_data_eo_3464040.db",
+    "sha256": "874262496556d933bbbc184cdec8f469660f6c1108b21e25f0481475b68eba81",
+    "table": "stargates",
+    "builder_version": "1.5.0",
+    "sde_build": 3464040
+  },
+  "selection": {
+    "space": "new-eden-known-space",
+    "id_range": [
+      30000000,
+      30999999
+    ],
+    "hidden": 0,
+    "directed_stargate_rows_in_source": 13978,
+    "undirected_edges_exported": 6989,
+    "deduplication": "unique (min(src,dst), max(src,dst)); fully reciprocal so A-B and B-A collapse to one segment",
+    "self_edges": 0,
+    "wspace_edges": 0,
+    "nonreciprocal_rows": 0,
+    "wormhole_space_exported": 0,
+    "reason": "Contract A stargates are already known-space only. Carbon draws one straight 3D segment per unique pair using the 1B system positions."
+  },
+  "validation": {
+    "jita_id": 30000142,
+    "amarr_id": 30002187,
+    "niarja_id": 30003504,
+    "jita_amarr_hops": 11,
+    "jita_reachable_including_jita": 5228,
+    "jita_neighbors_source": "tools/eve-online-sde/test_contract_a.py test_named_gate_neighbours",
+    "jita_amarr_hops_source": "eve-frontier-map/src/eo/routeDistance/__tests__/hopCount.test.ts",
+    "main_component_source": "eve-frontier-map/scripts/generate-gate-topology.mjs EXPECTED.counts"
+  },
+  "hubs": [
+    {
+      "id": 30000142,
+      "name": "Jita",
+      "neighbors": [
+        {
+          "id": 30000138,
+          "name": "Ikuchi"
+        },
+        {
+          "id": 30000140,
+          "name": "Maurasi"
+        },
+        {
+          "id": 30000143,
+          "name": "Niyabainen"
+        },
+        {
+          "id": 30000144,
+          "name": "Perimeter"
+        },
+        {
+          "id": 30000145,
+          "name": "New Caldari"
+        },
+        {
+          "id": 30001363,
+          "name": "Sobaseki"
+        },
+        {
+          "id": 30002780,
+          "name": "Muvolailen"
+        }
+      ]
+    },
+    {
+      "id": 30002187,
+      "name": "Amarr",
+      "neighbors": [
+        {
+          "id": 30002189,
+          "name": "Hedion"
+        },
+        {
+          "id": 30002192,
+          "name": "Irnin"
+        },
+        {
+          "id": 30002282,
+          "name": "Bhizheba"
+        },
+        {
+          "id": 30003491,
+          "name": "Ashab"
+        },
+        {
+          "id": 30003522,
+          "name": "Sarum Prime"
+        },
+        {
+          "id": 30005038,
+          "name": "Kor-Azor Prime"
+        }
+      ]
+    },
+    {
+      "id": 30002659,
+      "name": "Dodixie",
+      "neighbors": [
+        {
+          "id": 30002655,
+          "name": "Vylade"
+        },
+        {
+          "id": 30002656,
+          "name": "Auvergne"
+        },
+        {
+          "id": 30002658,
+          "name": "Agrallarier"
+        },
+        {
+          "id": 30002661,
+          "name": "Botane"
+        },
+        {
+          "id": 30003031,
+          "name": "Athinard"
+        },
+        {
+          "id": 30003032,
+          "name": "Meves"
+        }
+      ]
+    },
+    {
+      "id": 30002510,
+      "name": "Rens",
+      "neighbors": [
+        {
+          "id": 30002507,
+          "name": "Abudban"
+        },
+        {
+          "id": 30002509,
+          "name": "Odatrik"
+        },
+        {
+          "id": 30002526,
+          "name": "Frarn"
+        }
+      ]
+    },
+    {
+      "id": 30002053,
+      "name": "Hek",
+      "neighbors": [
+        {
+          "id": 30002049,
+          "name": "Uttindar"
+        },
+        {
+          "id": 30002054,
+          "name": "Hror"
+        },
+        {
+          "id": 30002068,
+          "name": "Nakugard"
+        },
+        {
+          "id": 30002543,
+          "name": "Eystur"
+        },
+        {
+          "id": 30002723,
+          "name": "Otou"
+        }
+      ]
+    },
+    {
+      "id": 30100000,
+      "name": "Zarzakh",
+      "neighbors": [
+        {
+          "id": 30001041,
+          "name": "G-0Q86"
+        },
+        {
+          "id": 30001269,
+          "name": "H-PA29"
+        },
+        {
+          "id": 30002086,
+          "name": "Turnur"
+        },
+        {
+          "id": 30003841,
+          "name": "Alsavoinon"
+        }
+      ]
+    }
+  ],
+  "coordinate_contract": {
+    "binary_stores": "undirected known-space system id pairs",
+    "host_display_transform": "(x, -z, -y) applied to the matching 1B system positions",
+    "geometry": "straight 3D segment between scene positions; no 2D layout, curves, or midpoints"
+  },
+  "generator": "scripts/export-new-eden-systems.py"
+}

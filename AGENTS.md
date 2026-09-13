@@ -4,7 +4,7 @@ This is a personal experiment: can an external developer consume public Carbon/T
 
 ## Non-goals
 
-Do not add ESI, SSO, labels, picking, routing, jump gates, security colours, regions, sovereignty, UI panels, search, persistence, installers, or production packaging unless a later milestone explicitly asks for that one thing.
+Do not add ESI, SSO, labels, picking, routing, jump bridges, security colours, regions, sovereignty, UI panels, search, persistence, installers, or production packaging unless a later milestone explicitly asks for that one thing.
 
 Milestone 1B already adds a static New Eden known-space point cloud. Do not grow that into a map product.
 
@@ -34,9 +34,17 @@ Human-verified. Do not redo it.
 
 `eo-map-carbon-neweden` loads 5,485 known-space systems from `data/new_eden_systems.bin`, an export of EO-Map's pinned Contract A artefact (`map_data_eo_3464040.db`, SDE 3464040, builder 1.5.0). The host applies EO-Map's live display mapping `scene = (db.x, -db.z, -db.y)` and draws them with the same TrinityAL `TOP_POINTS` path as 1A. A human confirmed the cluster is recognisably New Eden, with correct-enough orientation and the same orbit / pan / zoom as 1A.
 
-Do not re-interpret the SDE. Regenerate the artefact with `scripts/export-new-eden-systems.py` from the sibling EO-Map checkout. Do not open SQLite, ESI, or the EO-Map web app from this executable.
+Do not re-interpret the SDE. Regenerate both artefacts with `scripts/export-new-eden-systems.py` from the sibling EO-Map checkout. Do not open SQLite, ESI, or the EO-Map web app from this executable.
 
 W-space (2,604 Anoikis systems in Contract A) is a separate ~1,300 LY cluster and is omitted from this first visual.
+
+## Proven New Eden stargate graph (Milestone 1C)
+
+Automated smoke is in place. Pixels still need a human look.
+
+`eo-map-carbon-neweden` also loads `data/new_eden_stargates.bin`: 6,989 unique undirected known-space connections from the same Contract A `stargates` table (13,978 directed rows, already k-space only). The host draws them as one static `TOP_LINES` buffer (`DrawPrimitive(0, 6989)` — count is the number of segments). Systems stay on the unchanged 1B `TOP_POINTS` path. Two draw calls per frame. Same orbit / pan / zoom.
+
+Do not re-interpret the SDE. Regenerate both artefacts with `scripts/export-new-eden-systems.py`. Do not add W-space, wormholes, jump bridges, security colours, or route highlighting here.
 
 ## Upstream Trinity
 
@@ -65,7 +73,7 @@ Three WIN32 hosts, one CMake project, one vcpkg prefix:
 
 - `eo-map-carbon-triangle` — frozen Milestone 0 diagnostic.
 - `eo-map-carbon-starfield` — frozen Milestone 1A synthetic 3D starfield.
-- `eo-map-carbon-neweden` — frozen Milestone 1B real New Eden known-space point cloud.
+- `eo-map-carbon-neweden` — Milestone 1B point cloud plus Milestone 1C static stargate graph.
 
 Do not fold camera/depth/starfield/New Eden changes into `triangle_main.cpp`.
 Do not replace the synthetic 1A generator with New Eden data.
@@ -107,6 +115,7 @@ Build trees, binaries, logs, and generated shader headers stay untracked.
 - There is no TrinityAL camera, input helper, or `SetShaderConstant`. Matrices go through `Tr2ConstantBufferAL` (`Lock` / write / `Unlock`) + `SetConstants(..., VERTEX_SHADER, register)`. The VS signature must `Add(Tr2ShaderRegisterAL::CONSTANT_BUFFER, register)`. Mouse input is raw Win32.
 - Starfield camera is host-side and must keep EO-Map drag semantics (three.js `OrbitControls`, no mouse-orbit invert): left-drag orbit uses `yaw -= dx`, `pitch += dy`; right-drag pans the orbit target in screen space (`target += -right*dx + up*dy`); wheel zooms toward the current target. Do not flip orbit signs back to a "turntable" feel.
 - `TOP_POINTS` exists and is DX11 `POINTLIST`. `DrawPrimitive(start, count)` count is the number of points. No TrinityAL test draws it. `RS_POINTSIZE` / point sprites are ignored on DX11 (1-pixel points only). Metal marks `TOP_POINTS` `validType=false`; this repo is DX11-only.
+- `TOP_LINES` exists and is DX11 `LINELIST`. `DrawPrimitive(start, count)` count is the number of segments; the vertex buffer holds `2 * count` endpoints. No TrinityAL test draws it. There is no line-width API. `RS_ANTIALIASEDLINEENABLE` is enum-only on DX11 and is not applied. Metal marks `TOP_LINES` valid. This host is still DX11-only.
 - Full Trinity's sized-sprite path is instanced triangles (`EveSpriteSet` / `Tr2QuadRenderer`), not a TrinityAL primitive. Use that later if stars need size. Do not invent point-sprite state.
 
 ## Milestone discipline
@@ -155,4 +164,4 @@ New Eden:
 .\scripts\run-neweden.ps1
 ```
 
-Milestone 1B is already human-verified. Re-run only if the host or Carbon changes. Expect a Win32 window titled **EO-Map Carbon New Eden (TrinityAL DX11)** with thousands of white/grey 1-pixel systems in the recognisable New Eden cluster. Same orbit / pan / zoom as the starfield. Automated `--smoke` loads the pinned Contract A export, checks 5485 known-space rows plus Jita/Amarr/Dodixie/Rens/Hek scene anchors, presents 60 frames, and still cannot claim pixels.
+Milestone 1B geometry is already human-verified. Milestone 1C adds the real stargate network on the same host. Expect a Win32 window titled **EO-Map Carbon New Eden (TrinityAL DX11)** with the recognisable New Eden cluster plus a subdued grey network of straight 3D gate lines that stay attached while orbiting. Same orbit / pan / zoom as the starfield. Automated `--smoke` loads the pinned Contract A systems and undirected gates, checks 5485 systems, 6989 connections, hub adjacency, Jita→Amarr = 11 hops, presents 60 frames, and still cannot claim pixels.

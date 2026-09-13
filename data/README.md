@@ -1,12 +1,14 @@
-# New Eden point-cloud artefact
+# New Eden catalogue artefacts
 
-Slim static handoff for Milestone 1B. The Carbon executable does not open
-SQLite, does not call ESI, and does not load the EO-Map web app.
+Slim static handoff for Milestones 1B and 1C. The Carbon executable does not
+open SQLite, does not call ESI, and does not load the EO-Map web app.
 
 ## Files
 
 - `new_eden_systems.bin` — little-endian `NEDEN1B` table of known-space id / name / Contract A XYZ
 - `new_eden_systems.manifest.json` — provenance, AABB, and hub anchors
+- `new_eden_stargates.bin` — little-endian `NEGATE1` table of unique undirected known-space pairs
+- `new_eden_stargates.manifest.json` — provenance, filtering, and hub adjacency
 
 ## Provenance
 
@@ -54,3 +56,25 @@ scene = (db.x, -db.z, -db.y)
 
 Vertices are not recentred. The camera target is the measured New Eden AABB
 centre. There is no extra scale.
+
+## Stargate graph
+
+`new_eden_stargates.bin` is exported from the same Contract A `stargates`
+table. That table already holds 13,978 directed known-space rows and zero
+W-space / wormhole / jump-bridge edges. Carbon stores unique undirected pairs
+(`source_id < dest_id`): **6,989** connections. Drawing both directed rows
+would stack two identical 3D segments.
+
+The binary stores system ids only. The host looks up the matching 1B scene
+positions and emits a straight 3D segment. No 2D layout, curves, or midpoints.
+
+Pinned checks derived from EO-Map, not invented:
+
+- Jita neighbours: Ikuchi, Maurasi, Muvolailen, New Caldari, Niyabainen, Perimeter, Sobaseki
+  (`tools/eve-online-sde/test_contract_a.py`)
+- Jita → Amarr = 11 hops
+  (`eve-frontier-map/src/eo/routeDistance/__tests__/hopCount.test.ts`)
+- Jita reachable set = 5,228 systems, including Jita
+  (`generate-gate-topology.mjs` `mainComponent`)
+- Niarja (30003504, Pochven) is present but unreachable from Jita
+- Zarzakh's four static gates are included and drawn

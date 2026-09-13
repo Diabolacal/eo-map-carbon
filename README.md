@@ -16,6 +16,7 @@ A Windows-native experiment that:
 4. Draws a human-verified red triangle (`eo-map-carbon-triangle`) using TrinityAL APIs from `trinityal/tests`.
 5. Draws a human-verified synthetic 3D starfield of 25,000 points (`eo-map-carbon-starfield`) through the same TrinityAL DX11 path.
 6. Draws a human-verified New Eden known-space point cloud (`eo-map-carbon-neweden`) from an export of EO-Map's pinned Contract A artefact.
+7. Draws the real New Eden stargate graph on that same host from the same Contract A `stargates` table (pixels still need a human look).
 
 The visual sophistication is still low. The question is whether Carbon/Trinity can be consumed, then whether many points can be drawn in 3D without leaving TrinityAL.
 
@@ -25,9 +26,9 @@ The visual sophistication is still low. The question is whether Carbon/Trinity c
 - A replacement of Trinity with SDL / OpenGL / raw DirectX / Three.js.
 - A fork of Carbon. Trinity is cloned **outside** this repository.
 
-Picking, labels, jump gates, and routing are still later. They are not implemented here.
+Picking, labels, jump bridges, routing, and sized star sprites are still later. They are not implemented here.
 
-New Eden coordinates are a slim static export of EO-Map's pinned Contract A artefact. See [data/README.md](data/README.md). The native host does not open SQLite or call ESI.
+New Eden coordinates and stargate pairs are a slim static export of EO-Map's pinned Contract A artefact. See [data/README.md](data/README.md). The native host does not open SQLite or call ESI.
 
 ## Carbon architecture actually used
 
@@ -144,7 +145,7 @@ Milestone 1B (primary; real New Eden geometry):
 .\scripts\run-neweden.ps1
 ```
 
-Win32 window titled **EO-Map Carbon New Eden (TrinityAL DX11)**. White/grey 1-pixel systems in the real New Eden cluster. Same left-drag orbit, right-drag pan, and wheel zoom as the starfield. Close the window to exit.
+Win32 window titled **EO-Map Carbon New Eden (TrinityAL DX11)**. White/grey 1-pixel systems in the real New Eden cluster, plus a subdued grey network of straight 3D stargate lines. Same left-drag orbit, right-drag pan, and wheel zoom as the starfield. Close the window to exit.
 
 A console/log line `first Present completed` means `Present` returned success. It does not by itself prove pixels.
 
