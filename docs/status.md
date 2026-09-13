@@ -1,12 +1,12 @@
 # Current status
 
-Last updated 2026-09-13 after Milestone 1B New Eden point-cloud work.
+Last updated 2026-09-13 after human visual verification of Milestone 1B.
 
 ## Outcome
 
-**PROVEN PENDING HUMAN VISUAL** for Milestone 1B (real New Eden known-space geometry).
+**PROVEN**
 
-Milestone 0 (red triangle) remains human-verified. Milestone 1A (synthetic TrinityAL starfield plus EO-Map-matching orbit/pan/zoom) remains human-verified. Automated 1B smoke loaded the pinned Contract A export, checked 5485 known-space rows and five hub anchors, created the vertex buffer, presented 60 frames, and exited 0. A human still has to look at the window and compare the cluster to EO-Map.
+Milestone 0 (red triangle) is human-verified. Milestone 1A (synthetic TrinityAL starfield plus EO-Map-matching orbit/pan/zoom) is human-verified. Milestone 1B (real New Eden known-space geometry on the same TrinityAL path) is human-verified.
 
 ## Milestone 0 — triangle
 
@@ -35,7 +35,7 @@ The frozen 1A host is unchanged: `eo-map-carbon-starfield`, `src/starfield_main.
 
 ## Milestone 1B — real New Eden geometry
 
-**PROVEN PENDING HUMAN VISUAL**
+**PROVEN**, including human pixel, orientation, and camera verification.
 
 | Gate | Result | Evidence |
 | --- | --- | --- |
@@ -46,7 +46,10 @@ The frozen 1A host is unchanged: `eo-map-carbon-starfield`, `src/starfield_main.
 | E. anchors | **pass** | Jita / Amarr / Dodixie / Rens / Hek scene coordinates match the EO-Map display transform |
 | F. renderer init | **pass** | `adapter count: 3` then `TrinityAL CreateDevice succeeded` |
 | G. present | **pass** | `first Present completed`; 60-frame smoke exit 0; 1 draw/frame |
-| H. pixels / orientation | **pending human** | automated smoke cannot claim the cluster looks like EO-Map |
+| H. pixels / orientation | **pass (human)** | recognisable New Eden cluster and orientation; no distant W-space blob |
+| I. orbit / pan / zoom | **pass (human)** | left-drag orbit, right-drag pan, wheel zoom; remains responsive |
+
+1-pixel points and a plain white/grey look are accepted for this milestone. They are not a 1B failure.
 
 ### New Eden smoke log
 
@@ -89,18 +92,19 @@ The 0.31 ms / 3232 fps figure is QPC around BeginScene through Present with `PRE
 
 ## Known gaps
 
-- 1B pixels and orientation vs EO-Map are not human-verified yet.
-- Point size is not controllable through TrinityAL on DX11. If 5,485 1-pixel systems are too faint to read the cluster, that has to be demonstrated before any sprite-path rewrite.
+- Point size is not controllable through TrinityAL on DX11. 1-pixel systems are accepted for 1B; later size needs the verified instanced-triangle path, not `RS_POINTSIZE`.
 - W-space is intentionally omitted from this first visual.
 - Metal marks `TOP_POINTS` `validType=false`. This host is DX11-only.
 - Resize is implemented from verified APIs but was not interactively exercised in smoke.
 - Debug CRT is `/MD`. Global git `insteadOf` is still mutated by configure. Paths still assume `C:\dev\eo-map-carbon` and `C:\dev\carbon-upstream\trinity`.
 - No labels, picking, jump gates, routing, security colours, regions, ESI, or UI (intentionally out of scope).
 
-## Human smoke (1B — do this next)
+## Human smoke (already done)
+
+Re-run if Carbon or the host changes:
 
 ```powershell
 .\scripts\run-neweden.ps1
+.\scripts\run-starfield.ps1
+.\scripts\run-triangle.ps1
 ```
-
-Compare the cluster to EO-Map's default 3D New Eden home (not the 2D schematic morph, not wormhole home). See the closeout for the visual checklist.

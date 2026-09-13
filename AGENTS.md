@@ -28,11 +28,11 @@ Human-verified. Do not redo it.
 
 Do not fold later map features into this host. New Eden coordinates live in `eo-map-carbon-neweden`, not here.
 
-## New Eden point cloud (Milestone 1B)
+## Proven New Eden point cloud (Milestone 1B)
 
-Pending human visual confirmation. Automated smoke only.
+Human-verified. Do not redo it.
 
-`eo-map-carbon-neweden` loads 5,485 known-space systems from `data/new_eden_systems.bin`, an export of EO-Map's pinned Contract A artefact (`map_data_eo_3464040.db`, SDE 3464040, builder 1.5.0). The host applies EO-Map's live display mapping `scene = (db.x, -db.z, -db.y)` and draws them with the same TrinityAL `TOP_POINTS` path as 1A.
+`eo-map-carbon-neweden` loads 5,485 known-space systems from `data/new_eden_systems.bin`, an export of EO-Map's pinned Contract A artefact (`map_data_eo_3464040.db`, SDE 3464040, builder 1.5.0). The host applies EO-Map's live display mapping `scene = (db.x, -db.z, -db.y)` and draws them with the same TrinityAL `TOP_POINTS` path as 1A. A human confirmed the cluster is recognisably New Eden, with correct-enough orientation and the same orbit / pan / zoom as 1A.
 
 Do not re-interpret the SDE. Regenerate the artefact with `scripts/export-new-eden-systems.py` from the sibling EO-Map checkout. Do not open SQLite, ESI, or the EO-Map web app from this executable.
 
@@ -65,7 +65,7 @@ Three WIN32 hosts, one CMake project, one vcpkg prefix:
 
 - `eo-map-carbon-triangle` — frozen Milestone 0 diagnostic.
 - `eo-map-carbon-starfield` — frozen Milestone 1A synthetic 3D starfield.
-- `eo-map-carbon-neweden` — Milestone 1B real New Eden known-space point cloud.
+- `eo-map-carbon-neweden` — frozen Milestone 1B real New Eden known-space point cloud.
 
 Do not fold camera/depth/starfield/New Eden changes into `triangle_main.cpp`.
 Do not replace the synthetic 1A generator with New Eden data.
@@ -155,4 +155,4 @@ New Eden:
 .\scripts\run-neweden.ps1
 ```
 
-Expect a Win32 window titled **EO-Map Carbon New Eden (TrinityAL DX11)** with thousands of white/grey 1-pixel systems in the real New Eden cluster shape. Same orbit / pan / zoom as the starfield. Automated `--smoke` loads the pinned Contract A export, checks 5485 known-space rows plus Jita/Amarr/Dodixie/Rens/Hek scene anchors, presents 60 frames, and still cannot claim pixels.
+Milestone 1B is already human-verified. Re-run only if the host or Carbon changes. Expect a Win32 window titled **EO-Map Carbon New Eden (TrinityAL DX11)** with thousands of white/grey 1-pixel systems in the recognisable New Eden cluster. Same orbit / pan / zoom as the starfield. Automated `--smoke` loads the pinned Contract A export, checks 5485 known-space rows plus Jita/Amarr/Dodixie/Rens/Hek scene anchors, presents 60 frames, and still cannot claim pixels.
