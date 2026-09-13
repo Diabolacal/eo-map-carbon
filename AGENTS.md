@@ -18,6 +18,14 @@ The triangle host builds against public Trinity, uses TrinityAL DX11, opens a na
 
 Keep `src/triangle_main.cpp`, `src/shaders/PositionOnly.vsh`, `src/shaders/ConstantColor.psh`, and `scripts/run-triangle.ps1` as a diagnostic target. Do not casually edit the triangle draw path, window title, clear colour, or smoke behaviour.
 
+## Proven starfield (Milestone 1A)
+
+Human-verified. Do not redo it.
+
+`eo-map-carbon-starfield` draws 25,000 deterministic synthetic stars through TrinityAL `TOP_POINTS` in one `DrawPrimitive`, with an explicit orbit target. Left-drag orbit, right-drag pan, and wheel zoom match EO-Map's three.js `OrbitControls` signs. Interactive performance on this machine was about 240 FPS / 4.16 ms.
+
+Do not fold New Eden data into this host unless a later milestone asks for that.
+
 ## Upstream Trinity
 
 Checkout (not a submodule):
@@ -120,6 +128,6 @@ Starfield:
 .\scripts\run-starfield.ps1
 ```
 
-Expect a Win32 window titled **EO-Map Carbon starfield (TrinityAL DX11)** with thousands of white/grey stars on a near-black background. Left-drag orbits the current target (EO-Map direction). Right-drag pans the target. Mouse wheel zooms toward the target. Close the window to exit.
+Milestone 1A is already human-verified. Re-run only if the host or Carbon changes. Expect thousands of white/grey stars, EO-Map-matching left-drag orbit, right-drag pan, and wheel zoom toward the current target.
 
 Automated `--smoke` builds the full 25k starfield, presents 60 frames, and exits non-zero on setup/draw failure. It still cannot claim pixels.

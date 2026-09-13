@@ -1,12 +1,12 @@
 # Current status
 
-Last updated 2026-09-13 after a camera-control acceptance pass.
+Last updated 2026-09-13 after human camera verification and merge prep.
 
 ## Outcome
 
-**PROVEN PENDING HUMAN VISUAL**
+**PROVEN**
 
-Milestone 0 is human-verified. Milestone 1A rendering (25k `TOP_POINTS` stars, depth, one draw call, ~240 FPS interactive) is human-verified. A follow-up camera pass flipped orbit to match EO-Map's three.js `OrbitControls` and added right-drag pan of an explicit orbit target. Automated smoke still passes. The revised controls have not been human-checked.
+Milestone 0 (red triangle) is human-verified. Milestone 1A (synthetic TrinityAL starfield plus EO-Map-matching orbit/pan/zoom) is human-verified.
 
 ## Milestone 0 — triangle
 
@@ -26,7 +26,7 @@ Upstream `Rendering.CanRenderASingleTriangle` still **PASSED** (3 ms) after this
 
 ## Milestone 1A — synthetic starfield
 
-**Rendering: PROVEN (human).** Camera revision: **pending human smoke.**
+**PROVEN**, including human pixel and camera verification.
 
 | Gate | Result | Evidence |
 | --- | --- | --- |
@@ -38,7 +38,7 @@ Upstream `Rendering.CanRenderASingleTriangle` still **PASSED** (3 ms) after this
 | F. starfield construct | **pass** | `star count: 25000`; vertex buffer create succeeded (otherwise smoke exits 1) |
 | G. present | **pass** | `first Present completed`; 60-frame smoke exit 0 |
 | H. pixels / depth / 1 draw | **pass (human)** | ~25k stars visible, clearly 3D, ~240 FPS / ~4.16 ms, 1 draw/frame, clean close |
-| I. revised orbit / pan | **unverified** | orbit sign now matches EO-Map `OrbitControls`; right-drag pans the target |
+| I. revised orbit / pan | **pass (human)** | left-drag direction acceptable vs EO-Map; right-drag pans; further orbit uses the new target; wheel zoom still works |
 
 ### Starfield smoke log
 
@@ -51,19 +51,19 @@ path: TOP_POINTS DrawPrimitive (one call)
 star count: 25000
 draw calls per frame: 1
 adapter count: 3
-window hwnd=0000000000700AA2 1280x720
+window hwnd=0000000000800EB2 1280x720
 TrinityAL CreateDevice succeeded
-Rendering 25000 synthetic stars via TOP_POINTS. Left-drag orbits, wheel zooms. Close the window to exit.
+Rendering 25000 synthetic stars via TOP_POINTS. Left-drag orbits, right-drag pans, wheel zooms. Close the window to exit.
 first Present completed
-camera eye=70.4,53.8,114.8 distance=145.0
+camera eye=70.4,53.8,114.8 target=0.0,0.0,0.0 distance=145.0
 smoke test reached 60 frames, exiting
-smoke: frames=60 stars=25000 draw_calls/frame=1 avg_frame_ms=0.27 avg_fps=3762.4 path=TrinityAL_DX11/TOP_POINTS
+smoke: frames=60 stars=25000 draw_calls/frame=1 avg_frame_ms=0.24 avg_fps=4130.8 path=TrinityAL_DX11/TOP_POINTS
 exiting after 60 frames
 ```
 
 Process exit code: 0.
 
-The 0.27 ms / 3762 fps figure is QPC around BeginScene through Present with `PRESENT_INTERVAL_IMMEDIATE` in `--smoke` only. It is not a vsync-capped interactive measurement. Interactive mode uses `PRESENT_INTERVAL_ONE`.
+The 0.24 ms / 4130 fps figure is QPC around BeginScene through Present with `PRESENT_INTERVAL_IMMEDIATE` in `--smoke` only. It is not a vsync-capped interactive measurement. Interactive mode uses `PRESENT_INTERVAL_ONE` and was about 240 FPS / 4.16 ms on this machine.
 
 ## Architecture actually used (1A)
 
@@ -79,7 +79,6 @@ The 0.27 ms / 3762 fps figure is QPC around BeginScene through Present with `PRE
 
 ## Known gaps
 
-- Revised orbit direction and right-drag pan have not been human-checked yet. Rendering already was.
 - Point size is not controllable through TrinityAL on DX11. Later New Eden stars that need size should move to the verified instanced-triangle path, not `RS_POINTSIZE`.
 - Metal marks `TOP_POINTS` `validType=false`. This host is DX11-only.
 - No TrinityAL test draws `TOP_POINTS`. Behaviour is taken from the enum, the DX11 topology table, `ComputeVertexCount`, and Trinity's debug point-cloud submit.
@@ -87,19 +86,11 @@ The 0.27 ms / 3762 fps figure is QPC around BeginScene through Present with `PRE
 - Debug CRT is `/MD`. Global git `insteadOf` is still mutated by configure. Paths still assume `C:\dev\eo-map-carbon` and `C:\dev\carbon-upstream\trinity`.
 - No New Eden / map functionality (intentionally out of scope).
 
-## Human smoke required
+## Human smoke (already done)
 
-Primary command:
+Re-run if Carbon or the host changes:
 
 ```powershell
-cd C:\dev\eo-map-carbon
 .\scripts\run-starfield.ps1
-```
-
-Expect the same proven starfield. Check the camera pass: left-drag orbit should match EO-Map, right-drag should pan the target, further left-drag should orbit the new target, wheel zoom should still work.
-
-Triangle diagnostic (still valid):
-
-```powershell
 .\scripts\run-triangle.ps1
 ```

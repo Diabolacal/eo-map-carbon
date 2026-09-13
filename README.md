@@ -14,7 +14,7 @@ A Windows-native experiment that:
 2. Builds Trinity's C++ abstraction layer **TrinityAL** with the **Direct3D 11** backend.
 3. Opens a native Win32 window.
 4. Draws a human-verified red triangle (`eo-map-carbon-triangle`) using TrinityAL APIs from `trinityal/tests`.
-5. Draws a synthetic 3D starfield of 25,000 points (`eo-map-carbon-starfield`) through the same TrinityAL DX11 path.
+5. Draws a human-verified synthetic 3D starfield of 25,000 points (`eo-map-carbon-starfield`) through the same TrinityAL DX11 path.
 
 The visual sophistication is still low. The question is whether Carbon/Trinity can be consumed, then whether many points can be drawn in 3D without leaving TrinityAL.
 
