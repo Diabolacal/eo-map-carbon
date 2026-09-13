@@ -4,7 +4,9 @@ This is a personal experiment: can an external developer consume public Carbon/T
 
 ## Non-goals
 
-Do not add New Eden data, EVE SDE, ESI, SSO, system names, labels, picking, routing, jump gates, security colours, regions, sovereignty, UI panels, search, persistence, installers, or production packaging unless a later milestone explicitly asks for that one thing.
+Do not add ESI, SSO, labels, picking, routing, jump gates, security colours, regions, sovereignty, UI panels, search, persistence, installers, or production packaging unless a later milestone explicitly asks for that one thing.
+
+Milestone 1B already adds a static New Eden known-space point cloud. Do not grow that into a map product.
 
 Do not replace TrinityAL with raw DirectX, OpenGL, SDL renderer, Three.js, a WebView, or any other engine.
 
@@ -24,7 +26,17 @@ Human-verified. Do not redo it.
 
 `eo-map-carbon-starfield` draws 25,000 deterministic synthetic stars through TrinityAL `TOP_POINTS` in one `DrawPrimitive`, with an explicit orbit target. Left-drag orbit, right-drag pan, and wheel zoom match EO-Map's three.js `OrbitControls` signs. Interactive performance on this machine was about 240 FPS / 4.16 ms.
 
-Do not fold New Eden data into this host unless a later milestone asks for that.
+Do not fold later map features into this host. New Eden coordinates live in `eo-map-carbon-neweden`, not here.
+
+## New Eden point cloud (Milestone 1B)
+
+Pending human visual confirmation. Automated smoke only.
+
+`eo-map-carbon-neweden` loads 5,485 known-space systems from `data/new_eden_systems.bin`, an export of EO-Map's pinned Contract A artefact (`map_data_eo_3464040.db`, SDE 3464040, builder 1.5.0). The host applies EO-Map's live display mapping `scene = (db.x, -db.z, -db.y)` and draws them with the same TrinityAL `TOP_POINTS` path as 1A.
+
+Do not re-interpret the SDE. Regenerate the artefact with `scripts/export-new-eden-systems.py` from the sibling EO-Map checkout. Do not open SQLite, ESI, or the EO-Map web app from this executable.
+
+W-space (2,604 Anoikis systems in Contract A) is a separate ~1,300 LY cluster and is omitted from this first visual.
 
 ## Upstream Trinity
 
@@ -49,12 +61,14 @@ Full Trinity (`EveStarfield`, `TriView`, Blue/Python/`exefile`) is not the Trini
 
 ## Executables
 
-Two WIN32 hosts, one CMake project, one vcpkg prefix:
+Three WIN32 hosts, one CMake project, one vcpkg prefix:
 
 - `eo-map-carbon-triangle` — frozen Milestone 0 diagnostic.
-- `eo-map-carbon-starfield` — Milestone 1A synthetic 3D starfield.
+- `eo-map-carbon-starfield` — frozen Milestone 1A synthetic 3D starfield.
+- `eo-map-carbon-neweden` — Milestone 1B real New Eden known-space point cloud.
 
-Do not fold camera/depth/starfield changes into `triangle_main.cpp`.
+Do not fold camera/depth/starfield/New Eden changes into `triangle_main.cpp`.
+Do not replace the synthetic 1A generator with New Eden data.
 
 ## Build and run
 
@@ -69,6 +83,9 @@ From a Developer PowerShell (x64) in this repo, after the machine-local Trinity/
 .\scripts\build-starfield.ps1
 .\scripts\run-starfield.ps1
 .\scripts\run-starfield.ps1 -Smoke
+.\scripts\build-neweden.ps1
+.\scripts\run-neweden.ps1
+.\scripts\run-neweden.ps1 -Smoke
 ```
 
 Our CMake consumes Trinity's already-installed vcpkg prefix (`VCPKG_MANIFEST_MODE=OFF`). Do not add a second vcpkg manifest for this host.
@@ -131,3 +148,11 @@ Starfield:
 Milestone 1A is already human-verified. Re-run only if the host or Carbon changes. Expect thousands of white/grey stars, EO-Map-matching left-drag orbit, right-drag pan, and wheel zoom toward the current target.
 
 Automated `--smoke` builds the full 25k starfield, presents 60 frames, and exits non-zero on setup/draw failure. It still cannot claim pixels.
+
+New Eden:
+
+```powershell
+.\scripts\run-neweden.ps1
+```
+
+Expect a Win32 window titled **EO-Map Carbon New Eden (TrinityAL DX11)** with thousands of white/grey 1-pixel systems in the real New Eden cluster shape. Same orbit / pan / zoom as the starfield. Automated `--smoke` loads the pinned Contract A export, checks 5485 known-space rows plus Jita/Amarr/Dodixie/Rens/Hek scene anchors, presents 60 frames, and still cannot claim pixels.

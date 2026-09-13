@@ -15,16 +15,19 @@ A Windows-native experiment that:
 3. Opens a native Win32 window.
 4. Draws a human-verified red triangle (`eo-map-carbon-triangle`) using TrinityAL APIs from `trinityal/tests`.
 5. Draws a human-verified synthetic 3D starfield of 25,000 points (`eo-map-carbon-starfield`) through the same TrinityAL DX11 path.
+6. Draws real New Eden known-space system positions (`eo-map-carbon-neweden`) from an export of EO-Map's pinned Contract A artefact. Pixel geometry is pending human confirmation.
 
 The visual sophistication is still low. The question is whether Carbon/Trinity can be consumed, then whether many points can be drawn in 3D without leaving TrinityAL.
 
 ## What this is not
 
-- New Eden, star systems, EO-Map data, routing, labels, sovereignty, ESI, SSO, networking, UI panels, installers, auto-update, or production packaging.
+- Routing, labels, picking, sovereignty, ESI, SSO, networking, UI panels, installers, auto-update, or production packaging.
 - A replacement of Trinity with SDL / OpenGL / raw DirectX / Three.js.
 - A fork of Carbon. Trinity is cloned **outside** this repository.
 
-New Eden data, picking, labels, and routing are still later. They are not implemented here.
+Picking, labels, jump gates, and routing are still later. They are not implemented here.
+
+New Eden coordinates are a slim static export of EO-Map's pinned Contract A artefact. See [data/README.md](data/README.md). The native host does not open SQLite or call ESI.
 
 ## Carbon architecture actually used
 
@@ -108,6 +111,9 @@ git clone --recurse-submodules https://github.com/carbonengine/trinity.git C:\de
 .\scripts\build-starfield.ps1
 .\scripts\run-starfield.ps1
 .\scripts\run-starfield.ps1 -Smoke
+.\scripts\build-neweden.ps1
+.\scripts\run-neweden.ps1
+.\scripts\run-neweden.ps1 -Smoke
 ```
 
 `CMakeUserPresets.json` in the Trinity checkout is local (gitignored by Trinity). This repo keeps the template at `cmake/trinity-CMakeUserPresets.json`.
@@ -131,6 +137,14 @@ Milestone 1A (primary):
 ```
 
 Win32 window titled **EO-Map Carbon starfield (TrinityAL DX11)**. Thousands of white/grey stars on a near-black background. Left-drag orbits the current target (same direction as EO-Map). Right-drag pans that target. Mouse wheel zooms toward it. Close the window to exit.
+
+Milestone 1B (real New Eden geometry; pixels pending human look):
+
+```powershell
+.\scripts\run-neweden.ps1
+```
+
+Win32 window titled **EO-Map Carbon New Eden (TrinityAL DX11)**. White/grey 1-pixel systems in the real New Eden cluster. Same left-drag orbit, right-drag pan, and wheel zoom as the starfield. Close the window to exit.
 
 A console/log line `first Present completed` means `Present` returned success. It does not by itself prove pixels.
 

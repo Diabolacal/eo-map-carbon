@@ -136,3 +136,21 @@ add_executable(eo-map-carbon-starfield WIN32
     "${StarColor_ps_HEADER}"
 )
 eo_map_carbon_app(eo-map-carbon-starfield)
+
+add_executable(eo-map-carbon-neweden WIN32
+    src/neweden_main.cpp
+    src/new_eden_catalog.cpp
+    src/new_eden_catalog.h
+    src/new_eden_anchors.h
+    src/orbit_camera.h
+    "${Starfield_vs_HEADER}"
+    "${StarColor_ps_HEADER}"
+)
+eo_map_carbon_app(eo-map-carbon-neweden)
+add_custom_command(
+    TARGET eo-map-carbon-neweden POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_CURRENT_SOURCE_DIR}/data/new_eden_systems.bin"
+        "$<TARGET_FILE_DIR:eo-map-carbon-neweden>/new_eden_systems.bin"
+    COMMENT "Copy New Eden catalogue next to eo-map-carbon-neweden"
+)

@@ -1,0 +1,139 @@
+{
+  "artifact": {
+    "filename": "new_eden_systems.bin",
+    "bytes": 165925,
+    "sha256": "758a6b3b9973c42c6afbe7e3f00d23b0b8d0c0afa1ead102994e8f81dd279e03",
+    "format": "NEDEN1B",
+    "version": 1
+  },
+  "source": {
+    "kind": "EO-Map Contract A universe artefact (export, not a second SDE interpretation)",
+    "sibling_path": "../eo-map/eve-frontier-map/public/map_data_eo_3464040.db",
+    "filename": "map_data_eo_3464040.db",
+    "sha256": "874262496556d933bbbc184cdec8f469660f6c1108b21e25f0481475b68eba81",
+    "builder_version": "1.5.0",
+    "sde_build": 3464040,
+    "sde_url": "https://developers.eveonline.com/static-data/tranquility/eve-online-static-data-3464040-jsonl.zip",
+    "sde_sha256": "a13cacc71e403143b6de064f266d40d4fffee9fa0313a7b14ffc42ae8c96fe2d",
+    "sde_release_date": "2026-08-11T11:11:17Z",
+    "eve_ly_meters": 9460000000000000,
+    "db_transform": "(x,z,y)/9460000000000000"
+  },
+  "selection": {
+    "space": "new-eden-known-space",
+    "id_range": [
+      30000000,
+      30999999
+    ],
+    "hidden": 0,
+    "system_count": 5485,
+    "known_space_count": 5485,
+    "wormhole_space_count_in_source": 2604,
+    "wormhole_space_exported": 0,
+    "reason": "EO-Map default home is New Eden. W-space is a separate ~1,300 LY cluster and is omitted from this first visual reproduction."
+  },
+  "coordinate_contract": {
+    "binary_stores": "Contract A position_x/y/z (light years, uncentred)",
+    "host_display_transform": "(x, -z, -y)",
+    "host_display_transform_source": "eve-frontier-map/src/utils/universeCoordinates.ts dbToScenePosition",
+    "composed_raw_to_scene": "(raw.x, -raw.y, -raw.z) / 9460000000000000",
+    "no_extra_scale": true,
+    "no_centring_of_vertices": true,
+    "units": "light-year"
+  },
+  "scene_aabb": {
+    "min": {
+      "x": -53.7784309387207,
+      "y": -15.39274787902832,
+      "z": -49.98521041870117
+    },
+    "max": {
+      "x": 35.5732536315918,
+      "y": 7.39825963973999,
+      "z": 51.21065902709961
+    },
+    "extent": {
+      "x": 89.3516845703125,
+      "y": 22.79100751876831,
+      "z": 101.19586944580078
+    },
+    "centre": {
+      "x": -9.102588653564453,
+      "y": -3.997244119644165,
+      "z": 0.6127243041992188
+    }
+  },
+  "anchors": [
+    {
+      "id": 30000142,
+      "name": "Jita",
+      "db": {
+        "x": -13.643219947814941,
+        "y": 12.417466163635254,
+        "z": 6.422337055206299
+      },
+      "scene": {
+        "x": -13.643219947814941,
+        "y": -6.422337055206299,
+        "z": -12.417466163635254
+      }
+    },
+    {
+      "id": 30002187,
+      "name": "Amarr",
+      "db": {
+        "x": -21.643627166748047,
+        "y": -6.0910444259643555,
+        "z": 4.253528594970703
+      },
+      "scene": {
+        "x": -21.643627166748047,
+        "y": -4.253528594970703,
+        "z": 6.0910444259643555
+      }
+    },
+    {
+      "id": 30002659,
+      "name": "Dodixie",
+      "db": {
+        "x": -19.832660675048828,
+        "y": 2.927330732345581,
+        "z": 5.6280436515808105
+      },
+      "scene": {
+        "x": -19.832660675048828,
+        "y": -5.6280436515808105,
+        "z": -2.927330732345581
+      }
+    },
+    {
+      "id": 30002510,
+      "name": "Rens",
+      "db": {
+        "x": -10.478048324584961,
+        "y": -0.30314257740974426,
+        "z": 4.2637529373168945
+      },
+      "scene": {
+        "x": -10.478048324584961,
+        "y": -4.2637529373168945,
+        "z": 0.30314257740974426
+      }
+    },
+    {
+      "id": 30002053,
+      "name": "Hek",
+      "db": {
+        "x": -13.731220245361328,
+        "y": 5.916445255279541,
+        "z": 4.576603412628174
+      },
+      "scene": {
+        "x": -13.731220245361328,
+        "y": -4.576603412628174,
+        "z": -5.916445255279541
+      }
+    }
+  ],
+  "generator": "scripts/export-new-eden-systems.py"
+}

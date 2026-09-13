@@ -36,6 +36,12 @@
       "configurePreset": "triangle-debug",
       "configuration": "Debug",
       "targets": ["eo-map-carbon-starfield"]
+    },
+    {
+      "name": "neweden-debug",
+      "configurePreset": "triangle-debug",
+      "configuration": "Debug",
+      "targets": ["eo-map-carbon-neweden"]
     }
   ]
 }
