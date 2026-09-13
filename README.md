@@ -17,9 +17,9 @@ A Windows-native experiment that:
 5. Draws a human-verified synthetic 3D starfield of 25,000 points (`eo-map-carbon-starfield`) through the same TrinityAL DX11 path.
 6. Draws a human-verified New Eden known-space point cloud (`eo-map-carbon-neweden`) from an export of EO-Map's pinned Contract A artefact.
 7. Draws a human-verified New Eden stargate graph on that same host from the same Contract A `stargates` table.
-8. Turns that host into a visual lab: sized temperature-coloured stars, togglable TrinityAL bloom, distance-faded gates, and a developer slider panel. Aesthetics are not proven.
+8. Turns that host into a Creator Mode visual lab: sized temperature-coloured stars, togglable TrinityAL bloom, distance-faded gates, procedural sky, interstellar medium, optional glow/flare, optional region tint, persist, and a developer slider panel. Aesthetics are not proven.
 
-The geometry question is answered. The current question is whether a native Carbon/Trinity New Eden can look like a deliberate starmap.
+The geometry question is answered. The current question is whether a native Carbon/Trinity New Eden can look cinematic enough to share.
 
 ## What this is not
 
@@ -27,7 +27,7 @@ The geometry question is answered. The current question is whether a native Carb
 - A replacement of Trinity with SDL / OpenGL / raw DirectX / Three.js.
 - A fork of Carbon. Trinity is cloned **outside** this repository.
 
-Picking, labels, jump bridges, and routing are still later. The New Eden host now has a developer-only Win32 tuning panel; that is not product UI.
+Picking, labels, jump bridges, and routing are still later. The New Eden host now has a developer-only Win32 Creator panel and INI persist; that is not product UI.
 
 New Eden coordinates and stargate pairs are a slim static export of EO-Map's pinned Contract A artefact. See [data/README.md](data/README.md). The native host does not open SQLite or call ESI.
 
@@ -117,6 +117,7 @@ git clone --recurse-submodules https://github.com/carbonengine/trinity.git C:\de
 .\scripts\run-neweden.ps1
 .\scripts\run-neweden.ps1 -Smoke
 .\scripts\run-visual-lab.ps1
+.\scripts\run-creator-mode.ps1
 ```
 
 `CMakeUserPresets.json` in the Trinity checkout is local (gitignored by Trinity). This repo keeps the template at `cmake/trinity-CMakeUserPresets.json`.
@@ -147,10 +148,10 @@ Milestone 1B / 1C (primary; real New Eden geometry plus stargate graph):
 .\scripts\run-neweden.ps1
 ```
 
-Win32 window titled **EO-Map Carbon New Eden visual lab (TrinityAL DX11)**. Temperature-coloured sized stars, distance-faded gate lines, optional bloom, and a **Visual lab** slider window. Same left-drag orbit, right-drag pan, and wheel zoom as the starfield. Close the 3D window to exit.
+Win32 window titled **EO-Map Carbon New Eden Creator Mode (TrinityAL DX11)**. Temperature-coloured sized stars, faded gates, procedural sky, restrained ISM, optional glow, optional bloom, and a **Creator / Visual lab** slider window. Same left-drag orbit, right-drag pan, and wheel zoom as the starfield. Close the 3D window to exit.
 
 ```powershell
-.\scripts\run-visual-lab.ps1
+.\scripts\run-creator-mode.ps1
 ```
 
 A console/log line `first Present completed` means `Present` returned success. It does not by itself prove pixels.

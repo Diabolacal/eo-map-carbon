@@ -116,32 +116,42 @@ Separate modeless Win32 tool window (owner = DX HWND), Common Controls
 trackbars, `comctl32` only. No ImGui. Not created in `--smoke`.
 
 `TuneParams` live on the host; sliders write the struct; the frame loop reads
-it into constant buffers. Reset button / F9. Dump button / F8 writes
-`eo-map-carbon-neweden-tune.ini` next to the exe, logs the text, and copies to
-the clipboard when possible. The INI is **not** loaded on startup.
+it into constant buffers. The Creator panel is tabbed (Stars / Gates /
+Background / Medium / Glow / Colour / Post). Reset / F9 returns `TuneDefaults()`
+(locked human baseline). F8 / Save writes `eo-map-carbon-neweden-tune.ini` next
+to the exe and copies it. Interactive startup loads that file if present.
+`--smoke` never does. Unknown keys are ignored; non-finite values are skipped.
 
 ## Expected draw / pass architecture
 
 ```
 HDR sceneRT (RGBA16F) + D24S8
+  0. optional DeepSpace fullscreen (Z off)
   1. TOP_LINES gates (alpha blend, Z write on)
   2. instanced star quads (additive, Z write off)
      optional: TOP_POINTS diagnostic instead of (2)
+  3. optional instanced glow
+  4. optional instanced flare
+  unbind depth
 bloom ON:
-  3. extract 1/2
-  4. blur H 1/2
-  5. blur V 1/2
-  6. composite to backbuffer
+  5. extract 1/2
+  6. blur H 1/2
+  7. blur V 1/2
+  8. IsmField 1/2 (or clear to T=1 if ISM off)
+  9. composite to backbuffer
 bloom OFF:
-  3. blit/tonemap sceneRT to backbuffer
+  5. IsmField 1/2 (or clear)
+  6. blit/tonemap sceneRT to backbuffer
 ```
+
+Default Creator Mode (sky + ISM + glow, flare off):
 
 | Mode | Draw calls | PP passes |
 | --- | --- | --- |
-| sprites + bloom | 6 | 4 (extract, H, V, composite) |
-| sprites, bloom off | 3 | 1 (tonemap blit) |
-| `--points` + bloom | 6 | 4 |
-| `--points`, bloom off | 3 | 1 |
+| sprites + bloom + creator | 9 | 6 |
+| sprites, bloom off + creator | 6 | 3 |
+| sprites, creator off | 3 | 1 |
+| `--points` + bloom + creator | 8 | 6 |
 
 ## Important Carbon limitations
 
