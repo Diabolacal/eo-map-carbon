@@ -1,7 +1,7 @@
 {
   "description": "Repository files used as the shared System One state. Order is the preferred inclusion order.",
   "request_token_budget": 32000,
-  "english_char_budget_hint": 150000,
+  "english_char_budget_hint": 110000,
   "files": [
     "AGENTS.md",
     "docs/status.md",
@@ -16,7 +16,9 @@
   ],
   "drop_last_if_over_budget": [
     "README.md",
-    "src/new_eden_gates.cpp",
-    "src/new_eden_catalog.cpp"
+    "docs/status.md",
+    "CMakeLists.txt",
+    "src/new_eden_catalog.cpp",
+    "src/new_eden_gates.cpp"
   ]
 }
