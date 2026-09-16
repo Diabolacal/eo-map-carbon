@@ -1,0 +1,277 @@
+{
+  "questions": {
+    "graph_is_undirected": {
+      "type": "noul",
+      "instructions": "In `files['src/new_eden_gates.cpp']`, are loaded stargate edges unique undirected pairs with sourceId < destId, not a directed runtime graph?",
+      "criteria": {
+        "true": "NEGATE1 stores each connection once as a sorted undirected pair.",
+        "false": "The runtime graph is directed and both directions are stored as separate edges."
+      }
+    },
+    "adjacency_is_bidirectional": {
+      "type": "noul",
+      "instructions": "Does `BuildAdjacency` in `files['src/new_eden_gates.cpp']` insert both source->dest and dest->source?",
+      "criteria": {
+        "true": "Each undirected edge becomes two adjacency entries.",
+        "false": "Adjacency is one-way."
+      }
+    },
+    "edges_are_unweighted": {
+      "type": "noul",
+      "instructions": "Are stargate edges unweighted hop edges (no length/security/fuel cost in the Carbon graph)?",
+      "criteria": {
+        "true": "HopDistance increments by 1 per adjacency step.",
+        "false": "Edges carry a numeric weight used by the search."
+      }
+    },
+    "bfs_already_exists": {
+      "type": "noul",
+      "instructions": "Does Carbon already implement BFS over the stargate graph?",
+      "criteria": {
+        "true": "HopDistance is a BFS.",
+        "false": "There is no BFS yet."
+      }
+    },
+    "bfs_reconstructs_path": {
+      "type": "noul",
+      "instructions": "Does the existing BFS reconstruct the ordered system path, or only a hop count?",
+      "criteria": {
+        "true": "HopDistance or another function returns the sequence of system ids.",
+        "false": "HopDistance returns only an int hop count (or -1)."
+      }
+    },
+    "adjacency_type_is_internal": {
+      "type": "noul",
+      "instructions": "Is `Adjacency` / `BuildAdjacency` confined to the anonymous namespace in `files['src/new_eden_gates.cpp']` rather than exported from the header?",
+      "criteria": {
+        "true": "They are file-local.",
+        "false": "They are part of the public neweden API."
+      }
+    },
+    "extra_data_required": {
+      "type": "noul",
+      "instructions": "For a Jita to Amarr ordinary-stargate shortest hop route, is any data source beyond the already-loaded catalogue and stargate graph required?",
+      "criteria": {
+        "true": "Needs SQLite, ESI, jump bridges, or a new artefact.",
+        "false": "new_eden_systems.bin plus new_eden_stargates.bin are sufficient."
+      }
+    },
+    "ordinary_bfs_sufficient": {
+      "type": "noul",
+      "instructions": "Is unweighted shortest-hop BFS sufficient for this milestone's ordinary stargate Jita-Amarr route?",
+      "criteria": {
+        "true": "Unit-hop BFS on the undirected graph is enough.",
+        "false": "A* / Dijkstra / security costs are required."
+      }
+    },
+    "need_graph_format_change": {
+      "type": "noul",
+      "instructions": "Does the NEGATE1 / Graph edge format need to change to support reconstructing one shortest route?",
+      "criteria": {
+        "true": "The binary format or Edge struct must change.",
+        "false": "Parent-pointer BFS on the existing Graph is enough."
+      }
+    },
+    "jita_amarr_ids_present": {
+      "type": "noul",
+      "instructions": "Do `files['src/new_eden_gates_expect.h']` and `files['src/new_eden_anchors.h']` already define Jita and Amarr system ids?",
+      "criteria": {
+        "true": "kJitaId 30000142 and kAmarrId 30002187 exist.",
+        "false": "Those constants are missing."
+      }
+    },
+    "expected_hops_is_11": {
+      "type": "noul",
+      "instructions": "Is the pinned expected Jita-Amarr hop count 11?",
+      "criteria": {
+        "true": "kExpectedJitaAmarrHops is 11 and ValidateGraph checks it.",
+        "false": "The expected hop count is some other number or unchecked."
+      }
+    },
+    "system_names_available": {
+      "type": "noul",
+      "instructions": "Can system names be recovered from the loaded catalogue (`files['src/new_eden_catalog.h']`) for diagnostic logging of a route?",
+      "criteria": {
+        "true": "Catalog System has id and name.",
+        "false": "Only numeric ids exist at runtime."
+      }
+    },
+    "shader_is_grayscale_intensity": {
+      "type": "noul",
+      "instructions": "Does `files['src/shaders/StarColor.psh']` output a grayscale colour from a single per-vertex intensity, with no RGB channels?",
+      "criteria": {
+        "true": "float4(i,i,i,1).",
+        "false": "The pixel shader already takes an RGB colour."
+      }
+    },
+    "gates_use_static_toplines": {
+      "type": "noul",
+      "instructions": "Are existing stargates a static TOP_LINES buffer created with Tr2CpuUsage::NONE in `files['src/neweden_main.cpp']`?",
+      "criteria": {
+        "true": "One static line buffer for all gates.",
+        "false": "Gates are dynamic or not TOP_LINES."
+      }
+    },
+    "route_overlaps_gate_geometry": {
+      "type": "noul",
+      "instructions": "Would a Jita-Amarr stargate route reuse the same 3D segments already present in the full gate line buffer, creating a z-fighting risk if drawn again with depth tests on?",
+      "criteria": {
+        "true": "Route edges are a subset of existing undirected gate segments at identical scene positions.",
+        "false": "The route would occupy distinct geometry that does not coincide with the gate network."
+      }
+    },
+    "need_sqlite_or_esi": {
+      "type": "noul",
+      "instructions": "Would implementing this route require opening SQLite or calling ESI at runtime?",
+      "criteria": {
+        "true": "Runtime SQLite or ESI is required.",
+        "false": "AGENTS.md and the existing loaders forbid that; binaries are enough."
+      }
+    },
+    "need_new_shader": {
+      "type": "noul",
+      "instructions": "Is a new HLSL shader strictly required to make the route visually distinguishable from the 0.22-intensity grey gates?",
+      "criteria": {
+        "true": "A new coloured shader is the only way to distinguish the route.",
+        "false": "Reusing StarColor.psh with a much higher intensity (near 1.0) can distinguish it, optionally with a different depth state."
+      }
+    },
+    "must_edit_triangle_or_starfield": {
+      "type": "noul",
+      "instructions": "Must `triangle_main.cpp` or `starfield_main.cpp` change for this New Eden route highlight?",
+      "criteria": {
+        "true": "Those frozen hosts must change.",
+        "false": "They should stay untouched."
+      }
+    },
+    "eomap_thera_required": {
+      "type": "noul",
+      "instructions": "Does `external_readonly['eomap_hopCount.ts']` require Thera / public-wormhole chords for a normal-stargate Jita-Amarr shortest hop on known-space gates only?",
+      "criteria": {
+        "true": "Thera chords are required for this milestone.",
+        "false": "Thera is an optional extra in EO-Map hop-count helpers and is out of scope for ordinary stargates."
+      }
+    },
+    "eomap_dijkstra_required": {
+      "type": "noul",
+      "instructions": "Does this limited ordinary-stargate hop route need EO-Map's A* / Dijkstra / smart-gate / security-policy P2P solver?",
+      "criteria": {
+        "true": "Those solvers are required.",
+        "false": "They are unrelated product features; unit-hop BFS matches the hopCount test's Jita-Amarr=11 check."
+      }
+    },
+    "duplicate_graph_risk": {
+      "type": "noul",
+      "instructions": "Would introducing a second parallel graph type (beyond Graph + a local adjacency map for BFS) be an unnecessary duplication for this milestone?",
+      "criteria": {
+        "true": "A new graph framework would duplicate Graph/BuildAdjacency.",
+        "false": "A new graph type is required."
+      }
+    },
+    "validategraph_already_checks_hops": {
+      "type": "noul",
+      "instructions": "Does `ValidateGraph` already assert Jita-Amarr hop count equals kExpectedJitaAmarrHops?",
+      "criteria": {
+        "true": "Yes, via HopDistance.",
+        "false": "No hop-count check exists."
+      }
+    },
+    "findsystem_is_file_local": {
+      "type": "noul",
+      "instructions": "Is `FindSystem` in `files['src/new_eden_gates.cpp']` file-local (anonymous namespace) rather than declared in the header?",
+      "criteria": {
+        "true": "File-local.",
+        "false": "Exported."
+      }
+    },
+    "current_draw_calls_are_two": {
+      "type": "noul",
+      "instructions": "Does the New Eden host currently issue exactly two DrawPrimitive calls per frame (gates then systems)?",
+      "criteria": {
+        "true": "kDrawCallsPerFrame = 2.",
+        "false": "Some other count."
+      }
+    },
+    "graph_semantics": {
+      "type": "choice",
+      "instructions": "What are the runtime semantics of Carbon's stargate graph for shortest-hop search?",
+      "criteria": {
+        "undirected_unweighted": "Stored undirected; adjacency is bidirectional; each hop costs 1.",
+        "directed_unweighted": "Search must follow stored direction only.",
+        "undirected_weighted": "Edges have lengths or security weights."
+      }
+    },
+    "path_implementation": {
+      "type": "choice",
+      "instructions": "What is the smallest correct way to obtain the ordered Jita-Amarr route?",
+      "criteria": {
+        "extend_bfs_parents": "Keep the existing BFS, record parents, reconstruct the id sequence.",
+        "new_dijkstra": "Add a weighted Dijkstra/A* solver.",
+        "hardcode_systems": "Hard-code the 12 system names/ids to match the hop count."
+      }
+    },
+    "route_buffer": {
+      "type": "choice",
+      "instructions": "How should route line vertices be supplied to TrinityAL?",
+      "criteria": {
+        "separate_static_toplines": "A second static TOP_LINES buffer of the route segments, leaving the full gate buffer unchanged.",
+        "mutate_gate_buffer": "Rewrite intensities inside the existing 6989-edge gate buffer each frame.",
+        "points_only": "Highlight only TOP_POINTS, no route lines."
+      }
+    },
+    "shader_plan": {
+      "type": "choice",
+      "instructions": "How should the route be coloured for an engineering visual smoke, not a pretty map?",
+      "criteria": {
+        "reuse_starcolor_brighter": "Reuse Starfield.vsh / StarColor.psh with a much higher intensity than kGateIntensity 0.22.",
+        "new_rgb_shader": "Add a new RGB pixel shader and CMake fxc target before drawing anything.",
+        "cpu_gdi_overlay": "Draw the route with GDI/Win32 instead of TrinityAL."
+      }
+    },
+    "z_strategy": {
+      "type": "choice",
+      "instructions": "If the route reuses identical gate segment positions, how should it be drawn so it is visible?",
+      "criteria": {
+        "disable_or_relax_depth_on_route_pass": "Draw the full grey network as now, then draw the brighter route with depth disabled or always-pass so it is not z-fought.",
+        "remove_route_edges_from_gate_buffer": "Omit those edges from the normal gate buffer so they are only drawn once.",
+        "ignore_zfight": "Draw both with default Z and accept z-fighting."
+      }
+    },
+    "files_to_modify": {
+      "type": "choice",
+      "instructions": "Which files actually need modification for this smallest milestone?",
+      "criteria": {
+        "gates_and_neweden_main": "Primarily new_eden_gates.h/.cpp (path reconstruction + stronger validation) and neweden_main.cpp (buffer + draw + log).",
+        "cmake_shaders_and_hosts": "CMakeLists, new shaders, triangle, and starfield must all change.",
+        "export_and_binaries": "The NEGATE1 exporter and committed .bin files must change."
+      }
+    },
+    "draw_call_delta": {
+      "type": "choice",
+      "instructions": "If a separate static route TOP_LINES buffer is added and the existing two draws remain, what is the per-frame DrawPrimitive count?",
+      "criteria": {
+        "three": "Gates + route + systems.",
+        "two": "Still two because the route replaces the gate draw.",
+        "one": "Everything is merged into one draw."
+      }
+    },
+    "validation_plan": {
+      "type": "choice",
+      "instructions": "What validation should be added beyond the existing hop-count check?",
+      "criteria": {
+        "path_endpoints_hops_and_edges": "Reconstructed path starts at Jita, ends at Amarr, hop count 11, every consecutive pair is a real undirected edge; log names; keep Niarja unreachable.",
+        "hop_count_only": "Keep only the integer 11 check.",
+        "visual_only": "No code validation; rely on a human looking at the window."
+      }
+    },
+    "eomap_borrow": {
+      "type": "choice",
+      "instructions": "Given `external_readonly['eomap_hopCount.ts']`, what should Carbon borrow for this milestone?",
+      "criteria": {
+        "unit_hop_undirected_bfs_only": "The idea that Jita-Amarr is 11 undirected unit hops on the stargate adjacency; not Thera chords, not Dijkstra.",
+        "full_p2p_solver": "Port EO-Map's A*/Dijkstra/smart-gate/security stack.",
+        "nothing": "EO-Map has no relevant hop-count concept."
+      }
+    }
+  }
+}

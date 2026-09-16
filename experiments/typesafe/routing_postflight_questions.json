@@ -1,0 +1,227 @@
+{
+  "questions": {
+    "path_is_reconstructed": {
+      "type": "noul",
+      "instructions": "Does the diff in `files['src/new_eden_gates.cpp']` reconstruct an ordered sequence of system ids, not merely a hop integer?",
+      "criteria": {
+        "true": "ShortestRoute fills systemIds via a parent chain.",
+        "false": "Only HopDistance's integer remains."
+      }
+    },
+    "path_is_graph_derived": {
+      "type": "noul",
+      "instructions": "Is the Jita-Amarr system sequence derived by BFS on the loaded graph rather than a hard-coded list of names or ids?",
+      "criteria": {
+        "true": "Parents come from adjacency traversal of Graph edges.",
+        "false": "The sequence is a literal array of systems."
+      }
+    },
+    "starts_at_jita": {
+      "type": "noul",
+      "instructions": "Do validation and the host require the reconstructed route to start at kJitaId / Jita?",
+      "criteria": {
+        "true": "Front id is kJitaId and the name is checked as Jita.",
+        "false": "Start is not checked."
+      }
+    },
+    "ends_at_amarr": {
+      "type": "noul",
+      "instructions": "Do validation and the host require the reconstructed route to end at kAmarrId / Amarr?",
+      "criteria": {
+        "true": "Back id is kAmarrId and the name is checked as Amarr.",
+        "false": "End is not checked."
+      }
+    },
+    "hop_count_still_11": {
+      "type": "noul",
+      "instructions": "Is the expected hop count still 11 (kExpectedJitaAmarrHops) and enforced on the reconstructed path length?",
+      "criteria": {
+        "true": "hops == 11 and system count == 12.",
+        "false": "The 11-hop check was removed or replaced with a hard-coded path."
+      }
+    },
+    "consecutive_pairs_are_edges": {
+      "type": "noul",
+      "instructions": "Does ValidateGraph check that every consecutive pair on the reconstructed route exists as a loaded undirected stargate edge?",
+      "criteria": {
+        "true": "ConsecutivePairsAreEdges looks up sorted pairs in the edge set.",
+        "false": "Only hop count is checked."
+      }
+    },
+    "normal_gates_still_drawn": {
+      "type": "noul",
+      "instructions": "Does `files['src/neweden_main.cpp']` still draw the full static gate network with DrawPrimitive(0, edgeCount) on the original gate buffer?",
+      "criteria": {
+        "true": "The 6989-edge gate draw remains.",
+        "false": "Normal gates were removed or replaced by the route."
+      }
+    },
+    "route_is_separate_buffer": {
+      "type": "noul",
+      "instructions": "Is the route a separate static TOP_LINES buffer rather than mutating the full gate vertex buffer?",
+      "criteria": {
+        "true": "routeVertexBuffer is created from MakeRouteVertices.",
+        "false": "The gate buffer is rewritten."
+      }
+    },
+    "route_is_brighter": {
+      "type": "noul",
+      "instructions": "Is the route drawn with a higher intensity (kRouteIntensity 1.0) than the subdued gates (kGateIntensity 0.22) using the same grayscale shader?",
+      "criteria": {
+        "true": "Route vertices use 1.0 intensity.",
+        "false": "Route and gates use the same 0.22 intensity or a new coloured shader."
+      }
+    },
+    "no_sqlite_esi": {
+      "type": "noul",
+      "instructions": "Did this diff add SQLite, ESI, or other network/data-source dependencies?",
+      "criteria": {
+        "true": "New SQLite/ESI/network usage was added.",
+        "false": "Still local binaries only."
+      }
+    },
+    "no_new_shader_or_cmake_app": {
+      "type": "noul",
+      "instructions": "Did the implementation add a new HLSL shader, CMake executable, or vcpkg dependency?",
+      "criteria": {
+        "true": "New shader/CMake/vcpkg was added.",
+        "false": "Only gates + neweden_main (+ a Python checker) using existing shaders."
+      }
+    },
+    "triangle_starfield_untouched": {
+      "type": "noul",
+      "instructions": "According to `files['git_diff_stat']`, were triangle_main.cpp and starfield_main.cpp left unchanged?",
+      "criteria": {
+        "true": "Those files are not in the diff.",
+        "false": "They were edited."
+      }
+    },
+    "no_route_ui": {
+      "type": "noul",
+      "instructions": "Did the diff add route UI, search, picking, or origin/destination controls?",
+      "criteria": {
+        "true": "Interactive routing UI was added.",
+        "false": "The Jita-Amarr route is automatic with no new UI."
+      }
+    },
+    "draw_calls_are_three": {
+      "type": "noul",
+      "instructions": "Is kDrawCallsPerFrame now 3 (gate lines, route lines, points)?",
+      "criteria": {
+        "true": "Three DrawPrimitive calls.",
+        "false": "Still two, or some other number."
+      }
+    },
+    "route_depth_relaxed": {
+      "type": "noul",
+      "instructions": "Is the route overlay drawn with depth test/write disabled so it is not z-fought against the identical gate segments, then depth restored before points?",
+      "criteria": {
+        "true": "RS_ZENABLE and RS_ZWRITEENABLE are 0 for the route pass and restored afterward.",
+        "false": "Route uses the same depth state as gates with no overlay handling."
+      }
+    },
+    "graph_type_not_duplicated": {
+      "type": "noul",
+      "instructions": "Did the diff introduce a second graph class/framework besides Graph plus the existing local adjacency map used for BFS?",
+      "criteria": {
+        "true": "A new graph type was added.",
+        "false": "ShortestRoute reuses Graph and BuildAdjacency."
+      }
+    },
+    "smoke_claims_pixels": {
+      "type": "noul",
+      "instructions": "Do the new comments or smoke logs claim that automated --smoke proves the route pixels look correct?",
+      "criteria": {
+        "true": "The code/docs claim pixel proof from smoke.",
+        "false": "Smoke still only proves init/draw/Present; visual look is for a human."
+      }
+    },
+    "niarja_still_unreachable": {
+      "type": "noul",
+      "instructions": "Is the Niarja-unreachable check still present after routing was added?",
+      "criteria": {
+        "true": "HopDistance(Jita, Niarja) must still be -1.",
+        "false": "That check was removed."
+      }
+    },
+    "names_logged_from_catalogue": {
+      "type": "noul",
+      "instructions": "Are route system names formatted from the loaded catalogue at runtime rather than a hard-coded name string?",
+      "criteria": {
+        "true": "FormatRouteNames looks up Catalog System.name.",
+        "false": "A literal name list is printed."
+      }
+    },
+    "jump_bridges_added": {
+      "type": "noul",
+      "instructions": "Did the diff add jump bridges, Ansiblex, security avoidance, or W-space?",
+      "criteria": {
+        "true": "Those features were added.",
+        "false": "Ordinary stargates only."
+      }
+    },
+    "path_source": {
+      "type": "choice",
+      "instructions": "Where does the ordered Jita-Amarr route come from?",
+      "criteria": {
+        "bfs_parents_on_loaded_graph": "ShortestRoute BFS parent reconstruction on Graph.",
+        "hardcoded_system_list": "A fixed array of system ids/names.",
+        "eomap_runtime_import": "Live EO-Map or SQLite import."
+      }
+    },
+    "gate_network_fate": {
+      "type": "choice",
+      "instructions": "What happened to the ordinary gate network draw?",
+      "criteria": {
+        "unchanged_full_buffer": "Still one static TOP_LINES buffer of all undirected gates, drawn first.",
+        "route_edges_removed": "Route edges were stripped from the gate buffer.",
+        "gates_removed": "The gate draw was deleted."
+      }
+    },
+    "new_dependencies": {
+      "type": "choice",
+      "instructions": "What new runtime dependencies does this milestone add to the New Eden executable?",
+      "criteria": {
+        "none": "Still TrinityAL + local .bin files.",
+        "sqlite_or_esi": "SQLite or ESI.",
+        "new_shader_pipeline": "A new fxc shader target is required to run."
+      }
+    },
+    "validation_adequacy": {
+      "type": "choice",
+      "instructions": "How adequate is the code-side route validation versus the milestone requirements?",
+      "criteria": {
+        "endpoints_hops_edges": "Starts Jita, ends Amarr, 11 hops, consecutive pairs are real edges, Niarja still unreachable.",
+        "hops_only": "Only the integer 11 check remains.",
+        "missing": "No route validation."
+      }
+    },
+    "requirements_gap": {
+      "type": "choice",
+      "instructions": "Which required behaviour appears unimplemented in the diff?",
+      "criteria": {
+        "none_for_this_milestone": "Ordered graph-derived Jita-Amarr path, separate brighter overlay, normal gates remain, no UI/ESI.",
+        "no_actual_path": "Hop count only; no ordered path.",
+        "no_visual_overlay": "Path exists but is not drawn."
+      }
+    },
+    "regression_risk": {
+      "type": "choice",
+      "instructions": "How large is the regression surface of this diff relative to frozen triangle/starfield hosts and the existing gate draw?",
+      "criteria": {
+        "scoped_neweden_gates": "Edits are in neweden_main and new_eden_gates; triangle/starfield untouched; gate buffer still static.",
+        "wide_renderer_rewrite": "Shared camera/depth/triangle path was rewritten.",
+        "data_format_break": "NEGATE1/NEDEN1B layout changed."
+      }
+    },
+    "pixel_evidence": {
+      "type": "choice",
+      "instructions": "What does a passing --smoke run prove about the highlighted route?",
+      "criteria": {
+        "init_draw_present_and_route_log": "Init, draws, Present, logged route names/hops, exit 0. Not pixel aesthetics.",
+        "pixels_proven": "Smoke proves the overlay looks correct on screen.",
+        "nothing": "Smoke no longer runs."
+      }
+    }
+  }
+}

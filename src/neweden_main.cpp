@@ -1,6 +1,7 @@
-// Standalone TrinityAL DX11 New Eden host (Milestone 1C).
+// Standalone TrinityAL DX11 New Eden host (Milestone 1C + Jita-Amarr route highlight).
 // Systems stay on the proven 1B TOP_POINTS path. Gates are one static TOP_LINES
-// buffer of unique undirected Contract A pairs. Camera controls are unchanged.
+// buffer of unique undirected Contract A pairs. The Jita-Amarr shortest hop route
+// is a second static TOP_LINES buffer drawn on top. Camera controls are unchanged.
 
 #include <Windows.h>
 #include <windowsx.h>
@@ -16,6 +17,7 @@ typedef HWND Tr2WindowHandle;
 #include "new_eden_anchors.h"
 #include "new_eden_catalog.h"
 #include "new_eden_gates.h"
+#include "new_eden_gates_expect.h"
 #include "orbit_camera.h"
 
 #include <cmath>
@@ -36,8 +38,9 @@ const wchar_t* kWindowClass = L"eo-map-carbon-neweden";
 const wchar_t* kWindowTitle = L"EO-Map Carbon New Eden (TrinityAL DX11)";
 const uint32_t kDefaultWidth = 1280;
 const uint32_t kDefaultHeight = 720;
-const uint32_t kDrawCallsPerFrame = 2;
+const uint32_t kDrawCallsPerFrame = 3;
 const float kGateIntensity = 0.22f;
+const float kRouteIntensity = 1.0f;
 const uint32_t kSmokeFrames = 60;
 const char* kDatasetId = "map_data_eo_3464040.db builder=1.5.0 SDE=3464040";
 
@@ -326,6 +329,58 @@ std::vector<StarVertex> MakeGateVertices(const neweden::Catalog& catalog, const 
 	return lines;
 }
 
+const neweden::System* SystemById(const neweden::Catalog& catalog, uint32_t id)
+{
+	for (const neweden::System& system : catalog.systems)
+	{
+		if (system.id == id)
+		{
+			return &system;
+		}
+	}
+	return nullptr;
+}
+
+std::string FormatRouteNames(const neweden::Catalog& catalog, const std::vector<uint32_t>& systemIds)
+{
+	std::string out;
+	for (size_t i = 0; i < systemIds.size(); ++i)
+	{
+		if (i != 0)
+		{
+			out += " -> ";
+		}
+		const neweden::System* system = SystemById(catalog, systemIds[i]);
+		out += system ? system->name : "?";
+	}
+	return out;
+}
+
+std::vector<StarVertex> MakeRouteVertices(const neweden::Catalog& catalog, const std::vector<uint32_t>& systemIds)
+{
+	std::unordered_map<uint32_t, const neweden::System*> byId;
+	byId.reserve(catalog.systems.size());
+	for (const neweden::System& system : catalog.systems)
+	{
+		byId.emplace(system.id, &system);
+	}
+
+	std::vector<StarVertex> lines;
+	if (systemIds.size() < 2)
+	{
+		return lines;
+	}
+	lines.reserve((systemIds.size() - 1) * 2);
+	for (size_t i = 1; i < systemIds.size(); ++i)
+	{
+		const neweden::System* source = byId.at(systemIds[i - 1]);
+		const neweden::System* dest = byId.at(systemIds[i]);
+		lines.push_back({ source->sceneX, source->sceneY, source->sceneZ, kRouteIntensity });
+		lines.push_back({ dest->sceneX, dest->sceneY, dest->sceneZ, kRouteIntensity });
+	}
+	return lines;
+}
+
 bool CreateDepthBuffer(Tr2PrimaryRenderContextAL& renderContext, Tr2TextureAL& depthBuffer, uint32_t width, uint32_t height)
 {
 	depthBuffer = Tr2TextureAL();
@@ -403,7 +458,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 
 	Log(stdout, "eo-map-carbon-neweden starting\n");
 	Log(stdout, "renderer: TrinityAL DX11\n");
-	Log(stdout, "path: TOP_LINES + TOP_POINTS DrawPrimitive (two calls)\n");
+	Log(stdout, "path: TOP_LINES gates + TOP_LINES route + TOP_POINTS DrawPrimitive (three calls)\n");
 	Log(stdout, "draw calls per frame: %u\n", kDrawCallsPerFrame);
 
 	neweden::Catalog catalog;
@@ -447,6 +502,33 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 	Log(stdout, "connection count: %u (undirected; source directed rows=13978)\n", edgeCount);
 	Log(stdout, "anchor check: Jita/Amarr/Dodixie/Rens/Hek scene coordinates match EO-Map transform\n");
 	Log(stdout, "graph check: endpoints in catalogue, Jita/Amarr/Dodixie/Rens/Hek/Zarzakh adjacency, Jita-Amarr hops=11, Niarja unreachable\n");
+
+	std::vector<uint32_t> routeIds;
+	std::string routeError;
+	if (!neweden::ShortestRoute(graph, neweden::kJitaId, neweden::kAmarrId, routeIds, routeError))
+	{
+		Log(stderr, "FAILED Jita-Amarr shortest route: %s\n", routeError.c_str());
+		CloseSmokeLog();
+		return 1;
+	}
+	const uint32_t routeHops = routeIds.empty() ? 0 : uint32_t(routeIds.size() - 1);
+	const uint32_t routeSegmentCount = routeHops;
+	const std::string routeNames = FormatRouteNames(catalog, routeIds);
+	Log(stdout, "route: %s\n", routeNames.c_str());
+	Log(stdout, "route hops: %u (systems=%u, segments=%u, expected hops=%u)\n",
+		routeHops,
+		uint32_t(routeIds.size()),
+		routeSegmentCount,
+		neweden::kExpectedJitaAmarrHops);
+	if (routeHops != neweden::kExpectedJitaAmarrHops ||
+		routeIds.empty() ||
+		routeIds.front() != neweden::kJitaId ||
+		routeIds.back() != neweden::kAmarrId)
+	{
+		Log(stderr, "FAILED Jita-Amarr reconstructed route does not match expected endpoints/hops\n");
+		CloseSmokeLog();
+		return 1;
+	}
 
 	unsigned adapterCount = 0;
 	if (Failed("GetAdapterCount", Tr2VideoAdapterInfo::GetAdapterCount(adapterCount)) || adapterCount == 0)
@@ -567,8 +649,16 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 
 	const std::vector<StarVertex> stars = MakeSystemVertices(catalog);
 	const std::vector<StarVertex> gates = MakeGateVertices(catalog, graph);
+	const std::vector<StarVertex> routeLines = MakeRouteVertices(catalog, routeIds);
 	const uint32_t stride = sizeof(StarVertex);
 	const uint32_t gateVertexCount = uint32_t(gates.size());
+	const uint32_t routeVertexCount = uint32_t(routeLines.size());
+	if (routeVertexCount != routeSegmentCount * 2)
+	{
+		Log(stderr, "FAILED route vertex count %u != 2 * %u segments\n", routeVertexCount, routeSegmentCount);
+		CloseSmokeLog();
+		return 1;
+	}
 	if (gateVertexCount != edgeCount * 2)
 	{
 		Log(stderr, "FAILED gate vertex count %u != 2 * %u connections\n", gateVertexCount, edgeCount);
@@ -583,6 +673,12 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 	}
 	Tr2BufferAL gateVertexBuffer;
 	if (Failed("Create gate vertex buffer", gateVertexBuffer.Create(stride, gateVertexCount, Tr2GpuUsage::VERTEX_BUFFER, Tr2CpuUsage::NONE, gates.data(), *renderContext)))
+	{
+		CloseSmokeLog();
+		return 1;
+	}
+	Tr2BufferAL routeVertexBuffer;
+	if (Failed("Create route vertex buffer", routeVertexBuffer.Create(stride, routeVertexCount, Tr2GpuUsage::VERTEX_BUFFER, Tr2CpuUsage::NONE, routeLines.data(), *renderContext)))
 	{
 		CloseSmokeLog();
 		return 1;
@@ -605,7 +701,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 		return 1;
 	}
 
-	Log(stdout, "Rendering %u New Eden systems via TOP_POINTS and %u stargate connections via TOP_LINES. Left-drag orbits, right-drag pans, wheel zooms. Close the window to exit.\n", systemCount, edgeCount);
+	Log(stdout, "Rendering %u New Eden systems via TOP_POINTS, %u stargate connections via TOP_LINES, and the Jita-Amarr shortest route (%u hops) as a brighter TOP_LINES overlay. Left-drag orbits, right-drag pans, wheel zooms. Close the window to exit.\n", systemCount, edgeCount, routeHops);
 
 	LARGE_INTEGER qpcFreq = {};
 	QueryPerformanceFrequency(&qpcFreq);
@@ -700,6 +796,41 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 			ok = false;
 			break;
 		}
+		if (Failed("RS_ZENABLE route overlay", renderContext->SetRenderState(RS_ZENABLE, 0)))
+		{
+			ok = false;
+			break;
+		}
+		if (Failed("RS_ZWRITEENABLE route overlay", renderContext->SetRenderState(RS_ZWRITEENABLE, 0)))
+		{
+			ok = false;
+			break;
+		}
+		if (Failed("SetStreamSource route", renderContext->SetStreamSource(0, routeVertexBuffer, 0, stride)))
+		{
+			ok = false;
+			break;
+		}
+		if (Failed("SetTopology TOP_LINES route", renderContext->SetTopology(TOP_LINES)))
+		{
+			ok = false;
+			break;
+		}
+		if (Failed("DrawPrimitive route", renderContext->DrawPrimitive(0, routeSegmentCount)))
+		{
+			ok = false;
+			break;
+		}
+		if (Failed("RS_ZENABLE restore", renderContext->SetRenderState(RS_ZENABLE, 1)))
+		{
+			ok = false;
+			break;
+		}
+		if (Failed("RS_ZWRITEENABLE restore", renderContext->SetRenderState(RS_ZWRITEENABLE, 1)))
+		{
+			ok = false;
+			break;
+		}
 		if (Failed("SetStreamSource points", renderContext->SetStreamSource(0, vertexBuffer, 0, stride)))
 		{
 			ok = false;
@@ -752,9 +883,10 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 		{
 			const double avgMs = fpsWindowMs / double(fpsWindowFrames);
 			const double fps = (avgMs > 0.0) ? (1000.0 / avgMs) : 0.0;
-			Log(stdout, "perf: systems=%u connections=%u draw_calls=%u (1 line + 1 point) frame=%.2fms (%.0f fps) renderer=TrinityAL_DX11 TOP_LINES+TOP_POINTS dataset=SDE3464040\n",
+			Log(stdout, "perf: systems=%u connections=%u route_hops=%u draw_calls=%u (1 gate line + 1 route line + 1 point) frame=%.2fms (%.0f fps) renderer=TrinityAL_DX11 TOP_LINES+TOP_POINTS dataset=SDE3464040\n",
 				systemCount,
 				edgeCount,
+				routeHops,
 				kDrawCallsPerFrame,
 				avgMs,
 				fps);
@@ -772,12 +904,13 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmdLine, int)
 	{
 		const double avgMs = totalFrameMs / double(frames);
 		const double fps = (avgMs > 0.0) ? (1000.0 / avgMs) : 0.0;
-		Log(stdout, "smoke: frames=%u systems=%u connections=%u known_space=%u other_space=%u draw_calls/frame=%u point_draws=1 gate_draws=1 avg_frame_ms=%.2f avg_fps=%.1f path=TrinityAL_DX11/TOP_LINES+TOP_POINTS dataset=SDE3464040\n",
+		Log(stdout, "smoke: frames=%u systems=%u connections=%u known_space=%u other_space=%u route_hops=%u draw_calls/frame=%u point_draws=1 gate_draws=1 route_draws=1 avg_frame_ms=%.2f avg_fps=%.1f path=TrinityAL_DX11/TOP_LINES+TOP_POINTS dataset=SDE3464040\n",
 			frames,
 			systemCount,
 			edgeCount,
 			catalog.knownSpaceCount,
 			catalog.otherSpaceCount,
+			routeHops,
 			kDrawCallsPerFrame,
 			avgMs,
 			fps);

@@ -27,4 +27,10 @@ bool LoadGraph(const std::wstring& path, Graph& out, std::string& error);
 bool FindAndLoadGraph(Graph& out, std::string& error);
 bool ValidateGraph(const Catalog& catalog, const Graph& graph, std::string& error);
 int HopDistance(const Graph& graph, uint32_t fromId, uint32_t toId);
+bool ShortestRoute(
+	const Graph& graph,
+	uint32_t fromId,
+	uint32_t toId,
+	std::vector<uint32_t>& systemIds,
+	std::string& error);
 }

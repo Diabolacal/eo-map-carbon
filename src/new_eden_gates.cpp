@@ -186,23 +186,34 @@ bool ValidateNeighbors(
 }
 }
 
-int HopDistance(const Graph& graph, uint32_t fromId, uint32_t toId)
+bool ShortestRoute(
+	const Graph& graph,
+	uint32_t fromId,
+	uint32_t toId,
+	std::vector<uint32_t>& systemIds,
+	std::string& error)
 {
+	systemIds.clear();
 	if (fromId == toId)
 	{
-		return 0;
+		systemIds.push_back(fromId);
+		return true;
 	}
+
 	const Adjacency adj = BuildAdjacency(graph);
-	std::unordered_map<uint32_t, int> dist;
-	dist.reserve(adj.size());
+	std::unordered_map<uint32_t, uint32_t> parent;
+	std::unordered_set<uint32_t> seen;
 	std::queue<uint32_t> queue;
-	dist[fromId] = 0;
+	parent.reserve(adj.size());
+	seen.reserve(adj.size());
+	seen.insert(fromId);
 	queue.push(fromId);
-	while (!queue.empty())
+
+	bool found = false;
+	while (!queue.empty() && !found)
 	{
 		const uint32_t current = queue.front();
 		queue.pop();
-		const int here = dist[current];
 		const auto it = adj.find(current);
 		if (it == adj.end())
 		{
@@ -210,19 +221,88 @@ int HopDistance(const Graph& graph, uint32_t fromId, uint32_t toId)
 		}
 		for (uint32_t nxt : it->second)
 		{
-			if (dist.find(nxt) != dist.end())
+			if (!seen.insert(nxt).second)
 			{
 				continue;
 			}
-			dist[nxt] = here + 1;
+			parent[nxt] = current;
 			if (nxt == toId)
 			{
-				return dist[nxt];
+				found = true;
+				break;
 			}
 			queue.push(nxt);
 		}
 	}
-	return -1;
+
+	if (!found)
+	{
+		std::ostringstream oss;
+		oss << "no stargate path from " << fromId << " to " << toId;
+		error = oss.str();
+		return false;
+	}
+
+	for (uint32_t at = toId;;)
+	{
+		systemIds.push_back(at);
+		if (at == fromId)
+		{
+			break;
+		}
+		const auto parentIt = parent.find(at);
+		if (parentIt == parent.end())
+		{
+			error = "shortest-route parent chain is broken";
+			systemIds.clear();
+			return false;
+		}
+		at = parentIt->second;
+	}
+	std::reverse(systemIds.begin(), systemIds.end());
+	return true;
+}
+
+int HopDistance(const Graph& graph, uint32_t fromId, uint32_t toId)
+{
+	std::vector<uint32_t> systemIds;
+	std::string error;
+	if (!ShortestRoute(graph, fromId, toId, systemIds, error) || systemIds.empty())
+	{
+		return -1;
+	}
+	return int(systemIds.size()) - 1;
+}
+
+bool ConsecutivePairsAreEdges(const Graph& graph, const std::vector<uint32_t>& systemIds, std::string& error)
+{
+	std::unordered_set<uint64_t> keys;
+	keys.reserve(graph.edges.size());
+	for (const Edge& edge : graph.edges)
+	{
+		keys.insert((uint64_t(edge.sourceId) << 32) | uint64_t(edge.destId));
+	}
+	if (systemIds.size() < 2)
+	{
+		error = "route has no hops";
+		return false;
+	}
+	for (size_t i = 1; i < systemIds.size(); ++i)
+	{
+		const uint32_t a = systemIds[i - 1];
+		const uint32_t b = systemIds[i];
+		const uint32_t lo = (a < b) ? a : b;
+		const uint32_t hi = (a < b) ? b : a;
+		const uint64_t key = (uint64_t(lo) << 32) | uint64_t(hi);
+		if (keys.find(key) == keys.end())
+		{
+			std::ostringstream oss;
+			oss << "route hop " << a << "->" << b << " is not a loaded stargate edge";
+			error = oss.str();
+			return false;
+		}
+	}
+	return true;
 }
 
 bool LoadGraph(const std::wstring& path, Graph& out, std::string& error)
@@ -415,12 +495,33 @@ bool ValidateGraph(const Catalog& catalog, const Graph& graph, std::string& erro
 		return false;
 	}
 
-	const int hops = HopDistance(graph, kJitaId, kAmarrId);
-	if (hops != int(kExpectedJitaAmarrHops))
+	std::vector<uint32_t> jitaAmarr;
+	if (!ShortestRoute(graph, kJitaId, kAmarrId, jitaAmarr, error))
+	{
+		return false;
+	}
+	const int hops = int(jitaAmarr.size()) - 1;
+	if (hops != int(kExpectedJitaAmarrHops) || jitaAmarr.size() != kExpectedJitaAmarrHops + 1)
 	{
 		std::ostringstream oss;
 		oss << "Jita-Amarr hop count is " << hops << ", expected " << kExpectedJitaAmarrHops;
 		error = oss.str();
+		return false;
+	}
+	if (jitaAmarr.front() != kJitaId || jitaAmarr.back() != kAmarrId)
+	{
+		error = "reconstructed Jita-Amarr route does not start at Jita and end at Amarr";
+		return false;
+	}
+	if (!ConsecutivePairsAreEdges(graph, jitaAmarr, error))
+	{
+		return false;
+	}
+	const System* routeStart = FindSystem(catalog, jitaAmarr.front());
+	const System* routeEnd = FindSystem(catalog, jitaAmarr.back());
+	if (!routeStart || routeStart->name != "Jita" || !routeEnd || routeEnd->name != "Amarr")
+	{
+		error = "reconstructed route endpoints are not named Jita and Amarr";
 		return false;
 	}
 	if (HopDistance(graph, kJitaId, kNiarjaId) != -1)

@@ -43,6 +43,9 @@ Or from the repo root:
 `--measure-only` reports payload size against TypeSafe's documented ~32k token /
 ~150k English-character request budget before any live call.
 
+`ask.py` sends one fan-out (preflight/postflight) over named files. The
+Jita-Amarr routing development-task writeup is `ROUTING_EXPERIMENT.md`.
+
 ## Scoring
 
 - Noul: `noul >= 0.5` is yes. Certainty is `abs(noul - 0.5) * 2` (Noul has no
