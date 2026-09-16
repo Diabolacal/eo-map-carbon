@@ -1,14 +1,14 @@
 # Current status
 
-Last updated 2026-09-13 after the ISM volume fix on `feat/carbon-creator-mode`.
+Last updated 2026-09-16 after consolidating Creator Mode, the Jita-Amarr routing experiment, and the TypeSafe Jev experiments onto `main`.
 
 ## Outcome
 
-Milestones 0 / 1A / 1B / 1C remain **PROVEN** (human pixel verification).
+Milestones 0 / 1A / 1B / 1C remain **PROVEN** (human pixel verification of triangle, starfield, New Eden cluster, and stargate topology).
 
-The visual rendering lab has been extended into **Creator Mode**. Automated smoke proves init, persist parse, region sidecar, instanced stars, glow, sky, ISM, bloom on/off, creator-off composite, Present, numeric gate/chroma contracts, and a clean exit. It cannot claim pixels or aesthetics.
+The New Eden host is a **Creator Mode visual lab** plus an experimental Jita-Amarr route overlay. Automated smoke proves init, persist parse, region sidecar, instanced stars, glow, sky, ISM, bloom on/off, creator-off composite, Present, numeric gate/chroma contracts, Jita-Amarr = 11 hops, and a clean exit. It cannot claim pixels or aesthetics. The route overlay has not been separately human-verified.
 
-Human-tuned star / gate / bloom / sky / glow / ISM colour values are the checked-in `TuneParams` baseline. The ISM spatial model is a flared world-space disc, not the earlier 4-tap Y-slab.
+TypeSafe Jev work is isolated under `experiments/typesafe/`. It is not part of the Carbon host.
 
 ## Creator Mode
 
@@ -20,32 +20,47 @@ Launch:
 .\scripts\run-creator-mode.ps1
 ```
 
-Same as `.\scripts\run-visual-lab.ps1`. Opens the New Eden window titled **EO-Map Carbon New Eden Creator Mode (TrinityAL DX11)** and the **Creator / Visual lab** tool window.
+Same as `.\scripts\run-visual-lab.ps1` / `.\scripts\run-neweden.ps1`. Opens the New Eden window titled **EO-Map Carbon New Eden Creator Mode (TrinityAL DX11)** and the **Creator / Visual lab** tool window.
 
 | Gate | Result | Evidence |
 | --- | --- | --- |
-| A. configure | **pass** | `.\scripts\build-neweden.ps1` |
-| B. compile | **pass** | new shaders + host; C5030 ATL warning only |
-| C. link | **pass** | `.cmake-build-triangle-debug\bin\eo-map-carbon-neweden.exe` |
-| D. catalogues | **pass** | 5485 / 6989 / 5485 temps / 70 regions; Jita 7305 K / region 10000002 |
-| E. persist | **pass** | parse / clamp / unknown-key / roundtrip |
-| F. renderer init | **pass** | `TrinityAL CreateDevice succeeded` |
-| G. present | **pass** | first Present; 40 bloom-on (9 draws / 6 PP) then bloom-off creator (6 / 3) then creator-off (3 / 1) |
+| A. configure | **pass** (Creator Mode branch) | `.\scripts\build-neweden.ps1` |
+| B. compile | **pass** (Creator Mode branch) | new shaders + host; C5030 ATL warning only |
+| C. link | **pass** (Creator Mode branch) | `.cmake-build-triangle-debug\bin\eo-map-carbon-neweden.exe` |
+| D. catalogues | **pass** (Creator Mode branch) | 5485 / 6989 / 5485 temps / 70 regions; Jita 7305 K / region 10000002 |
+| E. persist | **pass** (Creator Mode branch) | parse / clamp / unknown-key / roundtrip |
+| F. renderer init | **pass** (Creator Mode branch) | `TrinityAL CreateDevice succeeded` |
+| G. present | **pass** (Creator Mode branch; draw counts below are pre-route-overlay) | first Present; 40 bloom-on then bloom-off creator then creator-off |
 | H. pixels / look | **not claimed** | human must look and tune |
+| I. Jita-Amarr overlay | **code + graph checks; pixels not claimed** | `ShortestRoute` + second GateLine pass after consolidation |
 
-### Creator Mode smoke log
-
-```
-ism math: centre_env=1.000 far=0.00000 above=0.00000 ... default_ray=0.857 centre_tau=0.677 screen_hits=115/336 (34.2%) radius=32.0 thick=8.0 far_clip=155.3
-persist check: parse/clamp/unknown-key/roundtrip ok
-first Present completed
-ism_qpc: default_steps=16 avg_ms=3.67 cinematic_steps=48 avg_ms=1.04 (immediate present; not a GPU profiler)
-smoke: frames=60 ... bloom_on_draws=9 bloom_on_pp=6 bloom_off_creator_draws=6 bloom_off_creator_pp=3 creator_off_draws=3 creator_off_pp=1 ... avg_frame_ms=1.75 avg_fps=571.0
-```
-
-The QPC figures are BeginScene through Present with `PRESENT_INTERVAL_IMMEDIATE` in `--smoke` only. The 16-step average includes first-frame hitch; a warmed `--points` smoke measured 0.85 ms at 16 steps and 0.92 ms at 48 steps. This is not a vsync-capped interactive measurement or a GPU profiler. Frozen triangle (30 frames) and synthetic starfield (25k points) stayed green. `--points` smoke is 8 / 6 then 5 / 3 then 3 / 1 (no glow draw).
+After consolidation the smoke expected draw counts include one extra route pass: bloom-on 10/6 (9/6 with `--points`), bloom-off creator 7/3 (6/3 with `--points`), creator-off 4/1. Re-run smoke after this merge before treating those numbers as green on this tree.
 
 See [docs/creator-mode-port.md](creator-mode-port.md) and [docs/visual-rendering-plan.md](visual-rendering-plan.md).
+
+## Jita-Amarr routing experiment
+
+Graph reconstruction and validation live in `src/new_eden_gates.cpp` (`ShortestRoute`, endpoint/hop/edge checks inside `ValidateGraph`). Independent Python BFS: `scripts/test-jita-amarr-route.py`.
+
+Expected path (11 hops):
+
+`Jita -> Ikuchi -> Ansila -> Hykkota -> Ahbazon -> Shera -> Gensela -> Dresi -> Aphend -> Romi -> Bhizheba -> Amarr`
+
+The visual is a second `TOP_LINES` draw using the existing Creator Mode `GateLine` program with higher opacity and a lighter tint, depth-write disabled so overlapping gate segments do not z-fight. It is not the old grayscale three-draw host.
+
+Jev preflight/postflight for that coding task: [experiments/typesafe/ROUTING_EXPERIMENT.md](../experiments/typesafe/ROUTING_EXPERIMENT.md).
+
+## TypeSafe / Jev experiments
+
+Not a renderer milestone. Not wired into any TrinityAL executable.
+
+| Experiment | Report |
+| --- | --- |
+| Repo comprehension (37 gold questions, 5 live runs) | [experiments/typesafe/REPORT.md](../experiments/typesafe/REPORT.md) |
+| Jita-Amarr coding-task preflight/postflight | [experiments/typesafe/ROUTING_EXPERIMENT.md](../experiments/typesafe/ROUTING_EXPERIMENT.md) |
+| Synthetic tactical commander (220 live `jev-1.13.0` calls) | [experiments/typesafe/JEV_TACTICAL_COMMANDER.md](../experiments/typesafe/JEV_TACTICAL_COMMANDER.md), [experiments/typesafe/COMMANDER_BENCHMARK.md](../experiments/typesafe/COMMANDER_BENCHMARK.md) |
+
+The commander test is Python / System One over scripted battlefield snapshots. There are no Carbon NPCs.
 
 ## Milestone 0 — triangle
 
@@ -63,31 +78,33 @@ The frozen 1A host is unchanged.
 
 **PROVEN**, including human pixel, orientation, topology, and camera verification.
 
-Geometry, camera signs, catalogues, and the unpremultiplied gate-grey contract are unchanged. Creator Mode draws extra passes around that proven path.
+Geometry, camera signs, and catalogues are unchanged. Creator Mode draws extra passes around that proven path. The Jita-Amarr overlay is additional and not part of the original 1C human proof.
 
 ## Architecture actually used (Creator Mode)
 
 - Same WIN32 host and camera as 1B/1C. Triangle and synthetic starfield stay frozen.
-- Data: existing `NEDEN1B` / `NEGATE1` / `NESTAR1` plus new `NEREGN1` region sidecar. No SQLite / ESI / network in the executable.
+- Data: existing `NEDEN1B` / `NEGATE1` / `NESTAR1` plus `NEREGN1` region sidecar. No SQLite / ESI / network in the executable.
 - Sky: one fullscreen `DeepSpace.psh` into the HDR scene RT. Hash stars are view-direction only.
 - ISM: half-res `IsmField.psh`, plane-centred 8/16/24/32/48-step world disc, composite multiplies scene/bloom by transmittance and adds emission.
 - Glow / flare: extra `DrawIndexedInstanced` batches, additive, thresholded. Not one draw per star.
 - Persist: INI next to the exe, loaded on interactive startup only.
+- Route overlay: extra `TOP_LINES` buffer, same `GateLine` shaders, brighter constants.
 
 ## Carbon/Trinity APIs newly used
 
-None beyond the already-verified TrinityAL RT / CB / resource-set / instanced-draw surface. New work is host shaders and extra passes.
+None beyond the already-verified TrinityAL RT / CB / resource-set / instanced-draw surface. New work is host shaders, extra passes, and graph parent-pointer BFS.
 
 ## Known gaps
 
-- Visual look is not proven. Human must open Creator Mode and tune.
-- ISM is an analytic flared disc, not EO-Map's 96³ bake. Aesthetics still need a human look.
+- Visual look is not proven. Human must open Creator Mode and look. The route overlay needs the same look.
+- ISM is an analytic flared disc, not EO-Map's 96³ bake.
 - Region tint is atlas modulo-11, not Creator highlight/dim/hide.
-- Gate lines remain 1 px.
+- Gate lines remain 1 px. The route overlay is still 1 px, just brighter.
 - W-space is intentionally omitted.
-- Resize of the new RTs follows the existing recreate path but was not interactively exercised.
+- Resize of the extra RTs follows the existing recreate path but was not interactively exercised after consolidation.
 - Debug CRT is `/MD`. Global git `insteadOf` is still mutated by configure.
-- No labels, picking, routing, security colours, ESI, or product UI.
+- No labels, picking, search, security colours, ESI, jump bridges, or product UI.
+- Jev is not in the native process. Community API latency is not a production NPC loop.
 
 ## Human smoke
 
@@ -95,4 +112,4 @@ None beyond the already-verified TrinityAL RT / CB / resource-set / instanced-dr
 .\scripts\run-creator-mode.ps1
 ```
 
-Milestones 0 / 1A / 1B / 1C are already human-verified. Re-run those only if Carbon or the frozen hosts change. Creator Mode needs a human to look and tune.
+Milestones 0 / 1A / 1B / 1C are already human-verified. Re-run those only if Carbon or the frozen hosts change. After consolidation, a human still needs to look at Creator Mode **and** confirm the Jita-Amarr overlay is visible and attached.

@@ -4,7 +4,7 @@ This is a personal experiment: can an external developer consume public Carbon/T
 
 ## Non-goals
 
-Do not add ESI, SSO, labels, picking, routing, jump bridges, security colours, sovereignty, search, installers, or production packaging unless a later milestone explicitly asks for that one thing. Creator Mode already has a developer tuning window, INI persist, and an optional region-tint sidecar. Do not grow those into product UI.
+Do not add ESI, SSO, labels, picking, jump bridges, security colours, sovereignty, search, installers, or production packaging unless a later milestone explicitly asks for that one thing. Creator Mode already has a developer tuning window, INI persist, and an optional region-tint sidecar. The host already has one experimental Jita-Amarr shortest-route overlay. Do not grow those into product UI or a general router.
 
 Milestone 1B already adds a static New Eden known-space point cloud. Do not grow that into a map product.
 
@@ -32,7 +32,7 @@ Do not fold later map features into this host. New Eden coordinates live in `eo-
 
 Human-verified. Do not redo it.
 
-`eo-map-carbon-neweden` loads 5,485 known-space systems from `data/new_eden_systems.bin`, an export of EO-Map's pinned Contract A artefact (`map_data_eo_3464040.db`, SDE 3464040, builder 1.5.0). The host applies EO-Map's live display mapping `scene = (db.x, -db.z, -db.y)` and draws them with the same TrinityAL `TOP_POINTS` path as 1A. A human confirmed the cluster is recognisably New Eden, with correct-enough orientation and the same orbit / pan / zoom as 1A.
+`eo-map-carbon-neweden` loads 5,485 known-space systems from `data/new_eden_systems.bin`, an export of EO-Map's pinned Contract A artefact (`map_data_eo_3464040.db`, SDE 3464040, builder 1.5.0). The host applies EO-Map's live display mapping `scene = (db.x, -db.z, -db.y)`. Milestone 1B was proven on `TOP_POINTS`. Creator Mode later changed the default system draw to instanced quads; `TOP_POINTS` remains `--points` / F7. A human confirmed the cluster is recognisably New Eden, with correct-enough orientation and the same orbit / pan / zoom as 1A.
 
 Do not re-interpret the SDE. Regenerate both artefacts with `scripts/export-new-eden-systems.py` from the sibling EO-Map checkout. Do not open SQLite, ESI, or the EO-Map web app from this executable.
 
@@ -42,9 +42,9 @@ W-space (2,604 Anoikis systems in Contract A) is a separate ~1,300 LY cluster an
 
 Human-verified. Do not redo it.
 
-`eo-map-carbon-neweden` also loads `data/new_eden_stargates.bin`: 6,989 unique undirected known-space connections from the same Contract A `stargates` table (13,978 directed rows, already k-space only). The host draws them as one static `TOP_LINES` buffer (`DrawPrimitive(0, 6989)` — count is the number of segments). A human confirmed the network is the real New Eden graph and stays attached through orbit / pan / zoom.
+`eo-map-carbon-neweden` also loads `data/new_eden_stargates.bin`: 6,989 unique undirected known-space connections from the same Contract A `stargates` table (13,978 directed rows, already k-space only). Creator Mode draws that network as faded `TOP_LINES` through the `GateLine` program. `ShortestRoute` reconstructs the ordered Jita-Amarr path (expected 11 hops); the host draws those segments as a second, brighter `GateLine` pass. A human confirmed the 1C network is the real New Eden graph. The route overlay is an experiment on top of that; its pixels are not separately human-proven.
 
-Do not re-interpret the SDE. Regenerate artefacts with `scripts/export-new-eden-systems.py`. Do not add W-space, wormholes, jump bridges, security colours, or route highlighting here.
+Do not re-interpret the SDE. Regenerate artefacts with `scripts/export-new-eden-systems.py`. Do not add W-space, wormholes, jump bridges, security colours, or additional routes here.
 
 ## Visual rendering lab / Creator Mode
 
@@ -83,7 +83,7 @@ Three WIN32 hosts, one CMake project, one vcpkg prefix:
 
 - `eo-map-carbon-triangle` — frozen Milestone 0 diagnostic.
 - `eo-map-carbon-starfield` — frozen Milestone 1A synthetic 3D starfield.
-- `eo-map-carbon-neweden` — proven 1B/1C geometry plus Creator Mode (instanced stars, bloom, sky, ISM, glow, persist, Win32 sliders). Aesthetics are not proven.
+- `eo-map-carbon-neweden` — proven 1B/1C geometry plus Creator Mode (instanced stars, bloom, sky, ISM, glow, persist, Win32 sliders) and an experimental Jita-Amarr route overlay. Aesthetics are not proven.
 
 Do not fold camera/depth/starfield/New Eden changes into `triangle_main.cpp`.
 Do not replace the synthetic 1A generator with New Eden data.
@@ -133,6 +133,18 @@ Build trees, binaries, logs, and generated shader headers stay untracked.
 - `Tr2ResourceSetAL` is immutable after `Create`. Default/empty resource sets do not unbind SRVs; bind a dummy set before drawing into a texture that was sampled last frame.
 - Constant-buffer `Create` size must be a multiple of 16. TrinityAL does not pad.
 
+## TypeSafe / Jev experiments
+
+Isolated Python work under `experiments/typesafe/`. Not a Carbon renderer milestone. Do not wire Jev, TypeSafe, or any HTTP API into a TrinityAL host.
+
+The tactical commander benchmark is:
+
+synthetic numeric battlefield state -> TypeSafe System One API -> typed tactical decisions -> deterministic fallback/composer
+
+It is not Carbon NPCs, and this repo does not run NPCs inside Carbon.
+
+Readable report: `experiments/typesafe/JEV_TACTICAL_COMMANDER.md`. Full evidence: `experiments/typesafe/COMMANDER_BENCHMARK.md`. Raw API dumps stay gitignored under `experiments/typesafe/results/`.
+
 ## Milestone discipline
 
 One milestone at a time. Do not implement later map features while proving a renderer step.
@@ -143,13 +155,11 @@ Automated smoke can prove init, draw, Present, and a clean exit. It cannot claim
 
 ## Git hygiene
 
-Work on a feature branch. Do not modify `main` directly unless asked.
+The public default branch is `main`. Do not invent extra long-lived branches for already-landed experiments.
 
 Do not commit build trees, binaries, logs, `.env`, credentials, proprietary assets, or cloned Carbon sources.
 
 Do not commit unless asked, except when the task explicitly includes a branch/commit/push closeout.
-
-Do not merge to `main` unless asked.
 
 ## Human smoke
 
@@ -179,7 +189,7 @@ New Eden:
 .\scripts\run-neweden.ps1
 ```
 
-Milestone 1B geometry and Milestone 1C stargate topology are already human-verified. Re-run only if the host or Carbon changes. Expect a Win32 window titled **EO-Map Carbon New Eden Creator Mode (TrinityAL DX11)** with the locked human baseline, procedural sky, a broad New Eden-scale ISM disc, optional glow, faded gates, and a tabbed Creator / Visual lab window. Same orbit / pan / zoom as the starfield. Automated `--smoke` loads the pinned Contract A systems, undirected gates, star temperatures, and region ids, checks persist parse and ISM envelope math, presents 40 bloom-on + 10 bloom-off creator + 10 creator-off frames, and still cannot claim pixels or aesthetics.
+Milestone 1B geometry and Milestone 1C stargate topology are already human-verified. Re-run only if the host or Carbon changes. Expect a Win32 window titled **EO-Map Carbon New Eden Creator Mode (TrinityAL DX11)** with the locked human baseline, procedural sky, a broad New Eden-scale ISM disc, optional glow, faded gates, a brighter Jita-Amarr route overlay, and a tabbed Creator / Visual lab window. Same orbit / pan / zoom as the starfield. Automated `--smoke` loads the pinned Contract A systems, undirected gates, star temperatures, and region ids, reconstructs Jita-Amarr = 11 hops, checks persist parse and ISM envelope math, presents 40 bloom-on + 10 bloom-off creator + 10 creator-off frames (draw counts include the extra route pass), and still cannot claim pixels or aesthetics. The route overlay has not been separately human-verified.
 
 ```powershell
 .\scripts\run-creator-mode.ps1

@@ -1,35 +1,57 @@
-# EO-Map Carbon Experiment
+# EO-Map Carbon
 
-Personal technical exercise: can an external developer bootstrap the public CCP/Fenris **Carbon / Trinity** stack, with LLM coding agents doing the implementation, and render something native.
+Personal technical exercise: can an external developer consume the public CCP/Fenris **Carbon / Trinity** stack and render a native 3D New Eden map with TrinityAL.
 
-This is **not** a product, **not** a port of EO-Map, and **not** a modification of the EVE Online or EVE Frontier clients.
+This is **not** a product, **not** a port of EO-Map, and **not** a modification of the EVE Online or EVE Frontier clients. Only public source, documentation, dependencies and data are used.
 
-Only public source, documentation, dependencies and data are used.
+## What this became
 
-## What this is
+It started as a bootstrap question. The public Carbon tree is real, but there is no hello-world app. This repo is the sequence of experiments that followed from that:
 
-A Windows-native experiment that:
+1. Native TrinityAL / Direct3D 11 host in a Win32 window.
+2. A human-verified red triangle (`eo-map-carbon-triangle`).
+3. A human-verified synthetic field of 25,000 points (`eo-map-carbon-starfield`), with EO-Map-matching orbit / pan / zoom.
+4. A human-verified New Eden known-space point cloud of 5,485 systems (`eo-map-carbon-neweden`), from an export of EO-Map's pinned Contract A artefact.
+5. A human-verified stargate graph on that same host: 6,989 unique undirected known-space connections.
+6. Creator Mode visual work on the New Eden host: sized temperature-coloured stars, faded gates, HDR bloom, procedural sky, interstellar-medium disc, optional glow / flare, optional region tint, INI persist, and a developer Win32 tuning panel. **Aesthetics are not proven.** Automated smoke does not claim pixels.
+7. A graph-derived Jita to Amarr shortest-hop route (11 hops), reconstructed with parent-pointer BFS on the loaded undirected graph, validated, and drawn as a brighter overlay on the current Creator Mode `GateLine` path.
 
-1. Consumes public Carbon repositories (`carbonengine/trinity` and the packages its vcpkg manifest pulls).
-2. Builds Trinity's C++ abstraction layer **TrinityAL** with the **Direct3D 11** backend.
-3. Opens a native Win32 window.
-4. Draws a human-verified red triangle (`eo-map-carbon-triangle`) using TrinityAL APIs from `trinityal/tests`.
-5. Draws a human-verified synthetic 3D starfield of 25,000 points (`eo-map-carbon-starfield`) through the same TrinityAL DX11 path.
-6. Draws a human-verified New Eden known-space point cloud (`eo-map-carbon-neweden`) from an export of EO-Map's pinned Contract A artefact.
-7. Draws a human-verified New Eden stargate graph on that same host from the same Contract A `stargates` table.
-8. Turns that host into a Creator Mode visual lab: sized temperature-coloured stars, togglable TrinityAL bloom, distance-faded gates, procedural sky, interstellar medium, optional glow/flare, optional region tint, persist, and a developer slider panel. Aesthetics are not proven.
+The geometry question is answered. Creator Mode is a visual lab, not a finished look. The Jita-Amarr overlay is a routing experiment, not a map router.
 
-The geometry question is answered. The current question is whether a native Carbon/Trinity New Eden can look cinematic enough to share.
+New Eden coordinates and stargate pairs are a slim static export of EO-Map's pinned Contract A artefact. See [data/README.md](data/README.md). The native host does not open SQLite or call ESI.
+
+## Other experiments in this repository
+
+[TypeSafe Jev / System One](experiments/typesafe/README.md) work lives under `experiments/typesafe/`. It is **not** wired into Carbon. There are no NPCs in the native host. The harness was already in this repo, so the later synthetic commander benchmark was added next to it.
+
+Three completed Jev experiments:
+
+- Repository-comprehension benchmark against a Milestone 1C snapshot: [experiments/typesafe/REPORT.md](experiments/typesafe/REPORT.md)
+- Jev-assisted Jita-Amarr coding-task preflight/postflight: [experiments/typesafe/ROUTING_EXPERIMENT.md](experiments/typesafe/ROUTING_EXPERIMENT.md)
+- Synthetic tactical commander feasibility test: one boss, up to 60 deterministic subordinates, up to 12 players, 16 typed questions per inference, 220 live `jev-1.13.0` calls
+
+Readable commander writeup:
+
+- [experiments/typesafe/JEV_TACTICAL_COMMANDER.md](experiments/typesafe/JEV_TACTICAL_COMMANDER.md)
+
+Full commander evidence (latency, sensitivity, stability, tokens):
+
+- [experiments/typesafe/COMMANDER_BENCHMARK.md](experiments/typesafe/COMMANDER_BENCHMARK.md)
+
+The commander architecture is:
+
+`synthetic numeric battlefield state → TypeSafe System One API → typed tactical decisions → deterministic fallback/composer`
+
+It is not `Carbon NPCs → Jev`.
 
 ## What this is not
 
-- Routing, labels, picking, sovereignty, ESI, SSO, networking, product UI, installers, auto-update, or production packaging.
-- A replacement of Trinity with SDL / OpenGL / raw DirectX / Three.js.
+- A map product. No labels, picking, search, sovereignty, ESI, SSO, networking, jump bridges, installers, or production packaging.
+- A replacement of Trinity with SDL / OpenGL / raw DirectX / Three.js / a WebView.
 - A fork of Carbon. Trinity is cloned **outside** this repository.
+- EVE Frontier NPC AI, Fenris Feral AI, or Jev controlling anything inside the Carbon host.
 
-Picking, labels, jump bridges, and routing are still later. The New Eden host now has a developer-only Win32 Creator panel and INI persist; that is not product UI.
-
-New Eden coordinates and stargate pairs are a slim static export of EO-Map's pinned Contract A artefact. See [data/README.md](data/README.md). The native host does not open SQLite or call ESI.
+The New Eden host has a developer-only Win32 Creator panel, INI persist, a static Jita-Amarr route overlay, and optional region tint. That is experiment UI, not product UI.
 
 ## Carbon architecture actually used
 
@@ -37,7 +59,7 @@ Public Carbon docs (`carbonengine/documentation`) still have an empty Getting St
 
 - Carbon components are built with **CMake presets + vcpkg**, using `carbonengine/vcpkg-registry` overlay triplets (`v141`, Windows SDK `10.0.17763.0`).
 - A full Carbon **game** is a Python/Blue process hosted by `exefile`. That is **not** required for this experiment.
-- **TrinityAL** (`trinityal/`, `TRINITY_AL_WITH_BLUE_EXPOSURE=0`) is a C++ layer that creates a D3D device from an `HWND` and draws primitives. The in-tree `TrinityALTest_dx11` already does this. The starfield uses `TOP_POINTS` (DX11 `POINTLIST`) plus a `Tr2ConstantBufferAL` for the view-projection matrix. `CreateDevice` does not create a depth buffer; that is a separate `Tr2TextureAL`.
+- **TrinityAL** (`trinityal/`, `TRINITY_AL_WITH_BLUE_EXPOSURE=0`) is a C++ layer that creates a D3D device from an `HWND` and draws primitives. The in-tree `TrinityALTest_dx11` already does this. The synthetic starfield uses `TOP_POINTS` (DX11 `POINTLIST`) plus a `Tr2ConstantBufferAL` for the view-projection matrix. `CreateDevice` does not create a depth buffer; that is a separate `Tr2TextureAL`.
 - Renderer backends default to **OFF**. DX11 is enabled explicitly (`-DBUILD_DX11=ON`).
 - Granny (`WITH_GRANNY`) is internal-only. It stays **OFF**.
 - There is no public hello-world app. The bootstrap is the TrinityAL tests plus this tiny host.
@@ -118,13 +140,24 @@ git clone --recurse-submodules https://github.com/carbonengine/trinity.git C:\de
 .\scripts\run-neweden.ps1 -Smoke
 .\scripts\run-visual-lab.ps1
 .\scripts\run-creator-mode.ps1
+
+# 7. Independent Jita-Amarr hop check (no Trinity)
+python scripts\test-jita-amarr-route.py
+
+# 8. Creator Mode numeric contracts (no GPU)
+python scripts\test-visual-lab-math.py
+
+# 9. TypeSafe harness unit tests (no API key required)
+python -m unittest discover -s experiments\typesafe\tests -t experiments\typesafe
 ```
 
 `CMakeUserPresets.json` in the Trinity checkout is local (gitignored by Trinity). This repo keeps the template at `cmake/trinity-CMakeUserPresets.json`.
 
-Our triangle CMake consumes Trinity's already-installed vcpkg prefix (`VCPKG_MANIFEST_MODE=OFF`) rather than installing a second copy.
+Our CMake consumes Trinity's already-installed vcpkg prefix (`VCPKG_MANIFEST_MODE=OFF`) rather than installing a second copy.
 
 ## Human smoke test
+
+Automated `--smoke` proves init, draw submission, Present, and a clean exit. It does **not** prove pixels. A human has to look at the window.
 
 Milestone 0 diagnostic:
 
@@ -134,25 +167,22 @@ Milestone 0 diagnostic:
 
 Win32 window titled **EO-Map Carbon triangle (TrinityAL DX11)**, red triangle on a dark blue-grey background, until you close it.
 
-Milestone 1A (primary):
+Milestone 1A (human-verified geometry and camera):
 
 ```powershell
 .\scripts\run-starfield.ps1
 ```
 
-Win32 window titled **EO-Map Carbon starfield (TrinityAL DX11)**. Thousands of white/grey stars on a near-black background. Left-drag orbits the current target (same direction as EO-Map). Right-drag pans that target. Mouse wheel zooms toward it. Close the window to exit.
+Win32 window titled **EO-Map Carbon starfield (TrinityAL DX11)**. Thousands of white/grey stars on a near-black background. Left-drag orbits the current target (same direction as EO-Map). Right-drag pans that target. Mouse wheel zooms toward it.
 
-Milestone 1B / 1C (primary; real New Eden geometry plus stargate graph):
+Milestone 1B / 1C geometry plus Creator Mode (geometry/topology human-verified; **look is not**):
 
 ```powershell
 .\scripts\run-neweden.ps1
-```
-
-Win32 window titled **EO-Map Carbon New Eden Creator Mode (TrinityAL DX11)**. Temperature-coloured sized stars, faded gates, procedural sky, restrained ISM, optional glow, optional bloom, and a **Creator / Visual lab** slider window. Same left-drag orbit, right-drag pan, and wheel zoom as the starfield. Close the 3D window to exit.
-
-```powershell
 .\scripts\run-creator-mode.ps1
 ```
+
+Win32 window titled **EO-Map Carbon New Eden Creator Mode (TrinityAL DX11)**. Temperature-coloured sized stars, faded gates, a brighter Jita-Amarr route overlay, procedural sky, restrained ISM, optional glow, optional bloom, and a **Creator / Visual lab** slider window. Same orbit / pan / zoom as the starfield.
 
 A console/log line `first Present completed` means `Present` returned success. It does not by itself prove pixels.
 

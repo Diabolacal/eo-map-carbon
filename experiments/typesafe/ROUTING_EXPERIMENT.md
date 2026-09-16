@@ -1,8 +1,8 @@
 # Jev-assisted Jita-Amarr routing experiment
 
-Isolated development-task experiment on branch `experiment/typesafe-jev-routing`.
-Not a product milestone and not merged to `main`. Frozen triangle and starfield
-hosts were not modified.
+Isolated development-task experiment. Originally landed on
+`experiment/typesafe-jev-routing`; the useful host/graph work is now on `main`
+alongside Creator Mode. Frozen triangle and starfield hosts were not modified.
 
 ## Task
 
