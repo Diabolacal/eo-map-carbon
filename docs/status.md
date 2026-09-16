@@ -30,11 +30,11 @@ Same as `.\scripts\run-visual-lab.ps1` / `.\scripts\run-neweden.ps1`. Opens the 
 | D. catalogues | **pass** (Creator Mode branch) | 5485 / 6989 / 5485 temps / 70 regions; Jita 7305 K / region 10000002 |
 | E. persist | **pass** (Creator Mode branch) | parse / clamp / unknown-key / roundtrip |
 | F. renderer init | **pass** (Creator Mode branch) | `TrinityAL CreateDevice succeeded` |
-| G. present | **pass** (Creator Mode branch; draw counts below are pre-route-overlay) | first Present; 40 bloom-on then bloom-off creator then creator-off |
+| G. present | **pass** after consolidation | first Present; 40 bloom-on (10 draws / 6 PP) then bloom-off creator (7 / 3) then creator-off (4 / 1), including the extra route pass |
 | H. pixels / look | **not claimed** | human must look and tune |
-| I. Jita-Amarr overlay | **code + graph checks; pixels not claimed** | `ShortestRoute` + second GateLine pass after consolidation |
+| I. Jita-Amarr overlay | **code + graph + smoke; pixels not claimed** | `ShortestRoute` 11 hops; second GateLine pass; smoke `route_draws=1` |
 
-After consolidation the smoke expected draw counts include one extra route pass: bloom-on 10/6 (9/6 with `--points`), bloom-off creator 7/3 (6/3 with `--points`), creator-off 4/1. Re-run smoke after this merge before treating those numbers as green on this tree.
+After consolidation the smoke expected draw counts include one extra route pass: bloom-on 10/6 (9/6 with `--points`), bloom-off creator 7/3 (6/3 with `--points`), creator-off 4/1. Confirmed on this tree: `route hops: 11` and `route_draws=1`.
 
 See [docs/creator-mode-port.md](creator-mode-port.md) and [docs/visual-rendering-plan.md](visual-rendering-plan.md).
 
