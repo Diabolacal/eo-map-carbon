@@ -1,0 +1,384 @@
+// Half-res interstellar medium. World-space disc raymarch (not a 4-tap slab).
+// rgb = in-scattered emission, a = transmittance.
+// Keep analytic envelope / march window in lockstep with src/ism_math.h.
+
+Texture2D bloomTex : register(t0);
+SamplerState sampl : register(s0);
+
+cbuffer cb0 : register(b0)
+{
+	float4 viewRight;   // xyz, aspect
+	float4 viewUp;      // xyz, tanHalfFovY
+	float4 viewFwd;     // xyz, camDist
+	float4 cameraPos;   // xyz, nearCut
+	float4 centre;      // xyz, discR
+	float4 envelope;    // thick, edgeSoft, lobe, floor
+	float4 field;       // density, contrast, ridge, scale
+	float4 extinct;     // tauScale, tauMax, redden, debug
+	float4 emission;    // emisGain, glowGain, wispGain, scatterGain
+	float4 lanes;       // dark, darkScale, light, lightScale
+	float4 mixp;        // starExt, minT, steps, regionMix
+	float4 cool;        // rgb
+	float4 warm;        // rgb
+	float4 high;        // rgb
+};
+
+struct VS_OUTPUT
+{
+	float4 Position : SV_Position;
+	float2 TexCoord : TEXCOORD;
+};
+
+static const float kFlatten = 4.2;
+static const float kClumpScale = 0.48;
+static const float kBridge = 0.22;
+static const float kIrrAmp = 0.10;
+static const float kEnvEarlyOut = 0.002;
+static const float kNearFloorLy = 4.0;
+static const float kFarClipSafety = 1.12;
+static const float kIrrExtra = 1.10;
+static const float kFill = 0.32;
+static const float kEmitScale = 0.085;
+static const float kSlabThickMul = 5.0;
+static const float kSlabPad = 5.0;
+static const float3 kLobe0 = float3(-4.013, -3.629, -5.550);
+static const float3 kLobe1 = float3(-15.511, -7.462, 5.948);
+static const float3 kLobe2 = float3(-23.176, -3.629, 2.115);
+static const float3 kLobeW = float3(1.00, 0.71, 0.67);
+
+float hash13(float3 p)
+{
+	p = frac(p * 0.3183099 + 0.1);
+	p *= 17.0;
+	return frac(p.x * p.y * p.z * (p.x + p.y + p.z));
+}
+
+float valueNoise(float3 p)
+{
+	float3 i = floor(p);
+	float3 f = frac(p);
+	f = f * f * (3.0 - 2.0 * f);
+	float n000 = hash13(i);
+	float n100 = hash13(i + float3(1, 0, 0));
+	float n010 = hash13(i + float3(0, 1, 0));
+	float n110 = hash13(i + float3(1, 1, 0));
+	float n001 = hash13(i + float3(0, 0, 1));
+	float n101 = hash13(i + float3(1, 0, 1));
+	float n011 = hash13(i + float3(0, 1, 1));
+	float n111 = hash13(i + float3(1, 1, 1));
+	float nx00 = lerp(n000, n100, f.x);
+	float nx10 = lerp(n010, n110, f.x);
+	float nx01 = lerp(n001, n101, f.x);
+	float nx11 = lerp(n011, n111, f.x);
+	return lerp(lerp(nx00, nx10, f.y), lerp(nx01, nx11, f.y), f.z);
+}
+
+float fbm4(float3 p)
+{
+	float a = 0.0;
+	float w = 0.5;
+	[unroll]
+	for (int i = 0; i < 4; ++i)
+	{
+		a += w * valueNoise(p);
+		p = p * 2.03 + 11.7;
+		w *= 0.5;
+	}
+	return a;
+}
+
+float ridged(float3 p, float ridge)
+{
+	float n = fbm4(p);
+	float billow = 1.0 - abs(n * 2.0 - 1.0);
+	return lerp(n, billow, saturate(ridge));
+}
+
+int qualitySteps(float steps)
+{
+	if (steps >= 40.0)
+	{
+		return 48;
+	}
+	if (steps >= 28.0)
+	{
+		return 32;
+	}
+	if (steps >= 20.0)
+	{
+		return 24;
+	}
+	if (steps >= 12.0)
+	{
+		return 16;
+	}
+	return 8;
+}
+
+float outerIrregularity(float dx, float dz)
+{
+	float ang = atan2(dz, dx);
+	return 0.50 * sin(2.0 * ang + 0.41) + 0.32 * sin(3.0 * ang - 1.17) + 0.18 * sin(5.0 * ang + 2.03);
+}
+
+float outerTaper(float3 p, float3 c, float sigma, float startMul, float endMul)
+{
+	float3 d = p - c;
+	float r = length(d.xz);
+	float rMax = sigma * endMul * (1.0 + kIrrAmp);
+	if (r >= rMax)
+	{
+		return 0.0;
+	}
+	float scale = 1.0 + kIrrAmp * outerIrregularity(d.x, d.z);
+	float rEff = r / max(scale, 1e-3);
+	float a = sigma * startMul;
+	float b = sigma * endMul;
+	float t = saturate((rEff - a) / max(b - a, 1e-3));
+	float s = t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
+	return 1.0 - s;
+}
+
+float tidalBridge(float3 p, float3 a, float3 b, float w)
+{
+	float3 pa = p - a;
+	float3 ba = b - a;
+	float s = saturate(dot(pa, ba) / max(dot(ba, ba), 1e-4));
+	float d = length(pa - ba * s);
+	float taper = lerp(1.0, 0.55, sin(3.14159265 * s));
+	return exp(-(d * d) / max(w * w * taper * taper, 1e-4));
+}
+
+float envelopeAt(float3 p, out float lobeN)
+{
+	float3 c = centre.xyz;
+	float sigma = max(centre.w, 1.0);
+	float thick = max(envelope.x, 0.4);
+	float edgeSoft = clamp(envelope.y, 0.40, 2.50);
+	float lobeAmt = max(envelope.z, 0.0);
+	float floorAmt = envelope.w;
+	float startMul = 1.35 + 0.65 * edgeSoft;
+	float endMul = 1.90 + 1.20 * edgeSoft;
+
+	float3 d = p - c;
+	float r = length(d.xz);
+	float rMax = sigma * endMul * (1.0 + kIrrAmp);
+	if (r >= rMax)
+	{
+		lobeN = 0.0;
+		return 0.0;
+	}
+
+	float hz = thick * (1.0 + r / sigma);
+	float disc = exp(-(r * r) / (2.0 * sigma * sigma)) * exp(-(d.y * d.y) / (2.0 * hz * hz));
+
+	float clumpR = max(sigma * kClumpScale, 1.0);
+	float3 q0 = p - kLobe0;
+	q0.y *= kFlatten;
+	float3 q1 = p - kLobe1;
+	q1.y *= kFlatten;
+	float3 q2 = p - kLobe2;
+	q2.y *= kFlatten;
+	float g0 = kLobeW.x * exp(-dot(q0, q0) / (clumpR * clumpR));
+	float g1 = kLobeW.y * exp(-dot(q1, q1) / (clumpR * clumpR));
+	float g2 = kLobeW.z * exp(-dot(q2, q2) / (clumpR * clumpR));
+	float lobes = g0 + g1 + g2;
+	lobeN = saturate(lobes);
+
+	float3 f = float3(1.0, kFlatten, 1.0);
+	float bw = clumpR * 0.45;
+	float br = tidalBridge(p * f, kLobe0 * f, kLobe1 * f, bw);
+	br += tidalBridge(p * f, kLobe1 * f, kLobe2 * f, bw);
+	br += tidalBridge(p * f, kLobe0 * f, kLobe2 * f, bw);
+
+	float env = disc * (floorAmt + lobeAmt * lobes + kBridge * br);
+	float innerFull = sigma * startMul * (1.0 - kIrrAmp);
+	if (r > innerFull)
+	{
+		env *= outerTaper(p, c, sigma, startMul, endMul);
+	}
+	return saturate(env);
+}
+
+bool intersectSphere(float3 ro, float3 rd, float3 c, float radius, out float tEnter, out float tExit)
+{
+	float3 oc = ro - c;
+	float b = dot(oc, rd);
+	float cc = dot(oc, oc) - radius * radius;
+	float h = b * b - cc;
+	if (h < 0.0)
+	{
+		tEnter = 0.0;
+		tExit = 0.0;
+		return false;
+	}
+	h = sqrt(h);
+	tEnter = -b - h;
+	tExit = -b + h;
+	return tExit > 0.0;
+}
+
+bool intersectSlabY(float3 ro, float3 rd, float y0, float y1, out float tEnter, out float tExit)
+{
+	if (y1 < y0)
+	{
+		float tmp = y0;
+		y0 = y1;
+		y1 = tmp;
+	}
+	if (abs(rd.y) < 1e-5)
+	{
+		if (ro.y < y0 || ro.y > y1)
+		{
+			tEnter = 0.0;
+			tExit = 0.0;
+			return false;
+		}
+		tEnter = 0.0;
+		tExit = 1.0e6;
+		return true;
+	}
+	float tA = (y0 - ro.y) / rd.y;
+	float tB = (y1 - ro.y) / rd.y;
+	tEnter = min(tA, tB);
+	tExit = max(tA, tB);
+	return tExit > max(tEnter, 0.0);
+}
+
+float4 main(VS_OUTPUT input) : SV_Target
+{
+	float2 uv = input.TexCoord;
+	float2 ndc = float2(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0);
+	float aspect = max(viewRight.w, 1e-4);
+	float tanHalf = max(viewUp.w, 1e-4);
+	float3 rd = normalize(viewFwd.xyz + viewRight.xyz * (ndc.x * tanHalf * aspect) + viewUp.xyz * (ndc.y * tanHalf));
+	float3 ro = cameraPos.xyz;
+	float camDist = max(viewFwd.w, 1.0);
+	float nearCut = saturate(cameraPos.w);
+
+	float sigma = max(centre.w, 1.0);
+	float thick = max(envelope.x, 0.4);
+	float edgeSoft = clamp(envelope.y, 0.40, 2.50);
+	float endMul = 1.90 + 1.20 * edgeSoft;
+	float farR = sigma * endMul * (1.0 + kIrrAmp) * kIrrExtra * kFarClipSafety;
+
+	float sph0, sph1;
+	if (!intersectSphere(ro, rd, centre.xyz, farR, sph0, sph1))
+	{
+		return float4(0, 0, 0, 1);
+	}
+	float yHalf = thick * kSlabThickMul + kSlabPad;
+	float slab0, slab1;
+	if (!intersectSlabY(ro, rd, centre.y - yHalf, centre.y + yHalf, slab0, slab1))
+	{
+		return float4(0, 0, 0, 1);
+	}
+	float t0 = max(kNearFloorLy, nearCut * camDist);
+	float tStart = max(max(max(sph0, 0.0), slab0), t0 * 0.30);
+	float tEnd = min(sph1, slab1);
+	if (tEnd <= tStart)
+	{
+		return float4(0, 0, 0, 1);
+	}
+
+	int steps = qualitySteps(mixp.z);
+	float dt = (tEnd - tStart) / float(steps);
+	float scale = max(field.w, 0.05);
+	float densityMul = field.x;
+	float contrast = max(field.y, 0.5);
+	float ridge = saturate(field.z);
+	float invR = 1.0 / sigma;
+
+	float tau = 0.0;
+	float3 E = 0.0;
+	float3 irr = bloomTex.Sample(sampl, uv).rgb;
+	float scatter = max(emission.w, 0.0);
+	float dbgEnv = 0.0;
+	float dbgRho = 0.0;
+	float dbgLane = 0.0;
+	int dbg = int(extinct.w + 0.5);
+
+	[loop]
+	for (int i = 0; i < 48; ++i)
+	{
+		if (i >= steps)
+		{
+			break;
+		}
+		float t = tStart + (float(i) + 0.5) * dt;
+		float3 p = ro + rd * t;
+		float lobeN;
+		float env = envelopeAt(p, lobeN);
+		dbgEnv = max(dbgEnv, env);
+		if (env < kEnvEarlyOut)
+		{
+			continue;
+		}
+
+		float nearW = lerp(0.12, 1.0, smoothstep(0.50 * t0, 1.50 * t0, t));
+		float3 local = p - centre.xyz;
+		float3 warp = float3(
+			valueNoise(local * (0.55 * invR * scale) + 3.1),
+			valueNoise(local * (0.55 * invR * scale) + 17.0),
+			valueNoise(local * (0.55 * invR * scale) + 41.0));
+		float3 pw = local * (2.40 * invR * scale) + (warp - 0.5) * 0.55;
+		float n = ridged(pw, ridge);
+		float shaped = pow(max(n, 0.0), contrast);
+		float rho = densityMul * env * lerp(kFill, 1.0, shaped) * nearW;
+
+		float3 lp = local * (1.80 * invR / max(lanes.y, 0.05));
+		lp.y *= 2.0;
+		float laneN = ridged(lp + warp * 1.2, 0.85);
+		float lane = pow(max(laneN - 0.42, 0.0), 2.4) * env * max(lanes.x, 0.0) * nearW;
+
+		float3 wp = local * (3.60 * invR / max(lanes.w, 0.05));
+		float wispN = ridged(wp + 9.1, 0.70);
+		float wisp = pow(max(wispN, 0.0), 2.2) * env * max(lanes.z, 0.0) * nearW;
+		wisp *= saturate(1.0 - lane * 4.0);
+
+		dbgRho = max(dbgRho, rho);
+		dbgLane = max(dbgLane, lane);
+
+		float glow = pow(max(env, 0.0), 2.4) * emission.y * nearW;
+		float dTau = (rho + lane) * dt * max(extinct.x, 0.0);
+		float Tpre = exp(-tau);
+		tau += dTau;
+		float3 col = lerp(cool.rgb, warm.rgb, saturate(lobeN * 1.15 + env * 0.35));
+		col = lerp(col, high.rgb, saturate(wisp * 2.5));
+		if (mixp.w > 1e-4)
+		{
+			const float3 atlas[11] = {
+				float3(1.00, 0.30, 0.15), float3(1.00, 0.65, 0.17), float3(0.95, 1.00, 0.38),
+				float3(0.18, 0.94, 0.66), float3(0.00, 0.76, 0.48), float3(0.27, 0.78, 1.00),
+				float3(0.12, 0.42, 1.00), float3(0.62, 0.49, 1.00), float3(1.00, 0.36, 0.56),
+				float3(1.00, 0.23, 0.19), float3(0.00, 0.82, 1.00)
+			};
+			uint stop = uint(abs(p.x * 1.7 + p.z * 2.3 + centre.x * 3.1)) % 11u;
+			col = lerp(col, atlas[stop], saturate(mixp.w) * 0.55);
+		}
+		E += Tpre * (emission.x * rho * col + wisp * high.rgb + glow * col + rho * irr * scatter) * (dt * kEmitScale);
+	}
+
+	float T = exp(-min(tau, max(extinct.y, 0.1)));
+	if (dbg == 1)
+	{
+		return float4(dbgEnv, dbgEnv * 0.62, dbgEnv * 0.28, 1);
+	}
+	if (dbg == 2)
+	{
+		return float4(dbgRho, dbgRho * 0.50, dbgRho * 0.22, 1);
+	}
+	if (dbg == 3)
+	{
+		return float4(dbgLane * 1.6, dbgLane * 0.25, dbgLane * 0.12, 1);
+	}
+	if (dbg == 4)
+	{
+		return float4(E * 3.5, 1);
+	}
+	if (dbg == 5)
+	{
+		return float4(T, T, T, 1);
+	}
+	return float4(E, T);
+}

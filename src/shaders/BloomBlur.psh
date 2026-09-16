@@ -1,0 +1,35 @@
+Texture2D tex0 : register(t0);
+SamplerState sampl : register(s0);
+
+cbuffer cb0 : register(b0)
+{
+	float threshold;
+	float strength;
+	float radius;
+	float exposure;
+	float texelX;
+	float texelY;
+	float blurDirX;
+	float blurDirY;
+};
+
+struct VS_OUTPUT
+{
+	float4 Position : SV_Position;
+	float2 TexCoord : TEXCOORD;
+};
+
+float4 main(VS_OUTPUT input) : SV_Target
+{
+	float2 step = float2(texelX, texelY) * float2(blurDirX, blurDirY) * radius;
+	float3 c = tex0.Sample(sampl, input.TexCoord).rgb * 0.227027;
+	c += tex0.Sample(sampl, input.TexCoord + step).rgb * 0.1945946;
+	c += tex0.Sample(sampl, input.TexCoord - step).rgb * 0.1945946;
+	c += tex0.Sample(sampl, input.TexCoord + step * 2.0).rgb * 0.1216216;
+	c += tex0.Sample(sampl, input.TexCoord - step * 2.0).rgb * 0.1216216;
+	c += tex0.Sample(sampl, input.TexCoord + step * 3.0).rgb * 0.054054;
+	c += tex0.Sample(sampl, input.TexCoord - step * 3.0).rgb * 0.054054;
+	c += tex0.Sample(sampl, input.TexCoord + step * 4.0).rgb * 0.016216;
+	c += tex0.Sample(sampl, input.TexCoord - step * 4.0).rgb * 0.016216;
+	return float4(c, 1.0);
+}

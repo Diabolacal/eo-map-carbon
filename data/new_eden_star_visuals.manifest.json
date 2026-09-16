@@ -1,0 +1,72 @@
+{
+  "artifact": {
+    "filename": "new_eden_star_visuals.bin",
+    "bytes": 65884,
+    "sha256": "9990b5ca590a2c6b942acadc5c4667d653f643dcce531d31769c5278b87d645f",
+    "format": "NESTAR1",
+    "version": 1,
+    "record": "system_id u32, temperature_k f32, spectral_letter u8, pad 3"
+  },
+  "source": {
+    "kind": "EO-Map Contract A systems.star_temperature / star_class (raw metadata)",
+    "sibling_path": "../eo-map/eve-frontier-map/public/map_data_eo_3464040.db",
+    "filename": "map_data_eo_3464040.db",
+    "sha256": "874262496556d933bbbc184cdec8f469660f6c1108b21e25f0481475b68eba81",
+    "builder_version": "1.5.0",
+    "sde_build": 3464040,
+    "sde_fields": [
+      "mapStars.statistics.temperature",
+      "mapStars.statistics.spectralClass"
+    ]
+  },
+  "selection": {
+    "space": "new-eden-known-space",
+    "system_count": 5485,
+    "temperature_min_k": 2010.0,
+    "temperature_max_k": 7496.0,
+    "spectral_letter_counts": {
+      "F": 802,
+      "G": 1484,
+      "K": 2307,
+      "M": 892
+    }
+  },
+  "presentation": {
+    "colour": "runtime blackbody from temperature (EO-Map getStellarTemperatureColor)",
+    "emissive": "runtime 1+5*log10-lerp(T,2300,7496)^3",
+    "size": "runtime heuristic aSize from system id; not SDE radius/luminosity",
+    "not_used_for_universe_map": [
+      "radius",
+      "luminosity_sde",
+      "security_status"
+    ]
+  },
+  "anchors": [
+    {
+      "id": 30000142,
+      "star_class": "F1 V",
+      "star_temperature": 7305.0
+    },
+    {
+      "id": 30002187,
+      "star_class": "K3 V",
+      "star_temperature": 4436.0
+    },
+    {
+      "id": 30002659,
+      "star_class": "K5 V",
+      "star_temperature": 4140.0
+    },
+    {
+      "id": 30002510,
+      "star_class": "K9 V",
+      "star_temperature": 3591.0
+    },
+    {
+      "id": 30002053,
+      "star_class": "G1 V",
+      "star_temperature": 5812.0
+    }
+  ],
+  "generator": "scripts/export-new-eden-systems.py"
+}

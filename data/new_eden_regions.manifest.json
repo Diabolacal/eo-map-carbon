@@ -1,0 +1,27 @@
+{
+  "artifact": {
+    "filename": "new_eden_regions.bin",
+    "bytes": 43944,
+    "sha256": "0bbc95d3548c10ac19d901a8e9bb566baa0562355c066e773f595d6a0e6a9ee6",
+    "format": "NEREGN1",
+    "version": 1,
+    "record": "system_id u32, region_id u32"
+  },
+  "source": {
+    "kind": "EO-Map Contract A systems.region_id (raw metadata)",
+    "sibling_path": "../eo-map/eve-frontier-map/public/map_data_eo_3464040.db",
+    "filename": "map_data_eo_3464040.db",
+    "sha256": "874262496556d933bbbc184cdec8f469660f6c1108b21e25f0481475b68eba81",
+    "builder_version": "1.5.0",
+    "sde_build": 3464040
+  },
+  "selection": {
+    "space": "new-eden-known-space",
+    "count": 5485,
+    "distinct_regions": 70,
+    "jita_id": 30000142,
+    "jita_region_id": 10000002,
+    "palette": "EO-Map REGION_ATLAS_PALETTE, region_id % 11, applied at runtime"
+  },
+  "generator": "scripts/export-new-eden-systems.py"
+}

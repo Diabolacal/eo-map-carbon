@@ -9,6 +9,10 @@ open SQLite, does not call ESI, and does not load the EO-Map web app.
 - `new_eden_systems.manifest.json` — provenance, AABB, and hub anchors
 - `new_eden_stargates.bin` — little-endian `NEGATE1` table of unique undirected known-space pairs
 - `new_eden_stargates.manifest.json` — provenance, filtering, and hub adjacency
+- `new_eden_star_visuals.bin` — little-endian `NESTAR1` table of known-space id / `star_temperature` / spectral letter
+- `new_eden_star_visuals.manifest.json` — provenance and temperature window
+- `new_eden_regions.bin` — little-endian `NEREGN1` table of known-space id / Contract A `region_id`
+- `new_eden_regions.manifest.json` — provenance and distinct-region count
 
 ## Provenance
 
@@ -68,8 +72,25 @@ would stack two identical 3D segments.
 The binary stores system ids only. The host looks up the matching 1B scene
 positions and emits a straight 3D segment. No 2D layout, curves, or midpoints.
 
+## Star visuals
+
+`new_eden_star_visuals.bin` is a sidecar, not a replacement of `NEDEN1B`.
+It stores raw Contract A `star_temperature` (kelvin) and the first letter of
+`star_class` for the same 5,485 ids, in the same order. The Carbon host derives
+blackbody RGB and emissive at runtime (EO-Map `starColors.ts`) so sliders can
+retune presentation. SDE radius / `luminosity_sde` / security status are not
+exported; EO-Map's universe map does not use them for the default look.
+
+## Regions
+
+`new_eden_regions.bin` is a sidecar for optional Creator Mode tint. It stores
+raw Contract A `region_id` for the same 5,485 ids, same order. Colour is
+applied at runtime with EO-Map's 11-stop `REGION_ATLAS_PALETTE` (`region_id % 11`).
+Default mix is off so stellar temperature colour stays intact.
+
 Pinned checks derived from EO-Map, not invented:
 
+- Jita region_id: 10000002 (The Forge); 70 distinct known-space regions
 - Jita neighbours: Ikuchi, Maurasi, Muvolailen, New Caldari, Niyabainen, Perimeter, Sobaseki
   (`tools/eve-online-sde/test_contract_a.py`)
 - Jita → Amarr = 11 hops
