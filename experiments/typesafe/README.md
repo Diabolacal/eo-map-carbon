@@ -48,8 +48,9 @@ Jita-Amarr routing development-task writeup is `ROUTING_EXPERIMENT.md`.
 
 A later synthetic commander benchmark (one Jev request as a higher-level
 tactical layer over scripted battlefield snapshots) lives in `commander/`
-with results in `COMMANDER_BENCHMARK.md`. It is not Frontier NPC AI and is
-not wired into any Carbon host.
+with full results in `COMMANDER_BENCHMARK.md`. A shorter public-facing writeup
+is in `JEV_TACTICAL_COMMANDER.md`. It is not Frontier NPC AI and is not wired
+into any Carbon host.
 
 ```powershell
 .\experiments\typesafe\commander\run.ps1 -DryRun
