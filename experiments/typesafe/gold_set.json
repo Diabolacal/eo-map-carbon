@@ -1,0 +1,428 @@
+{
+  "title": "Jev System One gold set for eo-map-carbon (Milestone 1C snapshot)",
+  "written_before_any_jev_call": true,
+  "noul_yes_threshold": 0.5,
+  "choice_low_confidence": 0.5,
+  "choice_high_confidence": 0.8,
+  "noul_low_certainty": 0.6,
+  "noul_high_certainty": 0.8,
+  "questions": [
+    {
+      "id": "uses_trinityal",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, does the New Eden host render through TrinityAL rather than a raw Direct3D, OpenGL, SDL, Three.js, or WebView renderer?",
+      "criteria": {
+        "true": "The host uses TrinityAL APIs such as Tr2PrimaryRenderContextAL, SetTopology, and DrawPrimitive.",
+        "false": "The host bypasses TrinityAL and draws with a substitute engine."
+      },
+      "expected": true,
+      "source": "AGENTS.md non-goals and neweden_main.cpp include TrinityAL.h and call Tr2PrimaryRenderContextAL."
+    },
+    {
+      "id": "granny_enabled",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, is Granny enabled for this experiment's Trinity/host build?",
+      "criteria": {
+        "true": "WITH_GRANNY or Granny is turned on.",
+        "false": "Granny stays OFF."
+      },
+      "expected": false,
+      "source": "AGENTS.md: 'Granny stays OFF.' README.md: Granny is internal-only and stays OFF."
+    },
+    {
+      "id": "runtime_sqlite",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, does the New Eden executable open SQLite at runtime?",
+      "criteria": {
+        "true": "The executable opens a .db / SQLite connection while running.",
+        "false": "It only loads pre-exported binary files such as new_eden_systems.bin."
+      },
+      "expected": false,
+      "source": "AGENTS.md: do not open SQLite from this executable. catalog/gates load .bin files via ifstream, not sqlite."
+    },
+    {
+      "id": "runtime_esi_or_network",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, does the New Eden executable call ESI or other network APIs at runtime?",
+      "criteria": {
+        "true": "The running host performs HTTP/ESI/SSO/network calls for map data.",
+        "false": "Runtime data is local binary artefacts only; ESI/network are non-goals."
+      },
+      "expected": false,
+      "source": "AGENTS.md non-goals and 1B/1C: do not open ESI. docs/status.md: No SQLite / ESI / network in the executable."
+    },
+    {
+      "id": "wspace_included",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, does this first New Eden visual include W-space / Anoikis systems?",
+      "criteria": {
+        "true": "W-space systems are loaded and drawn.",
+        "false": "W-space is omitted; only known-space is shown."
+      },
+      "expected": false,
+      "source": "AGENTS.md: W-space (2,604 Anoikis systems) is omitted. catalog.cpp requires otherSpaceCount == 0."
+    },
+    {
+      "id": "systems_use_top_points",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, are known-space systems drawn with TrinityAL TOP_POINTS?",
+      "criteria": {
+        "true": "SetTopology(TOP_POINTS) then DrawPrimitive for systems.",
+        "false": "Systems use some other primitive."
+      },
+      "expected": true,
+      "source": "neweden_main.cpp SetTopology(TOP_POINTS) and DrawPrimitive(0, systemCount). AGENTS.md 1B."
+    },
+    {
+      "id": "gates_use_top_lines",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, are stargate connections drawn with TrinityAL TOP_LINES?",
+      "criteria": {
+        "true": "SetTopology(TOP_LINES) then DrawPrimitive for gate segments.",
+        "false": "Gates use points, triangles, or another path."
+      },
+      "expected": true,
+      "source": "neweden_main.cpp SetTopology(TOP_LINES) and DrawPrimitive(0, edgeCount). AGENTS.md 1C."
+    },
+    {
+      "id": "gate_buffer_is_static",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, is the stargate line vertex buffer a static buffer filled at creation rather than a per-frame dynamic buffer?",
+      "criteria": {
+        "true": "Created once with Tr2CpuUsage::NONE and initial gate vertex data; not rewritten each frame.",
+        "false": "The gate buffer is CPU-writable and updated every frame."
+      },
+      "expected": true,
+      "source": "neweden_main.cpp gateVertexBuffer.Create(..., Tr2GpuUsage::VERTEX_BUFFER, Tr2CpuUsage::NONE, gates.data(), ...). AGENTS.md: one static TOP_LINES buffer."
+    },
+    {
+      "id": "depth_created_explicitly",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, does the host explicitly create a depth-stencil texture because CreateDevice does not create a depth buffer?",
+      "criteria": {
+        "true": "A Tr2TextureAL is created with PIXEL_FORMAT_D24_UNORM_S8_UINT and DEPTH_STENCIL, then SetDepthStencil.",
+        "false": "Depth comes from CreateDevice / present parameters, or there is no depth buffer."
+      },
+      "expected": true,
+      "source": "AGENTS.md build quirks; neweden_main.cpp CreateDepthBuffer after CreateDevice."
+    },
+    {
+      "id": "resize_recreates_depth",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, after a resize via SetPresentParameters, does the host recreate the depth texture and rebind it with SetDepthStencil?",
+      "criteria": {
+        "true": "ApplyResize calls SetPresentParameters, CreateDepthBuffer, then SetDepthStencil.",
+        "false": "Resize only changes present parameters and leaves the old depth texture bound."
+      },
+      "expected": true,
+      "source": "AGENTS.md: Recreate the depth texture after a resize. neweden_main.cpp ApplyResize."
+    },
+    {
+      "id": "labels_implemented",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, does this host implement system labels?",
+      "criteria": {
+        "true": "Labels are implemented in the New Eden host.",
+        "false": "Labels are an explicit non-goal and are not implemented."
+      },
+      "expected": false,
+      "source": "AGENTS.md non-goals; docs/status.md known gaps: No labels."
+    },
+    {
+      "id": "picking_implemented",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, does this host implement picking?",
+      "criteria": {
+        "true": "Picking is implemented.",
+        "false": "Picking is an explicit non-goal and is not implemented."
+      },
+      "expected": false,
+      "source": "AGENTS.md non-goals; docs/status.md known gaps: No picking."
+    },
+    {
+      "id": "routing_implemented",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, does this host implement routing or route highlighting?",
+      "criteria": {
+        "true": "Routing or route highlighting is implemented.",
+        "false": "Routing is an explicit non-goal and is not implemented."
+      },
+      "expected": false,
+      "source": "AGENTS.md 1C: Do not add route highlighting. Non-goals include routing."
+    },
+    {
+      "id": "security_colours_implemented",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, does this host implement security colours?",
+      "criteria": {
+        "true": "Systems or gates are coloured by security status.",
+        "false": "Security colours are an explicit non-goal and are not implemented."
+      },
+      "expected": false,
+      "source": "AGENTS.md 1C: Do not add security colours. docs/status.md: No ... security colours."
+    },
+    {
+      "id": "jump_bridges_implemented",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, does this host implement jump bridges?",
+      "criteria": {
+        "true": "Jump bridges are drawn or modelled.",
+        "false": "Jump bridges are an explicit non-goal and are not implemented."
+      },
+      "expected": false,
+      "source": "AGENTS.md 1C: Do not add jump bridges. docs/status.md known gaps."
+    },
+    {
+      "id": "dx11_point_size_controllable",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, does TrinityAL TOP_POINTS provide a controllable point size on DX11 in this host?",
+      "criteria": {
+        "true": "RS_POINTSIZE or another API actually sizes DX11 points.",
+        "false": "RS_POINTSIZE / point sprites are ignored on DX11; points are 1-pixel only."
+      },
+      "expected": false,
+      "source": "AGENTS.md: RS_POINTSIZE / point sprites are ignored on DX11 (1-pixel points only). docs/status.md known gaps."
+    },
+    {
+      "id": "intended_full_eomap_port",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, is this repository intended to become a full EO-Map product port?",
+      "criteria": {
+        "true": "The stated intent is to port EO-Map into a product.",
+        "false": "It is a personal Carbon/Trinity consumption experiment, not an EO-Map port."
+      },
+      "expected": false,
+      "source": "AGENTS.md opening: not a product, not an EO-Map port. README.md: not a port of EO-Map."
+    },
+    {
+      "id": "smoke_proves_pixels",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, can automated --smoke prove pixel contents or aesthetics?",
+      "criteria": {
+        "true": "A passing smoke run is treated as proof of pixels.",
+        "false": "Smoke can prove init/draw/Present/exit; a human must look at the window for pixels."
+      },
+      "expected": false,
+      "source": "AGENTS.md: Automated smoke can prove init, draw, Present, and a clean exit. It cannot claim pixels."
+    },
+    {
+      "id": "human_verified_1b_1c",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, have Milestone 1B New Eden geometry and Milestone 1C stargate topology already been human-verified?",
+      "criteria": {
+        "true": "Both 1B and 1C are recorded as human-verified / PROVEN.",
+        "false": "1B or 1C still awaits a human look."
+      },
+      "expected": true,
+      "source": "AGENTS.md 1B and 1C Human-verified. docs/status.md: PROVEN including human pixel verification."
+    },
+    {
+      "id": "carbon_forked_in_repo",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, does this repository contain a fork of Carbon/Trinity?",
+      "criteria": {
+        "true": "Trinity/Carbon sources are forked inside this repo.",
+        "false": "Trinity lives outside this repo as a checkout, not a fork/submodule of this experiment."
+      },
+      "expected": false,
+      "source": "AGENTS.md: Do not fork Carbon. Trinity lives outside this repo. CMakeLists.txt points at C:/dev/carbon-upstream/trinity."
+    },
+    {
+      "id": "camera_from_trinityal",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, does TrinityAL provide the camera and mouse-input helper used by the New Eden host?",
+      "criteria": {
+        "true": "A TrinityAL camera/input API is used.",
+        "false": "There is no TrinityAL camera; orbit_camera.h is host-side and mouse input is raw Win32."
+      },
+      "expected": false,
+      "source": "AGENTS.md: no TrinityAL camera or input helper. orbit_camera.h: Host-side orbit camera. neweden_main.cpp WndProc handles WM_MOUSE*."
+    },
+    {
+      "id": "host_is_dx11_only",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, is this host DX11-only rather than a Metal/Vulkan/OpenGL host?",
+      "criteria": {
+        "true": "The experiment is TrinityAL DX11 only.",
+        "false": "A non-DX11 backend is used or required."
+      },
+      "expected": true,
+      "source": "AGENTS.md: this repo is DX11-only; Metal marks TOP_POINTS validType=false. CMake links TrinityAL_dx11 and d3d11."
+    },
+    {
+      "id": "other_space_loaded",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, does the loaded New Eden catalogue include a non-zero other-space / W-space count?",
+      "criteria": {
+        "true": "otherSpaceCount is greater than zero in the loaded artefact.",
+        "false": "Load validation requires otherSpaceCount == 0 and known-space only."
+      },
+      "expected": false,
+      "source": "new_eden_catalog.cpp rejects header.otherSpaceCount != 0. status.md smoke: known-space 5485, other-space 0."
+    },
+    {
+      "id": "second_vcpkg_manifest",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, does this host add a second vcpkg manifest of its own?",
+      "criteria": {
+        "true": "The experiment has its own vcpkg.json consumed as a second manifest.",
+        "false": "CMake consumes Trinity's already-installed vcpkg prefix with VCPKG_MANIFEST_MODE=OFF."
+      },
+      "expected": false,
+      "source": "AGENTS.md: VCPKG_MANIFEST_MODE=OFF. Do not add a second vcpkg manifest. README.md same."
+    },
+    {
+      "id": "createdevice_creates_depth",
+      "type": "noul",
+      "instructions": "According to the repository files in `files`, does TrinityAL CreateDevice create a depth buffer for this host?",
+      "criteria": {
+        "true": "CreateDevice / Tr2PresentParametersAL supplies depth.",
+        "false": "CreateDevice does not create a depth buffer; Tr2PresentParametersAL has no depth field."
+      },
+      "expected": false,
+      "source": "AGENTS.md: CreateDevice does not create a depth buffer. Tr2PresentParametersAL has no depth field."
+    },
+    {
+      "id": "renderer_stack",
+      "type": "choice",
+      "instructions": "According to the repository files in `files`, which graphics stack does this experiment actually use?",
+      "criteria": {
+        "trinityal_dx11": "Public TrinityAL with the Direct3D 11 backend.",
+        "raw_direct3d": "Raw Direct3D without TrinityAL.",
+        "opengl_or_sdl": "OpenGL, SDL renderer, or similar substitute.",
+        "threejs_or_webview": "Three.js, a WebView, or another web engine."
+      },
+      "expected": "trinityal_dx11",
+      "source": "README.md / AGENTS.md: TrinityAL DX11. neweden_main.cpp window title TrinityAL DX11."
+    },
+    {
+      "id": "granny_build",
+      "type": "choice",
+      "instructions": "According to the repository files in `files`, what is the Granny build setting for this experiment?",
+      "criteria": {
+        "off": "Granny / WITH_GRANNY stays OFF.",
+        "on": "Granny is enabled."
+      },
+      "expected": "off",
+      "source": "AGENTS.md and README.md: Granny stays OFF."
+    },
+    {
+      "id": "space_inclusion",
+      "type": "choice",
+      "instructions": "According to the repository files in `files`, which systems are included in this first New Eden visual?",
+      "criteria": {
+        "known_space_only": "Known-space / k-space New Eden systems only; W-space omitted.",
+        "wspace_only": "Only W-space / Anoikis systems.",
+        "both": "Both known-space and W-space are drawn."
+      },
+      "expected": "known_space_only",
+      "source": "AGENTS.md 1B/1C; catalog.cpp otherSpaceCount must be 0; 5485 known-space."
+    },
+    {
+      "id": "systems_primitive",
+      "type": "choice",
+      "instructions": "According to the repository files in `files`, which TrinityAL primitive draws the New Eden systems?",
+      "criteria": {
+        "top_points": "TOP_POINTS / DX11 POINTLIST.",
+        "top_lines": "TOP_LINES / DX11 LINELIST.",
+        "triangles": "Triangle list or instanced quads."
+      },
+      "expected": "top_points",
+      "source": "neweden_main.cpp SetTopology(TOP_POINTS) for the system buffer."
+    },
+    {
+      "id": "gates_primitive",
+      "type": "choice",
+      "instructions": "According to the repository files in `files`, which TrinityAL primitive draws the stargate graph?",
+      "criteria": {
+        "top_lines": "TOP_LINES / DX11 LINELIST; DrawPrimitive count is the number of segments.",
+        "top_points": "TOP_POINTS.",
+        "triangles": "Triangle list or other mesh."
+      },
+      "expected": "top_lines",
+      "source": "neweden_main.cpp SetTopology(TOP_LINES); DrawPrimitive(0, edgeCount)."
+    },
+    {
+      "id": "gate_buffer_kind",
+      "type": "choice",
+      "instructions": "According to the repository files in `files`, how is the stargate vertex buffer created?",
+      "criteria": {
+        "static": "Static: Tr2CpuUsage::NONE, filled at Create, not rewritten per frame.",
+        "dynamic": "Dynamic/CPU-writable and updated every frame."
+      },
+      "expected": "static",
+      "source": "neweden_main.cpp Tr2CpuUsage::NONE; AGENTS.md one static TOP_LINES buffer."
+    },
+    {
+      "id": "camera_implementation",
+      "type": "choice",
+      "instructions": "According to the repository files in `files`, how are camera and mouse input implemented for New Eden?",
+      "criteria": {
+        "host_win32_orbit": "Host-side orbit_camera.h plus raw Win32 mouse messages (left-drag orbit, right-drag pan, wheel zoom).",
+        "trinityal_camera": "A TrinityAL camera or input helper class.",
+        "threejs_runtime": "An embedded three.js OrbitControls runtime."
+      },
+      "expected": "host_win32_orbit",
+      "source": "orbit_camera.h and neweden_main.cpp WndProc. AGENTS.md: no TrinityAL camera; signs match EO-Map OrbitControls but implementation is host-side."
+    },
+    {
+      "id": "interactive_present_interval",
+      "type": "choice",
+      "instructions": "According to `files['src/neweden_main.cpp']`, which present interval is used when the New Eden host is NOT running --smoke?",
+      "criteria": {
+        "interval_one": "PRESENT_INTERVAL_ONE (vsync).",
+        "immediate": "PRESENT_INTERVAL_IMMEDIATE.",
+        "interval_two": "PRESENT_INTERVAL_TWO."
+      },
+      "expected": "interval_one",
+      "source": "neweden_main.cpp: presentParameters.presentInterval = smoke ? PRESENT_INTERVAL_IMMEDIATE : PRESENT_INTERVAL_ONE;"
+    },
+    {
+      "id": "smoke_present_interval",
+      "type": "choice",
+      "instructions": "According to `files['src/neweden_main.cpp']`, which present interval is used when the New Eden host runs with --smoke?",
+      "criteria": {
+        "immediate": "PRESENT_INTERVAL_IMMEDIATE.",
+        "interval_one": "PRESENT_INTERVAL_ONE (vsync).",
+        "interval_two": "PRESENT_INTERVAL_TWO."
+      },
+      "expected": "immediate",
+      "source": "neweden_main.cpp smoke branch uses PRESENT_INTERVAL_IMMEDIATE. docs/status.md notes smoke is not vsync-capped."
+    },
+    {
+      "id": "draw_calls_per_frame",
+      "type": "choice",
+      "instructions": "According to the repository files in `files`, how many DrawPrimitive calls does the New Eden host issue per frame after Milestone 1C?",
+      "criteria": {
+        "one": "A single DrawPrimitive for systems only.",
+        "two": "Two calls: one TOP_LINES gates DrawPrimitive and one TOP_POINTS systems DrawPrimitive.",
+        "three_or_more": "Three or more DrawPrimitive calls per frame."
+      },
+      "expected": "two",
+      "source": "neweden_main.cpp kDrawCallsPerFrame = 2; two DrawPrimitive calls. AGENTS.md: Two draw calls per frame."
+    },
+    {
+      "id": "project_intent",
+      "type": "choice",
+      "instructions": "According to the repository files in `files`, what is this repository?",
+      "criteria": {
+        "carbon_trinityal_experiment": "A personal experiment consuming public Carbon/Trinity and rendering with TrinityAL.",
+        "eomap_product_port": "A product port of EO-Map.",
+        "eve_client_modification": "A modification of the EVE Online or EVE Frontier clients."
+      },
+      "expected": "carbon_trinityal_experiment",
+      "source": "AGENTS.md and README.md opening paragraphs."
+    },
+    {
+      "id": "pixel_evidence",
+      "type": "choice",
+      "instructions": "According to the repository files in `files`, what is sufficient evidence that pixels on screen are correct?",
+      "criteria": {
+        "human_look_required": "A human must look at the window. Automated smoke cannot claim pixels.",
+        "automated_smoke_sufficient": "A passing --smoke run is enough to claim pixel contents."
+      },
+      "expected": "human_look_required",
+      "source": "AGENTS.md milestone discipline and human smoke sections."
+    }
+  ]
+}

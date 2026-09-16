@@ -56,6 +56,10 @@ Desktop.ini
 # Python
 __pycache__/
 *.pyc
+.venv/
+
+# Isolated TypeSafe/Jev experiment local outputs (never commit API dumps)
+experiments/typesafe/results/
 
 # Local secrets / machine paths
 .env
