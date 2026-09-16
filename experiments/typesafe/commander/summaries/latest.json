@@ -1,7 +1,13 @@
 {
-  "live": false,
-  "reason": "TYPESAFE_API_KEY was not set; dry-run only. No live answers, latencies, or API tokens.",
+  "live": true,
   "model": "jev-latest",
+  "listed_models": [
+    "jev-latest",
+    "jev-preview"
+  ],
+  "models": [
+    "jev-1.13.0"
+  ],
   "measure": {
     "payload_chars": 10831,
     "payload_bytes_utf8": 10831,
@@ -171,81 +177,2517 @@
     "choice": 4,
     "total": 16
   },
+  "probe": {
+    "ok": true,
+    "latency_s": 0.24696259992197156,
+    "input_tokens": 3418,
+    "output_tokens": 481,
+    "model": "jev-1.13.0",
+    "answers": {
+      "boss_in_critical_danger": {
+        "type": "noul",
+        "noul": 0.1
+      },
+      "swarm_overextended": {
+        "type": "noul",
+        "noul": 0.08
+      },
+      "regroup_warranted": {
+        "type": "noul",
+        "noul": 0.14
+      },
+      "recall_detached_units": {
+        "type": "noul",
+        "noul": 0.15
+      },
+      "reinforcement_wave_warranted": {
+        "type": "noul",
+        "noul": 0.38
+      },
+      "focus_fire_warranted": {
+        "type": "noul",
+        "noul": 0.36
+      },
+      "pursuit_warranted": {
+        "type": "noul",
+        "noul": 0.11
+      },
+      "preserve_swarm_priority": {
+        "type": "noul",
+        "noul": 0.11
+      },
+      "protect_boss_priority": {
+        "type": "noul",
+        "noul": 0.28
+      },
+      "current_plan_still_sensible": {
+        "type": "noul",
+        "noul": 0.75
+      },
+      "distant_bait_should_be_ignored": {
+        "type": "noul",
+        "noul": 0.08
+      },
+      "pressure_can_be_maintained": {
+        "type": "noul",
+        "noul": 0.75
+      },
+      "tactical_posture": {
+        "type": "choice",
+        "choice": "press_attack",
+        "confidence": 0.92,
+        "probabilities": {
+          "regroup": 0.01,
+          "press_attack": 0.94,
+          "hold_close": 0.05,
+          "desperate_defence": 0.0
+        }
+      },
+      "formation_intent": {
+        "type": "choice",
+        "choice": "tight_screen",
+        "confidence": 0.45,
+        "probabilities": {
+          "tight_screen": 0.58,
+          "balanced": 0.38,
+          "recall_detached": 0.01,
+          "wide_pressure": 0.03
+        }
+      },
+      "reinforcement_action": {
+        "type": "choice",
+        "choice": "spawn_now",
+        "confidence": 0.95,
+        "probabilities": {
+          "spawn_now": 0.98,
+          "hold": 0.02
+        }
+      },
+      "primary_target": {
+        "type": "choice",
+        "choice": "P1",
+        "confidence": 0.92,
+        "probabilities": {
+          "none": 0.04,
+          "P4": 0.0,
+          "P8": 0.0,
+          "P6": 0.0,
+          "P1": 0.93,
+          "P3": 0.0,
+          "P7": 0.0,
+          "P2": 0.03,
+          "P5": 0.0
+        }
+      }
+    },
+    "error_type": null,
+    "error": null
+  },
+  "small_repeat_n": 4,
   "scenarios": [
     {
       "id": "initial_encounter",
       "title": "Initial encounter",
-      "why": "Boss healthy, full swarm, players approaching, little recent damage."
+      "why": "Boss healthy, full swarm, players approaching, little recent damage.",
+      "ok": true,
+      "latency_s": 0.25096159998793155,
+      "input_tokens": 3418,
+      "output_tokens": 481,
+      "model": "jev-1.13.0",
+      "deterministic": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      },
+      "jev_command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "tight_screen",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      },
+      "field_sources": {
+        "tactical_posture": "jev",
+        "formation_intent": "jev",
+        "reinforcement_action": "deterministic_ambiguous",
+        "primary_target": "jev"
+      },
+      "noul": {
+        "boss_in_critical_danger": 0.12,
+        "swarm_overextended": 0.08,
+        "regroup_warranted": 0.15,
+        "recall_detached_units": 0.15,
+        "reinforcement_wave_warranted": 0.39,
+        "focus_fire_warranted": 0.35,
+        "pursuit_warranted": 0.1,
+        "preserve_swarm_priority": 0.11,
+        "protect_boss_priority": 0.29,
+        "current_plan_still_sensible": 0.75,
+        "distant_bait_should_be_ignored": 0.08,
+        "pressure_can_be_maintained": 0.75
+      },
+      "choices": {
+        "tactical_posture": {
+          "type": "choice",
+          "choice": "press_attack",
+          "confidence": 0.9,
+          "probabilities": {
+            "regroup": 0.01,
+            "hold_close": 0.06,
+            "desperate_defence": 0.01,
+            "press_attack": 0.92
+          }
+        },
+        "formation_intent": {
+          "type": "choice",
+          "choice": "tight_screen",
+          "confidence": 0.4,
+          "probabilities": {
+            "recall_detached": 0.01,
+            "tight_screen": 0.55,
+            "wide_pressure": 0.03,
+            "balanced": 0.41
+          }
+        },
+        "reinforcement_action": {
+          "type": "choice",
+          "choice": "spawn_now",
+          "confidence": 0.95,
+          "probabilities": {
+            "spawn_now": 0.98,
+            "hold": 0.02
+          }
+        },
+        "primary_target": {
+          "type": "choice",
+          "choice": "P1",
+          "confidence": 0.92,
+          "probabilities": {
+            "P3": 0.0,
+            "none": 0.04,
+            "P6": 0.0,
+            "P4": 0.0,
+            "P2": 0.03,
+            "P5": 0.0,
+            "P8": 0.0,
+            "P7": 0.0,
+            "P1": 0.93
+          }
+        }
+      },
+      "review_flags": [
+        {
+          "scenario_id": "initial_encounter",
+          "id": "reinforcement_action",
+          "kind": "choice_not",
+          "note": "No attrition yet.",
+          "observed": "spawn_now",
+          "check": {
+            "kind": "choice_not",
+            "id": "reinforcement_action",
+            "value": "spawn_now"
+          }
+        }
+      ],
+      "review_flag_count": 1,
+      "compare": {
+        "deterministic": {
+          "tactical_posture": "press_attack",
+          "formation_intent": "wide_pressure",
+          "reinforcement_action": "hold",
+          "primary_target": "none",
+          "flags": {
+            "boss_in_critical_danger": false,
+            "swarm_overextended": false,
+            "regroup_warranted": false,
+            "recall_detached_units": false,
+            "reinforcement_wave_warranted": false,
+            "focus_fire_warranted": false,
+            "pursuit_warranted": false,
+            "preserve_swarm_priority": false,
+            "protect_boss_priority": false,
+            "current_plan_still_sensible": true,
+            "distant_bait_should_be_ignored": false,
+            "pressure_can_be_maintained": true
+          }
+        },
+        "applied": {
+          "command": {
+            "tactical_posture": "press_attack",
+            "formation_intent": "tight_screen",
+            "reinforcement_action": "hold",
+            "primary_target": "P1",
+            "flags": {
+              "boss_in_critical_danger": false,
+              "swarm_overextended": false,
+              "regroup_warranted": false,
+              "recall_detached_units": false,
+              "reinforcement_wave_warranted": false,
+              "focus_fire_warranted": false,
+              "pursuit_warranted": false,
+              "preserve_swarm_priority": false,
+              "protect_boss_priority": false,
+              "current_plan_still_sensible": true,
+              "distant_bait_should_be_ignored": false,
+              "pressure_can_be_maintained": true
+            }
+          },
+          "source": "jev_composed",
+          "reasons": [
+            "spawn_held_because_reinforcement_noul_ambiguous",
+            "ambiguous_noul:reinforcement_wave_warranted=0.39"
+          ],
+          "field_sources": {
+            "tactical_posture": "jev",
+            "formation_intent": "jev",
+            "reinforcement_action": "deterministic_ambiguous",
+            "primary_target": "jev"
+          },
+          "used_jev": true
+        },
+        "posture_agree": true,
+        "formation_agree": false,
+        "reinforce_agree": true,
+        "target_agree": false
+      }
     },
     {
       "id": "normal_engagement",
       "title": "Normal engagement",
-      "why": "Moderate losses, several players damaging subordinates, boss still healthy."
+      "why": "Moderate losses, several players damaging subordinates, boss still healthy.",
+      "ok": true,
+      "latency_s": 0.23466169997118413,
+      "input_tokens": 3448,
+      "output_tokens": 479,
+      "model": "jev-1.13.0",
+      "deterministic": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      },
+      "jev_command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "P3"
+      },
+      "field_sources": {
+        "tactical_posture": "jev",
+        "formation_intent": "deterministic_ambiguous",
+        "reinforcement_action": "jev",
+        "primary_target": "jev"
+      },
+      "noul": {
+        "boss_in_critical_danger": 0.22,
+        "swarm_overextended": 0.14,
+        "regroup_warranted": 0.41,
+        "recall_detached_units": 0.61,
+        "reinforcement_wave_warranted": 0.08,
+        "focus_fire_warranted": 0.51,
+        "pursuit_warranted": 0.13,
+        "preserve_swarm_priority": 0.21,
+        "protect_boss_priority": 0.37,
+        "current_plan_still_sensible": 0.68,
+        "distant_bait_should_be_ignored": 0.16,
+        "pressure_can_be_maintained": 0.55
+      },
+      "choices": {
+        "tactical_posture": {
+          "type": "choice",
+          "choice": "press_attack",
+          "confidence": 0.87,
+          "probabilities": {
+            "press_attack": 0.9,
+            "regroup": 0.01,
+            "hold_close": 0.08,
+            "desperate_defence": 0.01
+          }
+        },
+        "formation_intent": {
+          "type": "choice",
+          "choice": "balanced",
+          "confidence": 0.22,
+          "probabilities": {
+            "wide_pressure": 0.02,
+            "balanced": 0.41,
+            "recall_detached": 0.31,
+            "tight_screen": 0.26
+          }
+        },
+        "reinforcement_action": {
+          "type": "choice",
+          "choice": "hold",
+          "confidence": 1.0,
+          "probabilities": {
+            "hold": 1.0,
+            "spawn_now": 0.0
+          }
+        },
+        "primary_target": {
+          "type": "choice",
+          "choice": "P3",
+          "confidence": 0.58,
+          "probabilities": {
+            "P7": 0.0,
+            "P3": 0.64,
+            "P6": 0.0,
+            "P5": 0.0,
+            "none": 0.0,
+            "P4": 0.0,
+            "P8": 0.01,
+            "P2": 0.29,
+            "P1": 0.06
+          }
+        }
+      },
+      "review_flags": [],
+      "review_flag_count": 0,
+      "compare": {
+        "deterministic": {
+          "tactical_posture": "press_attack",
+          "formation_intent": "wide_pressure",
+          "reinforcement_action": "hold",
+          "primary_target": "none",
+          "flags": {
+            "boss_in_critical_danger": false,
+            "swarm_overextended": false,
+            "regroup_warranted": false,
+            "recall_detached_units": false,
+            "reinforcement_wave_warranted": false,
+            "focus_fire_warranted": false,
+            "pursuit_warranted": false,
+            "preserve_swarm_priority": false,
+            "protect_boss_priority": false,
+            "current_plan_still_sensible": true,
+            "distant_bait_should_be_ignored": false,
+            "pressure_can_be_maintained": true
+          }
+        },
+        "applied": {
+          "command": {
+            "tactical_posture": "press_attack",
+            "formation_intent": "wide_pressure",
+            "reinforcement_action": "hold",
+            "primary_target": "P3",
+            "flags": {
+              "boss_in_critical_danger": false,
+              "swarm_overextended": false,
+              "regroup_warranted": false,
+              "recall_detached_units": false,
+              "reinforcement_wave_warranted": false,
+              "focus_fire_warranted": false,
+              "pursuit_warranted": false,
+              "preserve_swarm_priority": false,
+              "protect_boss_priority": false,
+              "current_plan_still_sensible": true,
+              "distant_bait_should_be_ignored": false,
+              "pressure_can_be_maintained": true
+            }
+          },
+          "source": "jev_composed",
+          "reasons": [
+            "ambiguous_formation_intent_conf=0.22",
+            "ambiguous_noul:regroup_warranted=0.41",
+            "ambiguous_noul:recall_detached_units=0.61",
+            "ambiguous_noul:focus_fire_warranted=0.51",
+            "ambiguous_noul:protect_boss_priority=0.37",
+            "ambiguous_noul:pressure_can_be_maintained=0.55"
+          ],
+          "field_sources": {
+            "tactical_posture": "jev",
+            "formation_intent": "deterministic_ambiguous",
+            "reinforcement_action": "jev",
+            "primary_target": "jev"
+          },
+          "used_jev": true
+        },
+        "posture_agree": true,
+        "formation_agree": true,
+        "reinforce_agree": true,
+        "target_agree": false
+      }
     },
     {
       "id": "boss_focused",
       "title": "Boss being focused",
-      "why": "P3 accounts for most recent boss damage; boss health is falling."
+      "why": "P3 accounts for most recent boss damage; boss health is falling.",
+      "ok": true,
+      "latency_s": 0.23950999998487532,
+      "input_tokens": 3445,
+      "output_tokens": 479,
+      "model": "jev-1.13.0",
+      "deterministic": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "P3"
+      },
+      "jev_command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "P3"
+      },
+      "field_sources": {
+        "tactical_posture": "deterministic_ambiguous",
+        "formation_intent": "deterministic_ambiguous",
+        "reinforcement_action": "jev",
+        "primary_target": "jev"
+      },
+      "noul": {
+        "boss_in_critical_danger": 0.43,
+        "swarm_overextended": 0.12,
+        "regroup_warranted": 0.39,
+        "recall_detached_units": 0.6,
+        "reinforcement_wave_warranted": 0.08,
+        "focus_fire_warranted": 0.83,
+        "pursuit_warranted": 0.12,
+        "preserve_swarm_priority": 0.21,
+        "protect_boss_priority": 0.45,
+        "current_plan_still_sensible": 0.63,
+        "distant_bait_should_be_ignored": 0.13,
+        "pressure_can_be_maintained": 0.55
+      },
+      "choices": {
+        "tactical_posture": {
+          "type": "choice",
+          "choice": "press_attack",
+          "confidence": 0.34,
+          "probabilities": {
+            "regroup": 0.01,
+            "hold_close": 0.48,
+            "press_attack": 0.5,
+            "desperate_defence": 0.01
+          }
+        },
+        "formation_intent": {
+          "type": "choice",
+          "choice": "balanced",
+          "confidence": 0.25,
+          "probabilities": {
+            "balanced": 0.44,
+            "recall_detached": 0.19,
+            "wide_pressure": 0.01,
+            "tight_screen": 0.36
+          }
+        },
+        "reinforcement_action": {
+          "type": "choice",
+          "choice": "hold",
+          "confidence": 1.0,
+          "probabilities": {
+            "hold": 1.0,
+            "spawn_now": 0.0
+          }
+        },
+        "primary_target": {
+          "type": "choice",
+          "choice": "P3",
+          "confidence": 0.97,
+          "probabilities": {
+            "P3": 0.98,
+            "P4": 0.0,
+            "P7": 0.0,
+            "P5": 0.0,
+            "none": 0.0,
+            "P1": 0.01,
+            "P8": 0.0,
+            "P2": 0.01,
+            "P6": 0.0
+          }
+        }
+      },
+      "review_flags": [],
+      "review_flag_count": 0,
+      "compare": {
+        "deterministic": {
+          "tactical_posture": "press_attack",
+          "formation_intent": "wide_pressure",
+          "reinforcement_action": "hold",
+          "primary_target": "P3",
+          "flags": {
+            "boss_in_critical_danger": false,
+            "swarm_overextended": false,
+            "regroup_warranted": false,
+            "recall_detached_units": false,
+            "reinforcement_wave_warranted": false,
+            "focus_fire_warranted": true,
+            "pursuit_warranted": true,
+            "preserve_swarm_priority": false,
+            "protect_boss_priority": false,
+            "current_plan_still_sensible": false,
+            "distant_bait_should_be_ignored": false,
+            "pressure_can_be_maintained": true
+          }
+        },
+        "applied": {
+          "command": {
+            "tactical_posture": "press_attack",
+            "formation_intent": "wide_pressure",
+            "reinforcement_action": "hold",
+            "primary_target": "P3",
+            "flags": {
+              "boss_in_critical_danger": false,
+              "swarm_overextended": false,
+              "regroup_warranted": false,
+              "recall_detached_units": false,
+              "reinforcement_wave_warranted": false,
+              "focus_fire_warranted": true,
+              "pursuit_warranted": false,
+              "preserve_swarm_priority": false,
+              "protect_boss_priority": false,
+              "current_plan_still_sensible": false,
+              "distant_bait_should_be_ignored": false,
+              "pressure_can_be_maintained": true
+            }
+          },
+          "source": "jev_composed",
+          "reasons": [
+            "ambiguous_tactical_posture_conf=0.34",
+            "ambiguous_formation_intent_conf=0.25",
+            "ambiguous_noul:boss_in_critical_danger=0.43",
+            "ambiguous_noul:regroup_warranted=0.39",
+            "ambiguous_noul:recall_detached_units=0.60",
+            "ambiguous_noul:protect_boss_priority=0.45",
+            "ambiguous_noul:current_plan_still_sensible=0.63",
+            "ambiguous_noul:pressure_can_be_maintained=0.55"
+          ],
+          "field_sources": {
+            "tactical_posture": "deterministic_ambiguous",
+            "formation_intent": "deterministic_ambiguous",
+            "reinforcement_action": "jev",
+            "primary_target": "jev"
+          },
+          "used_jev": true
+        },
+        "posture_agree": true,
+        "formation_agree": true,
+        "reinforce_agree": true,
+        "target_agree": true
+      }
     },
     {
       "id": "swarm_dispersed",
       "title": "Swarm becoming dispersed",
-      "why": "Substantial fraction of NPCs far from the boss; two distant players drawing them."
+      "why": "Substantial fraction of NPCs far from the boss; two distant players drawing them.",
+      "ok": true,
+      "latency_s": 0.24180809990502894,
+      "input_tokens": 3457,
+      "output_tokens": 482,
+      "model": "jev-1.13.0",
+      "deterministic": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "recall_detached",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      },
+      "jev_command": {
+        "tactical_posture": "regroup",
+        "formation_intent": "recall_detached",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      },
+      "field_sources": {
+        "tactical_posture": "jev",
+        "formation_intent": "jev",
+        "reinforcement_action": "jev",
+        "primary_target": "jev"
+      },
+      "noul": {
+        "boss_in_critical_danger": 0.3,
+        "swarm_overextended": 0.77,
+        "regroup_warranted": 0.7,
+        "recall_detached_units": 0.54,
+        "reinforcement_wave_warranted": 0.08,
+        "focus_fire_warranted": 0.54,
+        "pursuit_warranted": 0.15,
+        "preserve_swarm_priority": 0.3,
+        "protect_boss_priority": 0.42,
+        "current_plan_still_sensible": 0.49,
+        "distant_bait_should_be_ignored": 0.49,
+        "pressure_can_be_maintained": 0.42
+      },
+      "choices": {
+        "tactical_posture": {
+          "type": "choice",
+          "choice": "regroup",
+          "confidence": 0.43,
+          "probabilities": {
+            "desperate_defence": 0.02,
+            "regroup": 0.57,
+            "hold_close": 0.07,
+            "press_attack": 0.34
+          }
+        },
+        "formation_intent": {
+          "type": "choice",
+          "choice": "recall_detached",
+          "confidence": 0.71,
+          "probabilities": {
+            "tight_screen": 0.11,
+            "recall_detached": 0.78,
+            "wide_pressure": 0.01,
+            "balanced": 0.1
+          }
+        },
+        "reinforcement_action": {
+          "type": "choice",
+          "choice": "hold",
+          "confidence": 1.0,
+          "probabilities": {
+            "spawn_now": 0.0,
+            "hold": 1.0
+          }
+        },
+        "primary_target": {
+          "type": "choice",
+          "choice": "P1",
+          "confidence": 0.98,
+          "probabilities": {
+            "P1": 0.98,
+            "P2": 0.01,
+            "none": 0.0,
+            "P9": 0.0,
+            "P8": 0.01,
+            "P5": 0.0,
+            "P3": 0.0,
+            "P4": 0.0,
+            "P6": 0.0
+          }
+        }
+      },
+      "review_flags": [],
+      "review_flag_count": 0,
+      "compare": {
+        "deterministic": {
+          "tactical_posture": "press_attack",
+          "formation_intent": "recall_detached",
+          "reinforcement_action": "hold",
+          "primary_target": "none",
+          "flags": {
+            "boss_in_critical_danger": false,
+            "swarm_overextended": true,
+            "regroup_warranted": false,
+            "recall_detached_units": true,
+            "reinforcement_wave_warranted": false,
+            "focus_fire_warranted": false,
+            "pursuit_warranted": false,
+            "preserve_swarm_priority": false,
+            "protect_boss_priority": false,
+            "current_plan_still_sensible": true,
+            "distant_bait_should_be_ignored": false,
+            "pressure_can_be_maintained": true
+          }
+        },
+        "applied": {
+          "command": {
+            "tactical_posture": "regroup",
+            "formation_intent": "recall_detached",
+            "reinforcement_action": "hold",
+            "primary_target": "P1",
+            "flags": {
+              "boss_in_critical_danger": false,
+              "swarm_overextended": true,
+              "regroup_warranted": true,
+              "recall_detached_units": true,
+              "reinforcement_wave_warranted": false,
+              "focus_fire_warranted": false,
+              "pursuit_warranted": false,
+              "preserve_swarm_priority": false,
+              "protect_boss_priority": false,
+              "current_plan_still_sensible": true,
+              "distant_bait_should_be_ignored": false,
+              "pressure_can_be_maintained": true
+            }
+          },
+          "source": "jev_composed",
+          "reasons": [
+            "ambiguous_noul:recall_detached_units=0.54",
+            "ambiguous_noul:focus_fire_warranted=0.54",
+            "ambiguous_noul:protect_boss_priority=0.42",
+            "ambiguous_noul:current_plan_still_sensible=0.49",
+            "ambiguous_noul:distant_bait_should_be_ignored=0.49",
+            "ambiguous_noul:pressure_can_be_maintained=0.42"
+          ],
+          "field_sources": {
+            "tactical_posture": "jev",
+            "formation_intent": "jev",
+            "reinforcement_action": "jev",
+            "primary_target": "jev"
+          },
+          "used_jev": true
+        },
+        "posture_agree": false,
+        "formation_agree": true,
+        "reinforce_agree": true,
+        "target_agree": false
+      }
     },
     {
       "id": "heavy_attrition",
       "title": "Heavy recent attrition",
-      "why": "Many NPC losses over a short interval; players are chewing through subordinates."
+      "why": "Many NPC losses over a short interval; players are chewing through subordinates.",
+      "ok": true,
+      "latency_s": 0.2485778999980539,
+      "input_tokens": 3453,
+      "output_tokens": 479,
+      "model": "jev-1.13.0",
+      "deterministic": {
+        "tactical_posture": "regroup",
+        "formation_intent": "balanced",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      },
+      "jev_command": {
+        "tactical_posture": "regroup",
+        "formation_intent": "balanced",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      },
+      "field_sources": {
+        "tactical_posture": "deterministic_ambiguous",
+        "formation_intent": "deterministic_ambiguous",
+        "reinforcement_action": "jev",
+        "primary_target": "jev"
+      },
+      "noul": {
+        "boss_in_critical_danger": 0.43,
+        "swarm_overextended": 0.16,
+        "regroup_warranted": 0.77,
+        "recall_detached_units": 0.64,
+        "reinforcement_wave_warranted": 0.08,
+        "focus_fire_warranted": 0.47,
+        "pursuit_warranted": 0.11,
+        "preserve_swarm_priority": 0.49,
+        "protect_boss_priority": 0.41,
+        "current_plan_still_sensible": 0.57,
+        "distant_bait_should_be_ignored": 0.15,
+        "pressure_can_be_maintained": 0.29
+      },
+      "choices": {
+        "tactical_posture": {
+          "type": "choice",
+          "choice": "press_attack",
+          "confidence": 0.34,
+          "probabilities": {
+            "press_attack": 0.5,
+            "desperate_defence": 0.04,
+            "regroup": 0.32,
+            "hold_close": 0.14
+          }
+        },
+        "formation_intent": {
+          "type": "choice",
+          "choice": "balanced",
+          "confidence": 0.16,
+          "probabilities": {
+            "tight_screen": 0.32,
+            "balanced": 0.36,
+            "recall_detached": 0.3,
+            "wide_pressure": 0.02
+          }
+        },
+        "reinforcement_action": {
+          "type": "choice",
+          "choice": "hold",
+          "confidence": 1.0,
+          "probabilities": {
+            "hold": 1.0,
+            "spawn_now": 0.0
+          }
+        },
+        "primary_target": {
+          "type": "choice",
+          "choice": "P1",
+          "confidence": 0.95,
+          "probabilities": {
+            "P1": 0.97,
+            "P6": 0.0,
+            "P7": 0.0,
+            "P2": 0.03,
+            "P5": 0.0,
+            "P4": 0.0,
+            "none": 0.0,
+            "P3": 0.0,
+            "P8": 0.0
+          }
+        }
+      },
+      "review_flags": [
+        {
+          "scenario_id": "heavy_attrition",
+          "id": "preserve_swarm_priority",
+          "kind": "noul_above",
+          "note": "Remaining swarm is already halved.",
+          "observed": 0.49,
+          "check": {
+            "kind": "noul_above",
+            "id": "preserve_swarm_priority",
+            "threshold": 0.5
+          }
+        },
+        {
+          "scenario_id": "heavy_attrition",
+          "id": "tactical_posture",
+          "kind": "choice_not",
+          "note": "Continuing a full press after a wipe pulse is questionable.",
+          "observed": "press_attack",
+          "check": {
+            "kind": "choice_not",
+            "id": "tactical_posture",
+            "value": "press_attack"
+          }
+        }
+      ],
+      "review_flag_count": 2,
+      "compare": {
+        "deterministic": {
+          "tactical_posture": "regroup",
+          "formation_intent": "balanced",
+          "reinforcement_action": "hold",
+          "primary_target": "none",
+          "flags": {
+            "boss_in_critical_danger": false,
+            "swarm_overextended": false,
+            "regroup_warranted": true,
+            "recall_detached_units": false,
+            "reinforcement_wave_warranted": false,
+            "focus_fire_warranted": false,
+            "pursuit_warranted": false,
+            "preserve_swarm_priority": true,
+            "protect_boss_priority": false,
+            "current_plan_still_sensible": false,
+            "distant_bait_should_be_ignored": false,
+            "pressure_can_be_maintained": false
+          }
+        },
+        "applied": {
+          "command": {
+            "tactical_posture": "regroup",
+            "formation_intent": "balanced",
+            "reinforcement_action": "hold",
+            "primary_target": "P1",
+            "flags": {
+              "boss_in_critical_danger": false,
+              "swarm_overextended": false,
+              "regroup_warranted": true,
+              "recall_detached_units": false,
+              "reinforcement_wave_warranted": false,
+              "focus_fire_warranted": false,
+              "pursuit_warranted": false,
+              "preserve_swarm_priority": true,
+              "protect_boss_priority": false,
+              "current_plan_still_sensible": false,
+              "distant_bait_should_be_ignored": false,
+              "pressure_can_be_maintained": false
+            }
+          },
+          "source": "jev_composed",
+          "reasons": [
+            "ambiguous_tactical_posture_conf=0.34",
+            "ambiguous_formation_intent_conf=0.16",
+            "ambiguous_noul:boss_in_critical_danger=0.43",
+            "ambiguous_noul:recall_detached_units=0.64",
+            "ambiguous_noul:focus_fire_warranted=0.47",
+            "ambiguous_noul:preserve_swarm_priority=0.49",
+            "ambiguous_noul:protect_boss_priority=0.41",
+            "ambiguous_noul:current_plan_still_sensible=0.57"
+          ],
+          "field_sources": {
+            "tactical_posture": "deterministic_ambiguous",
+            "formation_intent": "deterministic_ambiguous",
+            "reinforcement_action": "jev",
+            "primary_target": "jev"
+          },
+          "used_jev": true
+        },
+        "posture_agree": true,
+        "formation_agree": true,
+        "reinforce_agree": true,
+        "target_agree": false
+      }
     },
     {
       "id": "boss_critical",
       "title": "Boss critically damaged",
-      "why": "Very low boss health and a reduced swarm; remaining players are on the boss."
+      "why": "Very low boss health and a reduced swarm; remaining players are on the boss.",
+      "ok": true,
+      "latency_s": 0.23034050001297146,
+      "input_tokens": 3114,
+      "output_tokens": 448,
+      "model": "jev-1.13.0",
+      "deterministic": {
+        "tactical_posture": "desperate_defence",
+        "formation_intent": "tight_screen",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      },
+      "jev_command": {
+        "tactical_posture": "hold_close",
+        "formation_intent": "tight_screen",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      },
+      "field_sources": {
+        "tactical_posture": "jev",
+        "formation_intent": "deterministic_ambiguous",
+        "reinforcement_action": "jev",
+        "primary_target": "jev"
+      },
+      "noul": {
+        "boss_in_critical_danger": 0.86,
+        "swarm_overextended": 0.15,
+        "regroup_warranted": 0.62,
+        "recall_detached_units": 0.68,
+        "reinforcement_wave_warranted": 0.09,
+        "focus_fire_warranted": 0.8,
+        "pursuit_warranted": 0.1,
+        "preserve_swarm_priority": 0.39,
+        "protect_boss_priority": 0.61,
+        "current_plan_still_sensible": 0.56,
+        "distant_bait_should_be_ignored": 0.12,
+        "pressure_can_be_maintained": 0.34
+      },
+      "choices": {
+        "tactical_posture": {
+          "type": "choice",
+          "choice": "hold_close",
+          "confidence": 0.42,
+          "probabilities": {
+            "regroup": 0.03,
+            "press_attack": 0.35,
+            "hold_close": 0.57,
+            "desperate_defence": 0.05
+          }
+        },
+        "formation_intent": {
+          "type": "choice",
+          "choice": "tight_screen",
+          "confidence": 0.18,
+          "probabilities": {
+            "wide_pressure": 0.01,
+            "tight_screen": 0.39,
+            "balanced": 0.25,
+            "recall_detached": 0.35
+          }
+        },
+        "reinforcement_action": {
+          "type": "choice",
+          "choice": "hold",
+          "confidence": 1.0,
+          "probabilities": {
+            "spawn_now": 0.0,
+            "hold": 1.0
+          }
+        },
+        "primary_target": {
+          "type": "choice",
+          "choice": "P1",
+          "confidence": 0.96,
+          "probabilities": {
+            "P1": 0.97,
+            "P2": 0.01,
+            "P3": 0.02,
+            "P4": 0.0,
+            "none": 0.0
+          }
+        }
+      },
+      "review_flags": [],
+      "review_flag_count": 0,
+      "compare": {
+        "deterministic": {
+          "tactical_posture": "desperate_defence",
+          "formation_intent": "tight_screen",
+          "reinforcement_action": "hold",
+          "primary_target": "P1",
+          "flags": {
+            "boss_in_critical_danger": true,
+            "swarm_overextended": false,
+            "regroup_warranted": false,
+            "recall_detached_units": false,
+            "reinforcement_wave_warranted": false,
+            "focus_fire_warranted": true,
+            "pursuit_warranted": true,
+            "preserve_swarm_priority": true,
+            "protect_boss_priority": true,
+            "current_plan_still_sensible": false,
+            "distant_bait_should_be_ignored": false,
+            "pressure_can_be_maintained": false
+          }
+        },
+        "applied": {
+          "command": {
+            "tactical_posture": "hold_close",
+            "formation_intent": "tight_screen",
+            "reinforcement_action": "hold",
+            "primary_target": "P1",
+            "flags": {
+              "boss_in_critical_danger": true,
+              "swarm_overextended": false,
+              "regroup_warranted": false,
+              "recall_detached_units": true,
+              "reinforcement_wave_warranted": false,
+              "focus_fire_warranted": true,
+              "pursuit_warranted": false,
+              "preserve_swarm_priority": true,
+              "protect_boss_priority": true,
+              "current_plan_still_sensible": false,
+              "distant_bait_should_be_ignored": false,
+              "pressure_can_be_maintained": false
+            }
+          },
+          "source": "jev_composed",
+          "reasons": [
+            "ambiguous_formation_intent_conf=0.18",
+            "ambiguous_noul:regroup_warranted=0.62",
+            "ambiguous_noul:preserve_swarm_priority=0.39",
+            "ambiguous_noul:protect_boss_priority=0.61",
+            "ambiguous_noul:current_plan_still_sensible=0.56"
+          ],
+          "field_sources": {
+            "tactical_posture": "jev",
+            "formation_intent": "deterministic_ambiguous",
+            "reinforcement_action": "jev",
+            "primary_target": "jev"
+          },
+          "used_jev": true
+        },
+        "posture_agree": false,
+        "formation_agree": true,
+        "reinforce_agree": true,
+        "target_agree": true
+      }
     },
     {
       "id": "reinforce_under_pressure",
       "title": "Reinforcements available under pressure",
-      "why": "Capacity is up, cooldown is zero, swarm is depleted, and players are still applying damage."
+      "why": "Capacity is up, cooldown is zero, swarm is depleted, and players are still applying damage.",
+      "ok": true,
+      "latency_s": 0.2286471000406891,
+      "input_tokens": 3449,
+      "output_tokens": 480,
+      "model": "jev-1.13.0",
+      "deterministic": {
+        "tactical_posture": "regroup",
+        "formation_intent": "balanced",
+        "reinforcement_action": "spawn_now",
+        "primary_target": "P1"
+      },
+      "jev_command": {
+        "tactical_posture": "hold_close",
+        "formation_intent": "balanced",
+        "reinforcement_action": "spawn_now",
+        "primary_target": "P1"
+      },
+      "field_sources": {
+        "tactical_posture": "jev",
+        "formation_intent": "deterministic_ambiguous",
+        "reinforcement_action": "jev",
+        "primary_target": "jev"
+      },
+      "noul": {
+        "boss_in_critical_danger": 0.6,
+        "swarm_overextended": 0.31,
+        "regroup_warranted": 0.72,
+        "recall_detached_units": 0.66,
+        "reinforcement_wave_warranted": 0.74,
+        "focus_fire_warranted": 0.57,
+        "pursuit_warranted": 0.13,
+        "preserve_swarm_priority": 0.4,
+        "protect_boss_priority": 0.56,
+        "current_plan_still_sensible": 0.57,
+        "distant_bait_should_be_ignored": 0.18,
+        "pressure_can_be_maintained": 0.37
+      },
+      "choices": {
+        "tactical_posture": {
+          "type": "choice",
+          "choice": "hold_close",
+          "confidence": 0.4,
+          "probabilities": {
+            "desperate_defence": 0.06,
+            "regroup": 0.09,
+            "hold_close": 0.55,
+            "press_attack": 0.3
+          }
+        },
+        "formation_intent": {
+          "type": "choice",
+          "choice": "balanced",
+          "confidence": 0.25,
+          "probabilities": {
+            "tight_screen": 0.25,
+            "recall_detached": 0.3,
+            "wide_pressure": 0.01,
+            "balanced": 0.44
+          }
+        },
+        "reinforcement_action": {
+          "type": "choice",
+          "choice": "spawn_now",
+          "confidence": 0.99,
+          "probabilities": {
+            "spawn_now": 1.0,
+            "hold": 0.0
+          }
+        },
+        "primary_target": {
+          "type": "choice",
+          "choice": "P1",
+          "confidence": 0.95,
+          "probabilities": {
+            "P4": 0.0,
+            "P1": 0.96,
+            "P2": 0.01,
+            "none": 0.0,
+            "P5": 0.0,
+            "P8": 0.02,
+            "P3": 0.01,
+            "P6": 0.0,
+            "P7": 0.0
+          }
+        }
+      },
+      "review_flags": [],
+      "review_flag_count": 0,
+      "compare": {
+        "deterministic": {
+          "tactical_posture": "regroup",
+          "formation_intent": "balanced",
+          "reinforcement_action": "spawn_now",
+          "primary_target": "P1",
+          "flags": {
+            "boss_in_critical_danger": false,
+            "swarm_overextended": false,
+            "regroup_warranted": true,
+            "recall_detached_units": false,
+            "reinforcement_wave_warranted": true,
+            "focus_fire_warranted": true,
+            "pursuit_warranted": true,
+            "preserve_swarm_priority": true,
+            "protect_boss_priority": false,
+            "current_plan_still_sensible": false,
+            "distant_bait_should_be_ignored": false,
+            "pressure_can_be_maintained": false
+          }
+        },
+        "applied": {
+          "command": {
+            "tactical_posture": "hold_close",
+            "formation_intent": "balanced",
+            "reinforcement_action": "spawn_now",
+            "primary_target": "P1",
+            "flags": {
+              "boss_in_critical_danger": false,
+              "swarm_overextended": false,
+              "regroup_warranted": true,
+              "recall_detached_units": true,
+              "reinforcement_wave_warranted": true,
+              "focus_fire_warranted": true,
+              "pursuit_warranted": false,
+              "preserve_swarm_priority": true,
+              "protect_boss_priority": false,
+              "current_plan_still_sensible": false,
+              "distant_bait_should_be_ignored": false,
+              "pressure_can_be_maintained": false
+            }
+          },
+          "source": "jev_composed",
+          "reasons": [
+            "ambiguous_formation_intent_conf=0.25",
+            "ambiguous_noul:boss_in_critical_danger=0.60",
+            "ambiguous_noul:focus_fire_warranted=0.57",
+            "ambiguous_noul:preserve_swarm_priority=0.40",
+            "ambiguous_noul:protect_boss_priority=0.56",
+            "ambiguous_noul:current_plan_still_sensible=0.57",
+            "ambiguous_noul:pressure_can_be_maintained=0.37"
+          ],
+          "field_sources": {
+            "tactical_posture": "jev",
+            "formation_intent": "deterministic_ambiguous",
+            "reinforcement_action": "jev",
+            "primary_target": "jev"
+          },
+          "used_jev": true
+        },
+        "posture_agree": false,
+        "formation_agree": true,
+        "reinforce_agree": true,
+        "target_agree": true
+      }
     },
     {
       "id": "reinforce_while_stable",
       "title": "Reinforcements available while stable",
-      "why": "Capacity is up, but the encounter is currently quiet and the swarm is nearly full."
+      "why": "Capacity is up, but the encounter is currently quiet and the swarm is nearly full.",
+      "ok": true,
+      "latency_s": 0.26255620003212243,
+      "input_tokens": 3425,
+      "output_tokens": 480,
+      "model": "jev-1.13.0",
+      "deterministic": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      },
+      "jev_command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      },
+      "field_sources": {
+        "tactical_posture": "jev",
+        "formation_intent": "deterministic_ambiguous",
+        "reinforcement_action": "deterministic_ambiguous",
+        "primary_target": "jev"
+      },
+      "noul": {
+        "boss_in_critical_danger": 0.13,
+        "swarm_overextended": 0.1,
+        "regroup_warranted": 0.17,
+        "recall_detached_units": 0.58,
+        "reinforcement_wave_warranted": 0.58,
+        "focus_fire_warranted": 0.31,
+        "pursuit_warranted": 0.12,
+        "preserve_swarm_priority": 0.14,
+        "protect_boss_priority": 0.27,
+        "current_plan_still_sensible": 0.77,
+        "distant_bait_should_be_ignored": 0.09,
+        "pressure_can_be_maintained": 0.76
+      },
+      "choices": {
+        "tactical_posture": {
+          "type": "choice",
+          "choice": "press_attack",
+          "confidence": 0.95,
+          "probabilities": {
+            "regroup": 0.0,
+            "hold_close": 0.03,
+            "desperate_defence": 0.0,
+            "press_attack": 0.97
+          }
+        },
+        "formation_intent": {
+          "type": "choice",
+          "choice": "balanced",
+          "confidence": 0.35,
+          "probabilities": {
+            "recall_detached": 0.14,
+            "tight_screen": 0.33,
+            "balanced": 0.52,
+            "wide_pressure": 0.01
+          }
+        },
+        "reinforcement_action": {
+          "type": "choice",
+          "choice": "spawn_now",
+          "confidence": 0.97,
+          "probabilities": {
+            "spawn_now": 0.99,
+            "hold": 0.01
+          }
+        },
+        "primary_target": {
+          "type": "choice",
+          "choice": "P1",
+          "confidence": 0.9,
+          "probabilities": {
+            "P3": 0.0,
+            "none": 0.02,
+            "P6": 0.0,
+            "P4": 0.0,
+            "P2": 0.06,
+            "P5": 0.0,
+            "P8": 0.01,
+            "P7": 0.0,
+            "P1": 0.91
+          }
+        }
+      },
+      "review_flags": [
+        {
+          "scenario_id": "reinforce_while_stable",
+          "id": "reinforcement_wave_warranted",
+          "kind": "noul_below",
+          "note": "No meaningful depletion.",
+          "observed": 0.58,
+          "check": {
+            "kind": "noul_below",
+            "id": "reinforcement_wave_warranted",
+            "threshold": 0.5
+          }
+        },
+        {
+          "scenario_id": "reinforce_while_stable",
+          "id": "reinforcement_action",
+          "kind": "choice_is",
+          "note": "Spawning into a stable fight wastes the wave.",
+          "observed": "spawn_now",
+          "check": {
+            "kind": "choice_is",
+            "id": "reinforcement_action",
+            "value": "hold"
+          }
+        }
+      ],
+      "review_flag_count": 2,
+      "compare": {
+        "deterministic": {
+          "tactical_posture": "press_attack",
+          "formation_intent": "wide_pressure",
+          "reinforcement_action": "hold",
+          "primary_target": "none",
+          "flags": {
+            "boss_in_critical_danger": false,
+            "swarm_overextended": false,
+            "regroup_warranted": false,
+            "recall_detached_units": false,
+            "reinforcement_wave_warranted": false,
+            "focus_fire_warranted": false,
+            "pursuit_warranted": false,
+            "preserve_swarm_priority": false,
+            "protect_boss_priority": false,
+            "current_plan_still_sensible": true,
+            "distant_bait_should_be_ignored": false,
+            "pressure_can_be_maintained": true
+          }
+        },
+        "applied": {
+          "command": {
+            "tactical_posture": "press_attack",
+            "formation_intent": "wide_pressure",
+            "reinforcement_action": "hold",
+            "primary_target": "P1",
+            "flags": {
+              "boss_in_critical_danger": false,
+              "swarm_overextended": false,
+              "regroup_warranted": false,
+              "recall_detached_units": false,
+              "reinforcement_wave_warranted": false,
+              "focus_fire_warranted": false,
+              "pursuit_warranted": false,
+              "preserve_swarm_priority": false,
+              "protect_boss_priority": false,
+              "current_plan_still_sensible": true,
+              "distant_bait_should_be_ignored": false,
+              "pressure_can_be_maintained": true
+            }
+          },
+          "source": "jev_composed",
+          "reasons": [
+            "ambiguous_formation_intent_conf=0.35",
+            "spawn_held_because_reinforcement_noul_ambiguous",
+            "ambiguous_noul:recall_detached_units=0.58",
+            "ambiguous_noul:reinforcement_wave_warranted=0.58"
+          ],
+          "field_sources": {
+            "tactical_posture": "jev",
+            "formation_intent": "deterministic_ambiguous",
+            "reinforcement_action": "deterministic_ambiguous",
+            "primary_target": "jev"
+          },
+          "used_jev": true
+        },
+        "posture_agree": true,
+        "formation_agree": true,
+        "reinforce_agree": true,
+        "target_agree": false
+      }
     },
     {
       "id": "distant_bait",
       "title": "Distant bait while others stay on the boss",
-      "why": "P12 is 155 km away drawing subordinates; P1/P2 remain on the boss."
+      "why": "P12 is 155 km away drawing subordinates; P1/P2 remain on the boss.",
+      "ok": true,
+      "latency_s": 0.2482865999918431,
+      "input_tokens": 3451,
+      "output_tokens": 483,
+      "model": "jev-1.13.0",
+      "deterministic": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      },
+      "jev_command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      },
+      "field_sources": {
+        "tactical_posture": "jev",
+        "formation_intent": "deterministic_ambiguous",
+        "reinforcement_action": "jev",
+        "primary_target": "jev"
+      },
+      "noul": {
+        "boss_in_critical_danger": 0.25,
+        "swarm_overextended": 0.49,
+        "regroup_warranted": 0.54,
+        "recall_detached_units": 0.51,
+        "reinforcement_wave_warranted": 0.07,
+        "focus_fire_warranted": 0.71,
+        "pursuit_warranted": 0.14,
+        "preserve_swarm_priority": 0.27,
+        "protect_boss_priority": 0.4,
+        "current_plan_still_sensible": 0.58,
+        "distant_bait_should_be_ignored": 0.65,
+        "pressure_can_be_maintained": 0.5
+      },
+      "choices": {
+        "tactical_posture": {
+          "type": "choice",
+          "choice": "press_attack",
+          "confidence": 0.74,
+          "probabilities": {
+            "hold_close": 0.09,
+            "regroup": 0.09,
+            "press_attack": 0.81,
+            "desperate_defence": 0.01
+          }
+        },
+        "formation_intent": {
+          "type": "choice",
+          "choice": "recall_detached",
+          "confidence": 0.27,
+          "probabilities": {
+            "recall_detached": 0.46,
+            "wide_pressure": 0.02,
+            "tight_screen": 0.13,
+            "balanced": 0.39
+          }
+        },
+        "reinforcement_action": {
+          "type": "choice",
+          "choice": "hold",
+          "confidence": 1.0,
+          "probabilities": {
+            "spawn_now": 0.0,
+            "hold": 1.0
+          }
+        },
+        "primary_target": {
+          "type": "choice",
+          "choice": "P1",
+          "confidence": 0.97,
+          "probabilities": {
+            "P1": 0.97,
+            "P6": 0.0,
+            "P2": 0.01,
+            "none": 0.0,
+            "P7": 0.0,
+            "P5": 0.0,
+            "P12": 0.01,
+            "P3": 0.01,
+            "P4": 0.0
+          }
+        }
+      },
+      "review_flags": [],
+      "review_flag_count": 0,
+      "compare": {
+        "deterministic": {
+          "tactical_posture": "press_attack",
+          "formation_intent": "wide_pressure",
+          "reinforcement_action": "hold",
+          "primary_target": "P1",
+          "flags": {
+            "boss_in_critical_danger": false,
+            "swarm_overextended": false,
+            "regroup_warranted": false,
+            "recall_detached_units": false,
+            "reinforcement_wave_warranted": false,
+            "focus_fire_warranted": true,
+            "pursuit_warranted": true,
+            "preserve_swarm_priority": false,
+            "protect_boss_priority": false,
+            "current_plan_still_sensible": true,
+            "distant_bait_should_be_ignored": true,
+            "pressure_can_be_maintained": true
+          }
+        },
+        "applied": {
+          "command": {
+            "tactical_posture": "press_attack",
+            "formation_intent": "wide_pressure",
+            "reinforcement_action": "hold",
+            "primary_target": "P1",
+            "flags": {
+              "boss_in_critical_danger": false,
+              "swarm_overextended": false,
+              "regroup_warranted": false,
+              "recall_detached_units": false,
+              "reinforcement_wave_warranted": false,
+              "focus_fire_warranted": true,
+              "pursuit_warranted": false,
+              "preserve_swarm_priority": false,
+              "protect_boss_priority": false,
+              "current_plan_still_sensible": true,
+              "distant_bait_should_be_ignored": true,
+              "pressure_can_be_maintained": true
+            }
+          },
+          "source": "jev_composed",
+          "reasons": [
+            "ambiguous_formation_intent_conf=0.27",
+            "ambiguous_noul:swarm_overextended=0.49",
+            "ambiguous_noul:regroup_warranted=0.54",
+            "ambiguous_noul:recall_detached_units=0.51",
+            "ambiguous_noul:protect_boss_priority=0.40",
+            "ambiguous_noul:current_plan_still_sensible=0.58",
+            "ambiguous_noul:pressure_can_be_maintained=0.50"
+          ],
+          "field_sources": {
+            "tactical_posture": "jev",
+            "formation_intent": "deterministic_ambiguous",
+            "reinforcement_action": "jev",
+            "primary_target": "jev"
+          },
+          "used_jev": true
+        },
+        "posture_agree": true,
+        "formation_agree": true,
+        "reinforce_agree": true,
+        "target_agree": true
+      }
     },
     {
       "id": "few_players_boss_damaged",
       "title": "Few players remain but the boss is badly damaged",
-      "why": "Only two hostiles left, both on the boss, commander already at 18%."
+      "why": "Only two hostiles left, both on the boss, commander already at 18%.",
+      "ok": true,
+      "latency_s": 0.24497850006446242,
+      "input_tokens": 3057,
+      "output_tokens": 432,
+      "model": "jev-1.13.0",
+      "deterministic": {
+        "tactical_posture": "desperate_defence",
+        "formation_intent": "tight_screen",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      },
+      "jev_command": {
+        "tactical_posture": "desperate_defence",
+        "formation_intent": "tight_screen",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      },
+      "field_sources": {
+        "tactical_posture": "deterministic_ambiguous",
+        "formation_intent": "deterministic_ambiguous",
+        "reinforcement_action": "jev",
+        "primary_target": "jev"
+      },
+      "noul": {
+        "boss_in_critical_danger": 0.8,
+        "swarm_overextended": 0.11,
+        "regroup_warranted": 0.49,
+        "recall_detached_units": 0.67,
+        "reinforcement_wave_warranted": 0.08,
+        "focus_fire_warranted": 0.83,
+        "pursuit_warranted": 0.09,
+        "preserve_swarm_priority": 0.31,
+        "protect_boss_priority": 0.62,
+        "current_plan_still_sensible": 0.59,
+        "distant_bait_should_be_ignored": 0.05,
+        "pressure_can_be_maintained": 0.48
+      },
+      "choices": {
+        "tactical_posture": {
+          "type": "choice",
+          "choice": "hold_close",
+          "confidence": 0.37,
+          "probabilities": {
+            "hold_close": 0.52,
+            "desperate_defence": 0.03,
+            "regroup": 0.04,
+            "press_attack": 0.41
+          }
+        },
+        "formation_intent": {
+          "type": "choice",
+          "choice": "tight_screen",
+          "confidence": 0.35,
+          "probabilities": {
+            "balanced": 0.18,
+            "recall_detached": 0.3,
+            "wide_pressure": 0.01,
+            "tight_screen": 0.51
+          }
+        },
+        "reinforcement_action": {
+          "type": "choice",
+          "choice": "hold",
+          "confidence": 1.0,
+          "probabilities": {
+            "spawn_now": 0.0,
+            "hold": 1.0
+          }
+        },
+        "primary_target": {
+          "type": "choice",
+          "choice": "P1",
+          "confidence": 0.99,
+          "probabilities": {
+            "P2": 0.0,
+            "P1": 1.0,
+            "none": 0.0
+          }
+        }
+      },
+      "review_flags": [],
+      "review_flag_count": 0,
+      "compare": {
+        "deterministic": {
+          "tactical_posture": "desperate_defence",
+          "formation_intent": "tight_screen",
+          "reinforcement_action": "hold",
+          "primary_target": "P1",
+          "flags": {
+            "boss_in_critical_danger": true,
+            "swarm_overextended": false,
+            "regroup_warranted": false,
+            "recall_detached_units": false,
+            "reinforcement_wave_warranted": false,
+            "focus_fire_warranted": true,
+            "pursuit_warranted": true,
+            "preserve_swarm_priority": false,
+            "protect_boss_priority": true,
+            "current_plan_still_sensible": false,
+            "distant_bait_should_be_ignored": false,
+            "pressure_can_be_maintained": false
+          }
+        },
+        "applied": {
+          "command": {
+            "tactical_posture": "desperate_defence",
+            "formation_intent": "tight_screen",
+            "reinforcement_action": "hold",
+            "primary_target": "P1",
+            "flags": {
+              "boss_in_critical_danger": true,
+              "swarm_overextended": false,
+              "regroup_warranted": false,
+              "recall_detached_units": true,
+              "reinforcement_wave_warranted": false,
+              "focus_fire_warranted": true,
+              "pursuit_warranted": false,
+              "preserve_swarm_priority": false,
+              "protect_boss_priority": true,
+              "current_plan_still_sensible": false,
+              "distant_bait_should_be_ignored": false,
+              "pressure_can_be_maintained": false
+            }
+          },
+          "source": "jev_composed",
+          "reasons": [
+            "ambiguous_tactical_posture_conf=0.37",
+            "ambiguous_formation_intent_conf=0.35",
+            "ambiguous_noul:regroup_warranted=0.49",
+            "ambiguous_noul:protect_boss_priority=0.62",
+            "ambiguous_noul:current_plan_still_sensible=0.59",
+            "ambiguous_noul:pressure_can_be_maintained=0.48"
+          ],
+          "field_sources": {
+            "tactical_posture": "deterministic_ambiguous",
+            "formation_intent": "deterministic_ambiguous",
+            "reinforcement_action": "jev",
+            "primary_target": "jev"
+          },
+          "used_jev": true
+        },
+        "posture_agree": true,
+        "formation_agree": true,
+        "reinforce_agree": true,
+        "target_agree": true
+      }
     },
     {
       "id": "no_pressure",
       "title": "No meaningful hostile pressure",
-      "why": "Boss healthy, full swarm, players far and dealing almost no damage."
+      "why": "Boss healthy, full swarm, players far and dealing almost no damage.",
+      "ok": true,
+      "latency_s": 0.22872740007005632,
+      "input_tokens": 3419,
+      "output_tokens": 481,
+      "model": "jev-1.13.0",
+      "deterministic": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      },
+      "jev_command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "tight_screen",
+        "reinforcement_action": "spawn_now",
+        "primary_target": "P1"
+      },
+      "field_sources": {
+        "tactical_posture": "jev",
+        "formation_intent": "jev",
+        "reinforcement_action": "jev",
+        "primary_target": "jev"
+      },
+      "noul": {
+        "boss_in_critical_danger": 0.09,
+        "swarm_overextended": 0.07,
+        "regroup_warranted": 0.13,
+        "recall_detached_units": 0.14,
+        "reinforcement_wave_warranted": 0.3,
+        "focus_fire_warranted": 0.28,
+        "pursuit_warranted": 0.09,
+        "preserve_swarm_priority": 0.1,
+        "protect_boss_priority": 0.24,
+        "current_plan_still_sensible": 0.71,
+        "distant_bait_should_be_ignored": 0.07,
+        "pressure_can_be_maintained": 0.8
+      },
+      "choices": {
+        "tactical_posture": {
+          "type": "choice",
+          "choice": "press_attack",
+          "confidence": 0.92,
+          "probabilities": {
+            "press_attack": 0.94,
+            "desperate_defence": 0.01,
+            "regroup": 0.01,
+            "hold_close": 0.04
+          }
+        },
+        "formation_intent": {
+          "type": "choice",
+          "choice": "tight_screen",
+          "confidence": 0.51,
+          "probabilities": {
+            "tight_screen": 0.63,
+            "balanced": 0.33,
+            "recall_detached": 0.01,
+            "wide_pressure": 0.03
+          }
+        },
+        "reinforcement_action": {
+          "type": "choice",
+          "choice": "spawn_now",
+          "confidence": 0.92,
+          "probabilities": {
+            "spawn_now": 0.96,
+            "hold": 0.04
+          }
+        },
+        "primary_target": {
+          "type": "choice",
+          "choice": "P1",
+          "confidence": 0.73,
+          "probabilities": {
+            "P1": 0.76,
+            "P6": 0.0,
+            "P7": 0.0,
+            "P2": 0.01,
+            "P5": 0.06,
+            "P4": 0.0,
+            "none": 0.17,
+            "P3": 0.0,
+            "P8": 0.0
+          }
+        }
+      },
+      "review_flags": [
+        {
+          "scenario_id": "no_pressure",
+          "id": "reinforcement_action",
+          "kind": "choice_is",
+          "note": "Nothing to reinforce against.",
+          "observed": "spawn_now",
+          "check": {
+            "kind": "choice_is",
+            "id": "reinforcement_action",
+            "value": "hold"
+          }
+        }
+      ],
+      "review_flag_count": 1,
+      "compare": {
+        "deterministic": {
+          "tactical_posture": "press_attack",
+          "formation_intent": "wide_pressure",
+          "reinforcement_action": "hold",
+          "primary_target": "none",
+          "flags": {
+            "boss_in_critical_danger": false,
+            "swarm_overextended": false,
+            "regroup_warranted": false,
+            "recall_detached_units": false,
+            "reinforcement_wave_warranted": false,
+            "focus_fire_warranted": false,
+            "pursuit_warranted": false,
+            "preserve_swarm_priority": false,
+            "protect_boss_priority": false,
+            "current_plan_still_sensible": true,
+            "distant_bait_should_be_ignored": false,
+            "pressure_can_be_maintained": true
+          }
+        },
+        "applied": {
+          "command": {
+            "tactical_posture": "press_attack",
+            "formation_intent": "tight_screen",
+            "reinforcement_action": "spawn_now",
+            "primary_target": "P1",
+            "flags": {
+              "boss_in_critical_danger": false,
+              "swarm_overextended": false,
+              "regroup_warranted": false,
+              "recall_detached_units": false,
+              "reinforcement_wave_warranted": false,
+              "focus_fire_warranted": false,
+              "pursuit_warranted": false,
+              "preserve_swarm_priority": false,
+              "protect_boss_priority": false,
+              "current_plan_still_sensible": true,
+              "distant_bait_should_be_ignored": false,
+              "pressure_can_be_maintained": true
+            }
+          },
+          "source": "jev_composed",
+          "reasons": [
+            "jev_accepted"
+          ],
+          "field_sources": {
+            "tactical_posture": "jev",
+            "formation_intent": "jev",
+            "reinforcement_action": "jev",
+            "primary_target": "jev"
+          },
+          "used_jev": true
+        },
+        "posture_agree": true,
+        "formation_agree": false,
+        "reinforce_agree": false,
+        "target_agree": false
+      }
     },
     {
       "id": "contradictory_pressures",
       "title": "Contradictory pressures",
-      "why": "Dangerous boss attacker, dispersed swarm, heavy subordinate losses, reinforcement available."
+      "why": "Dangerous boss attacker, dispersed swarm, heavy subordinate losses, reinforcement available.",
+      "ok": true,
+      "latency_s": 0.2531069000251591,
+      "input_tokens": 3454,
+      "output_tokens": 483,
+      "model": "jev-1.13.0",
+      "deterministic": {
+        "tactical_posture": "regroup",
+        "formation_intent": "recall_detached",
+        "reinforcement_action": "spawn_now",
+        "primary_target": "P1"
+      },
+      "jev_command": {
+        "tactical_posture": "regroup",
+        "formation_intent": "recall_detached",
+        "reinforcement_action": "spawn_now",
+        "primary_target": "P1"
+      },
+      "field_sources": {
+        "tactical_posture": "jev",
+        "formation_intent": "jev",
+        "reinforcement_action": "jev",
+        "primary_target": "jev"
+      },
+      "noul": {
+        "boss_in_critical_danger": 0.69,
+        "swarm_overextended": 0.78,
+        "regroup_warranted": 0.83,
+        "recall_detached_units": 0.62,
+        "reinforcement_wave_warranted": 0.66,
+        "focus_fire_warranted": 0.85,
+        "pursuit_warranted": 0.13,
+        "preserve_swarm_priority": 0.65,
+        "protect_boss_priority": 0.54,
+        "current_plan_still_sensible": 0.46,
+        "distant_bait_should_be_ignored": 0.45,
+        "pressure_can_be_maintained": 0.19
+      },
+      "choices": {
+        "tactical_posture": {
+          "type": "choice",
+          "choice": "regroup",
+          "confidence": 0.58,
+          "probabilities": {
+            "hold_close": 0.06,
+            "press_attack": 0.15,
+            "regroup": 0.6799999999999999,
+            "desperate_defence": 0.11
+          }
+        },
+        "formation_intent": {
+          "type": "choice",
+          "choice": "recall_detached",
+          "confidence": 0.72,
+          "probabilities": {
+            "recall_detached": 0.79,
+            "wide_pressure": 0.01,
+            "balanced": 0.07,
+            "tight_screen": 0.13
+          }
+        },
+        "reinforcement_action": {
+          "type": "choice",
+          "choice": "spawn_now",
+          "confidence": 0.97,
+          "probabilities": {
+            "spawn_now": 0.99,
+            "hold": 0.01
+          }
+        },
+        "primary_target": {
+          "type": "choice",
+          "choice": "P1",
+          "confidence": 0.99,
+          "probabilities": {
+            "P7": 0.0,
+            "P6": 0.0,
+            "P2": 0.0,
+            "P5": 0.0,
+            "none": 0.0,
+            "P1": 1.0,
+            "P3": 0.0,
+            "P4": 0.0,
+            "P8": 0.0
+          }
+        }
+      },
+      "review_flags": [],
+      "review_flag_count": 0,
+      "compare": {
+        "deterministic": {
+          "tactical_posture": "regroup",
+          "formation_intent": "recall_detached",
+          "reinforcement_action": "spawn_now",
+          "primary_target": "P1",
+          "flags": {
+            "boss_in_critical_danger": false,
+            "swarm_overextended": true,
+            "regroup_warranted": true,
+            "recall_detached_units": true,
+            "reinforcement_wave_warranted": true,
+            "focus_fire_warranted": true,
+            "pursuit_warranted": true,
+            "preserve_swarm_priority": true,
+            "protect_boss_priority": false,
+            "current_plan_still_sensible": false,
+            "distant_bait_should_be_ignored": true,
+            "pressure_can_be_maintained": false
+          }
+        },
+        "applied": {
+          "command": {
+            "tactical_posture": "regroup",
+            "formation_intent": "recall_detached",
+            "reinforcement_action": "spawn_now",
+            "primary_target": "P1",
+            "flags": {
+              "boss_in_critical_danger": true,
+              "swarm_overextended": true,
+              "regroup_warranted": true,
+              "recall_detached_units": true,
+              "reinforcement_wave_warranted": true,
+              "focus_fire_warranted": true,
+              "pursuit_warranted": false,
+              "preserve_swarm_priority": true,
+              "protect_boss_priority": false,
+              "current_plan_still_sensible": false,
+              "distant_bait_should_be_ignored": true,
+              "pressure_can_be_maintained": false
+            }
+          },
+          "source": "jev_composed",
+          "reasons": [
+            "ambiguous_noul:recall_detached_units=0.62",
+            "ambiguous_noul:protect_boss_priority=0.54",
+            "ambiguous_noul:current_plan_still_sensible=0.46",
+            "ambiguous_noul:distant_bait_should_be_ignored=0.45"
+          ],
+          "field_sources": {
+            "tactical_posture": "jev",
+            "formation_intent": "jev",
+            "reinforcement_action": "jev",
+            "primary_target": "jev"
+          },
+          "used_jev": true
+        },
+        "posture_agree": true,
+        "formation_agree": true,
+        "reinforce_agree": true,
+        "target_agree": true
+      }
     },
     {
       "id": "healthy_boss_thin_swarm",
       "title": "Healthy boss, thin swarm",
-      "why": "Boss is fine; subordinates have been eroded to 11. Preserve-vs-press trade-off."
+      "why": "Boss is fine; subordinates have been eroded to 11. Preserve-vs-press trade-off.",
+      "ok": true,
+      "latency_s": 0.23703880002722144,
+      "input_tokens": 3037,
+      "output_tokens": 455,
+      "model": "jev-1.13.0",
+      "deterministic": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "balanced",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      },
+      "jev_command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "balanced",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      },
+      "field_sources": {
+        "tactical_posture": "jev",
+        "formation_intent": "deterministic_ambiguous",
+        "reinforcement_action": "jev",
+        "primary_target": "jev"
+      },
+      "noul": {
+        "boss_in_critical_danger": 0.22,
+        "swarm_overextended": 0.18,
+        "regroup_warranted": 0.78,
+        "recall_detached_units": 0.57,
+        "reinforcement_wave_warranted": 0.09,
+        "focus_fire_warranted": 0.39,
+        "pursuit_warranted": 0.12,
+        "preserve_swarm_priority": 0.61,
+        "protect_boss_priority": 0.34,
+        "current_plan_still_sensible": 0.52,
+        "distant_bait_should_be_ignored": 0.14,
+        "pressure_can_be_maintained": 0.31
+      },
+      "choices": {
+        "tactical_posture": {
+          "type": "choice",
+          "choice": "press_attack",
+          "confidence": 0.55,
+          "probabilities": {
+            "regroup": 0.23,
+            "press_attack": 0.67,
+            "hold_close": 0.09,
+            "desperate_defence": 0.01
+          }
+        },
+        "formation_intent": {
+          "type": "choice",
+          "choice": "balanced",
+          "confidence": 0.16,
+          "probabilities": {
+            "wide_pressure": 0.02,
+            "tight_screen": 0.25,
+            "balanced": 0.37,
+            "recall_detached": 0.36
+          }
+        },
+        "reinforcement_action": {
+          "type": "choice",
+          "choice": "hold",
+          "confidence": 1.0,
+          "probabilities": {
+            "spawn_now": 0.0,
+            "hold": 1.0
+          }
+        },
+        "primary_target": {
+          "type": "choice",
+          "choice": "P1",
+          "confidence": 0.98,
+          "probabilities": {
+            "P1": 0.99,
+            "P5": 0.0,
+            "P2": 0.01,
+            "P3": 0.0,
+            "P4": 0.0,
+            "none": 0.0
+          }
+        }
+      },
+      "review_flags": [],
+      "review_flag_count": 0,
+      "compare": {
+        "deterministic": {
+          "tactical_posture": "press_attack",
+          "formation_intent": "balanced",
+          "reinforcement_action": "hold",
+          "primary_target": "none",
+          "flags": {
+            "boss_in_critical_danger": false,
+            "swarm_overextended": false,
+            "regroup_warranted": false,
+            "recall_detached_units": false,
+            "reinforcement_wave_warranted": false,
+            "focus_fire_warranted": false,
+            "pursuit_warranted": false,
+            "preserve_swarm_priority": true,
+            "protect_boss_priority": false,
+            "current_plan_still_sensible": true,
+            "distant_bait_should_be_ignored": false,
+            "pressure_can_be_maintained": true
+          }
+        },
+        "applied": {
+          "command": {
+            "tactical_posture": "press_attack",
+            "formation_intent": "balanced",
+            "reinforcement_action": "hold",
+            "primary_target": "P1",
+            "flags": {
+              "boss_in_critical_danger": false,
+              "swarm_overextended": false,
+              "regroup_warranted": true,
+              "recall_detached_units": false,
+              "reinforcement_wave_warranted": false,
+              "focus_fire_warranted": false,
+              "pursuit_warranted": false,
+              "preserve_swarm_priority": true,
+              "protect_boss_priority": false,
+              "current_plan_still_sensible": true,
+              "distant_bait_should_be_ignored": false,
+              "pressure_can_be_maintained": false
+            }
+          },
+          "source": "jev_composed",
+          "reasons": [
+            "ambiguous_formation_intent_conf=0.16",
+            "ambiguous_noul:recall_detached_units=0.57",
+            "ambiguous_noul:focus_fire_warranted=0.39",
+            "ambiguous_noul:preserve_swarm_priority=0.61",
+            "ambiguous_noul:current_plan_still_sensible=0.52"
+          ],
+          "field_sources": {
+            "tactical_posture": "jev",
+            "formation_intent": "deterministic_ambiguous",
+            "reinforcement_action": "jev",
+            "primary_target": "jev"
+          },
+          "used_jev": true
+        },
+        "posture_agree": true,
+        "formation_agree": true,
+        "reinforce_agree": true,
+        "target_agree": false
+      }
     },
     {
       "id": "collapsing_no_reinforce",
       "title": "Collapsing without reinforcement capacity",
-      "why": "Same pressure as the spawn-now case, but capacity is down and cooldown is long."
+      "why": "Same pressure as the spawn-now case, but capacity is down and cooldown is long.",
+      "ok": true,
+      "latency_s": 0.23788380005862564,
+      "input_tokens": 3453,
+      "output_tokens": 482,
+      "model": "jev-1.13.0",
+      "deterministic": {
+        "tactical_posture": "regroup",
+        "formation_intent": "balanced",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      },
+      "jev_command": {
+        "tactical_posture": "regroup",
+        "formation_intent": "balanced",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      },
+      "field_sources": {
+        "tactical_posture": "deterministic_ambiguous",
+        "formation_intent": "deterministic_ambiguous",
+        "reinforcement_action": "jev",
+        "primary_target": "jev"
+      },
+      "noul": {
+        "boss_in_critical_danger": 0.6,
+        "swarm_overextended": 0.35,
+        "regroup_warranted": 0.74,
+        "recall_detached_units": 0.66,
+        "reinforcement_wave_warranted": 0.08,
+        "focus_fire_warranted": 0.57,
+        "pursuit_warranted": 0.13,
+        "preserve_swarm_priority": 0.44,
+        "protect_boss_priority": 0.55,
+        "current_plan_still_sensible": 0.48,
+        "distant_bait_should_be_ignored": 0.15,
+        "pressure_can_be_maintained": 0.31
+      },
+      "choices": {
+        "tactical_posture": {
+          "type": "choice",
+          "choice": "hold_close",
+          "confidence": 0.3,
+          "probabilities": {
+            "regroup": 0.16,
+            "press_attack": 0.31,
+            "hold_close": 0.47,
+            "desperate_defence": 0.06
+          }
+        },
+        "formation_intent": {
+          "type": "choice",
+          "choice": "recall_detached",
+          "confidence": 0.17,
+          "probabilities": {
+            "tight_screen": 0.26,
+            "balanced": 0.36,
+            "recall_detached": 0.37,
+            "wide_pressure": 0.01
+          }
+        },
+        "reinforcement_action": {
+          "type": "choice",
+          "choice": "hold",
+          "confidence": 1.0,
+          "probabilities": {
+            "spawn_now": 0.0,
+            "hold": 1.0
+          }
+        },
+        "primary_target": {
+          "type": "choice",
+          "choice": "P1",
+          "confidence": 0.96,
+          "probabilities": {
+            "none": 0.0,
+            "P4": 0.0,
+            "P8": 0.01,
+            "P6": 0.0,
+            "P3": 0.01,
+            "P1": 0.97,
+            "P7": 0.0,
+            "P2": 0.01,
+            "P5": 0.0
+          }
+        }
+      },
+      "review_flags": [],
+      "review_flag_count": 0,
+      "compare": {
+        "deterministic": {
+          "tactical_posture": "regroup",
+          "formation_intent": "balanced",
+          "reinforcement_action": "hold",
+          "primary_target": "P1",
+          "flags": {
+            "boss_in_critical_danger": false,
+            "swarm_overextended": false,
+            "regroup_warranted": true,
+            "recall_detached_units": false,
+            "reinforcement_wave_warranted": false,
+            "focus_fire_warranted": true,
+            "pursuit_warranted": true,
+            "preserve_swarm_priority": true,
+            "protect_boss_priority": false,
+            "current_plan_still_sensible": false,
+            "distant_bait_should_be_ignored": false,
+            "pressure_can_be_maintained": false
+          }
+        },
+        "applied": {
+          "command": {
+            "tactical_posture": "regroup",
+            "formation_intent": "balanced",
+            "reinforcement_action": "hold",
+            "primary_target": "P1",
+            "flags": {
+              "boss_in_critical_danger": false,
+              "swarm_overextended": false,
+              "regroup_warranted": true,
+              "recall_detached_units": true,
+              "reinforcement_wave_warranted": false,
+              "focus_fire_warranted": true,
+              "pursuit_warranted": false,
+              "preserve_swarm_priority": true,
+              "protect_boss_priority": false,
+              "current_plan_still_sensible": false,
+              "distant_bait_should_be_ignored": false,
+              "pressure_can_be_maintained": false
+            }
+          },
+          "source": "jev_composed",
+          "reasons": [
+            "ambiguous_tactical_posture_conf=0.30",
+            "ambiguous_formation_intent_conf=0.17",
+            "ambiguous_noul:boss_in_critical_danger=0.60",
+            "ambiguous_noul:focus_fire_warranted=0.57",
+            "ambiguous_noul:preserve_swarm_priority=0.44",
+            "ambiguous_noul:protect_boss_priority=0.55",
+            "ambiguous_noul:current_plan_still_sensible=0.48"
+          ],
+          "field_sources": {
+            "tactical_posture": "deterministic_ambiguous",
+            "formation_intent": "deterministic_ambiguous",
+            "reinforcement_action": "jev",
+            "primary_target": "jev"
+          },
+          "used_jev": true
+        },
+        "posture_agree": true,
+        "formation_agree": true,
+        "reinforce_agree": true,
+        "target_agree": true
+      }
     },
     {
       "id": "last_player_fleeing",
       "title": "Last player fleeing far away",
-      "why": "One surviving player at 160 km, low damage, moving away. Pursuit is the trap."
+      "why": "One surviving player at 160 km, low damage, moving away. Pursuit is the trap.",
+      "ok": true,
+      "latency_s": 0.24973949999548495,
+      "input_tokens": 2703,
+      "output_tokens": 424,
+      "model": "jev-1.13.0",
+      "deterministic": {
+        "tactical_posture": "hold_close",
+        "formation_intent": "balanced",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      },
+      "jev_command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "balanced",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      },
+      "field_sources": {
+        "tactical_posture": "jev",
+        "formation_intent": "deterministic_ambiguous",
+        "reinforcement_action": "jev",
+        "primary_target": "jev"
+      },
+      "noul": {
+        "boss_in_critical_danger": 0.37,
+        "swarm_overextended": 0.11,
+        "regroup_warranted": 0.36,
+        "recall_detached_units": 0.64,
+        "reinforcement_wave_warranted": 0.08,
+        "focus_fire_warranted": 0.63,
+        "pursuit_warranted": 0.14,
+        "preserve_swarm_priority": 0.23,
+        "protect_boss_priority": 0.49,
+        "current_plan_still_sensible": 0.68,
+        "distant_bait_should_be_ignored": 0.1,
+        "pressure_can_be_maintained": 0.56
+      },
+      "choices": {
+        "tactical_posture": {
+          "type": "choice",
+          "choice": "press_attack",
+          "confidence": 0.48,
+          "probabilities": {
+            "hold_close": 0.15,
+            "desperate_defence": 0.13,
+            "regroup": 0.1,
+            "press_attack": 0.62
+          }
+        },
+        "formation_intent": {
+          "type": "choice",
+          "choice": "tight_screen",
+          "confidence": 0.37,
+          "probabilities": {
+            "wide_pressure": 0.01,
+            "recall_detached": 0.31,
+            "balanced": 0.15,
+            "tight_screen": 0.53
+          }
+        },
+        "reinforcement_action": {
+          "type": "choice",
+          "choice": "hold",
+          "confidence": 1.0,
+          "probabilities": {
+            "spawn_now": 0.0,
+            "hold": 1.0
+          }
+        },
+        "primary_target": {
+          "type": "choice",
+          "choice": "P1",
+          "confidence": 0.52,
+          "probabilities": {
+            "P1": 0.76,
+            "none": 0.24
+          }
+        }
+      },
+      "review_flags": [],
+      "review_flag_count": 0,
+      "compare": {
+        "deterministic": {
+          "tactical_posture": "hold_close",
+          "formation_intent": "balanced",
+          "reinforcement_action": "hold",
+          "primary_target": "none",
+          "flags": {
+            "boss_in_critical_danger": false,
+            "swarm_overextended": false,
+            "regroup_warranted": false,
+            "recall_detached_units": false,
+            "reinforcement_wave_warranted": false,
+            "focus_fire_warranted": false,
+            "pursuit_warranted": false,
+            "preserve_swarm_priority": false,
+            "protect_boss_priority": false,
+            "current_plan_still_sensible": false,
+            "distant_bait_should_be_ignored": false,
+            "pressure_can_be_maintained": false
+          }
+        },
+        "applied": {
+          "command": {
+            "tactical_posture": "press_attack",
+            "formation_intent": "balanced",
+            "reinforcement_action": "hold",
+            "primary_target": "P1",
+            "flags": {
+              "boss_in_critical_danger": false,
+              "swarm_overextended": false,
+              "regroup_warranted": false,
+              "recall_detached_units": false,
+              "reinforcement_wave_warranted": false,
+              "focus_fire_warranted": false,
+              "pursuit_warranted": false,
+              "preserve_swarm_priority": false,
+              "protect_boss_priority": false,
+              "current_plan_still_sensible": true,
+              "distant_bait_should_be_ignored": false,
+              "pressure_can_be_maintained": false
+            }
+          },
+          "source": "jev_composed",
+          "reasons": [
+            "ambiguous_formation_intent_conf=0.37",
+            "ambiguous_noul:boss_in_critical_danger=0.37",
+            "ambiguous_noul:regroup_warranted=0.36",
+            "ambiguous_noul:recall_detached_units=0.64",
+            "ambiguous_noul:focus_fire_warranted=0.63",
+            "ambiguous_noul:protect_boss_priority=0.49",
+            "ambiguous_noul:pressure_can_be_maintained=0.56"
+          ],
+          "field_sources": {
+            "tactical_posture": "jev",
+            "formation_intent": "deterministic_ambiguous",
+            "reinforcement_action": "jev",
+            "primary_target": "jev"
+          },
+          "used_jev": true
+        },
+        "posture_agree": false,
+        "formation_agree": true,
+        "reinforce_agree": true,
+        "target_agree": false
+      }
     }
   ],
   "sensitivity": [
@@ -253,205 +2695,1348 @@
       "id": "boss_health_80_vs_20",
       "title": "Boss health 80% -> 20%",
       "changed_field": "boss.health_pct",
-      "accounting_notes": "Only boss.health_pct changes. Damage, swarm, and players stay fixed."
+      "accounting_notes": "Only boss.health_pct changes. Damage, swarm, and players stay fixed.",
+      "passed": true,
+      "expectations": [
+        {
+          "id": "boss_in_critical_danger",
+          "kind": "noul",
+          "direction": "not_decrease",
+          "base": 0.19,
+          "variant": 0.83,
+          "delta": 0.6399999999999999,
+          "ok": true,
+          "note": "Lower health should not make critical danger less likely."
+        },
+        {
+          "id": "protect_boss_priority",
+          "kind": "noul",
+          "direction": "not_decrease",
+          "base": 0.36,
+          "variant": 0.52,
+          "delta": 0.16000000000000003,
+          "ok": true,
+          "note": "A 20% boss should not lower protect-self priority."
+        },
+        {
+          "id": "tactical_posture",
+          "kind": "choice_prob",
+          "option": "desperate_defence",
+          "direction": "not_decrease",
+          "base": 0.01,
+          "variant": 0.04,
+          "delta": 0.03,
+          "base_choice": "press_attack",
+          "variant_choice": "press_attack",
+          "ok": true,
+          "note": "Desperate defence should not become less probable."
+        },
+        {
+          "id": "tactical_posture",
+          "kind": "choice_prob",
+          "option": "press_attack",
+          "direction": "not_increase",
+          "base": 0.9,
+          "variant": 0.83,
+          "delta": -0.07000000000000006,
+          "base_choice": "press_attack",
+          "variant_choice": "press_attack",
+          "ok": true,
+          "note": "Pressing the attack should not become more probable at 20% health."
+        }
+      ]
     },
     {
       "id": "recent_boss_damage_low_vs_severe",
       "title": "Recent boss damage low -> severe",
       "changed_field": "player boss-damage totals (and matching boss.damage_received_last_10s)",
-      "accounting_notes": "The intended variable is recent boss-damage intensity. Player shares keep their proportions; boss.damage_received_last_10s is rewritten to the player sum so the snapshot stays consistent."
+      "accounting_notes": "The intended variable is recent boss-damage intensity. Player shares keep their proportions; boss.damage_received_last_10s is rewritten to the player sum so the snapshot stays consistent.",
+      "passed": false,
+      "expectations": [
+        {
+          "id": "boss_in_critical_danger",
+          "kind": "noul",
+          "direction": "not_decrease",
+          "base": 0.14,
+          "variant": 0.17,
+          "delta": 0.03,
+          "ok": true,
+          "note": "A damage spike should not lower critical danger."
+        },
+        {
+          "id": "focus_fire_warranted",
+          "kind": "noul",
+          "direction": "not_decrease",
+          "base": 0.58,
+          "variant": 0.62,
+          "delta": 0.040000000000000036,
+          "ok": true,
+          "note": "More concentrated incoming damage should not lower focus-fire warrant."
+        },
+        {
+          "id": "current_plan_still_sensible",
+          "kind": "noul",
+          "direction": "not_increase",
+          "base": 0.64,
+          "variant": 0.68,
+          "delta": 0.040000000000000036,
+          "ok": false,
+          "note": "A sudden spike should not make the current plan more sensible."
+        }
+      ]
     },
     {
       "id": "sub_count_60_vs_15",
       "title": "Subordinate count 60 -> 15",
       "changed_field": "swarm.alive (close_to_boss is the remainder bucket)",
-      "accounting_notes": "alive must equal the range-bucket sum, so close_to_boss is the accounting remainder. medium_range and detached_far stay 8 and 5."
+      "accounting_notes": "alive must equal the range-bucket sum, so close_to_boss is the accounting remainder. medium_range and detached_far stay 8 and 5.",
+      "passed": true,
+      "expectations": [
+        {
+          "id": "preserve_swarm_priority",
+          "kind": "noul",
+          "direction": "not_decrease",
+          "base": 0.19,
+          "variant": 0.45,
+          "delta": 0.26,
+          "ok": true,
+          "note": "A thin swarm should not lower preservation priority."
+        },
+        {
+          "id": "regroup_warranted",
+          "kind": "noul",
+          "direction": "not_decrease",
+          "base": 0.36,
+          "variant": 0.7,
+          "delta": 0.33999999999999997,
+          "ok": true,
+          "note": "Losing most of the swarm should not make regroup less likely."
+        },
+        {
+          "id": "pressure_can_be_maintained",
+          "kind": "noul",
+          "direction": "not_increase",
+          "base": 0.56,
+          "variant": 0.42,
+          "delta": -0.14000000000000007,
+          "ok": true,
+          "note": "15 NPCs should not make continued pressure more plausible."
+        }
+      ]
     },
     {
       "id": "detached_5_vs_35",
       "title": "Detached subordinates 5 -> 35",
       "changed_field": "swarm.detached_far (close_to_boss is the remainder bucket)",
-      "accounting_notes": "alive stays 45 and medium_range stays 8. close_to_boss falls because buckets must sum to alive."
+      "accounting_notes": "alive stays 45 and medium_range stays 8. close_to_boss falls because buckets must sum to alive.",
+      "passed": false,
+      "expectations": [
+        {
+          "id": "swarm_overextended",
+          "kind": "noul",
+          "direction": "not_decrease",
+          "base": 0.26,
+          "variant": 0.82,
+          "delta": 0.5599999999999999,
+          "ok": true,
+          "note": "More detached units should not lower overextension."
+        },
+        {
+          "id": "recall_detached_units",
+          "kind": "noul",
+          "direction": "not_decrease",
+          "base": 0.62,
+          "variant": 0.61,
+          "delta": -0.010000000000000009,
+          "ok": false,
+          "note": "Recall should not become less warranted."
+        },
+        {
+          "id": "formation_intent",
+          "kind": "choice_prob",
+          "option": "recall_detached",
+          "direction": "not_decrease",
+          "base": 0.37,
+          "variant": 0.89,
+          "delta": 0.52,
+          "base_choice": "recall_detached",
+          "variant_choice": "recall_detached",
+          "ok": true,
+          "note": "Recall formation should not become less probable."
+        },
+        {
+          "id": "formation_intent",
+          "kind": "choice_prob",
+          "option": "wide_pressure",
+          "direction": "not_increase",
+          "base": 0.01,
+          "variant": 0.01,
+          "delta": 0.0,
+          "base_choice": "recall_detached",
+          "variant_choice": "recall_detached",
+          "ok": true,
+          "note": "Wide pressure should not become more probable when the swarm is already scattered."
+        }
+      ]
     },
     {
       "id": "losses_2_vs_20",
       "title": "Recent subordinate losses 2 -> 20",
       "changed_field": "swarm.losses_last_10s (losses_last_30s stays >= 10s losses)",
-      "accounting_notes": "losses_last_30s cannot be smaller than losses_last_10s, so both rise together. alive is unchanged; this is a recent-loss pulse, not a new headcount."
+      "accounting_notes": "losses_last_30s cannot be smaller than losses_last_10s, so both rise together. alive is unchanged; this is a recent-loss pulse, not a new headcount.",
+      "passed": true,
+      "expectations": [
+        {
+          "id": "regroup_warranted",
+          "kind": "noul",
+          "direction": "not_decrease",
+          "base": 0.34,
+          "variant": 0.72,
+          "delta": 0.37999999999999995,
+          "ok": true,
+          "note": "A loss pulse should not make regroup less likely."
+        },
+        {
+          "id": "preserve_swarm_priority",
+          "kind": "noul",
+          "direction": "not_decrease",
+          "base": 0.18,
+          "variant": 0.34,
+          "delta": 0.16000000000000003,
+          "ok": true,
+          "note": "Heavy recent deaths should not lower preservation."
+        },
+        {
+          "id": "current_plan_still_sensible",
+          "kind": "noul",
+          "direction": "not_increase",
+          "base": 0.68,
+          "variant": 0.6,
+          "delta": -0.08000000000000007,
+          "ok": true,
+          "note": "The current plan should not look more sensible after a wipe pulse."
+        }
+      ]
     },
     {
       "id": "reinforce_unavailable_vs_available",
       "title": "Reinforcement unavailable -> available under pressure",
       "changed_field": "boss.reinforcement_capacity_available",
-      "accounting_notes": "Both sides use the same pressured mid-fight snapshot. Only capacity and cooldown change."
+      "accounting_notes": "Both sides use the same pressured mid-fight snapshot. Only capacity and cooldown change.",
+      "passed": true,
+      "expectations": [
+        {
+          "id": "reinforcement_wave_warranted",
+          "kind": "noul",
+          "direction": "not_decrease",
+          "base": 0.07,
+          "variant": 0.66,
+          "delta": 0.5900000000000001,
+          "ok": true,
+          "note": "Turning capacity on under pressure should not make a wave less warranted."
+        },
+        {
+          "id": "reinforcement_action",
+          "kind": "choice_prob",
+          "option": "spawn_now",
+          "direction": "not_decrease",
+          "base": 0.0,
+          "variant": 0.99,
+          "delta": 0.99,
+          "base_choice": "hold",
+          "variant_choice": "spawn_now",
+          "ok": true,
+          "note": "spawn_now should not become less probable when a wave becomes possible."
+        }
+      ]
     },
     {
       "id": "p3_boss_damage_50_vs_800",
       "title": "P3 recent boss damage 50 -> 800",
       "changed_field": "players[P3].damage_to_boss_last_10s",
-      "accounting_notes": "Only P3's recent boss damage changes. boss.damage_received_last_10s and derived top-damager fields are recomputed from the player list so the snapshot stays consistent."
+      "accounting_notes": "Only P3's recent boss damage changes. boss.damage_received_last_10s and derived top-damager fields are recomputed from the player list so the snapshot stays consistent.",
+      "passed": true,
+      "expectations": [
+        {
+          "id": "primary_target",
+          "kind": "choice_prob",
+          "option": "P3",
+          "direction": "not_decrease",
+          "base": 0.96,
+          "variant": 0.98,
+          "delta": 0.020000000000000018,
+          "base_choice": "P3",
+          "variant_choice": "P3",
+          "ok": true,
+          "note": "P3 should become at least as plausible a focus target."
+        },
+        {
+          "id": "focus_fire_warranted",
+          "kind": "noul",
+          "direction": "not_decrease",
+          "base": 0.68,
+          "variant": 0.85,
+          "delta": 0.16999999999999993,
+          "ok": true,
+          "note": "An 800-damage outlier should not lower focus-fire warrant."
+        },
+        {
+          "id": "boss_in_critical_danger",
+          "kind": "noul",
+          "direction": "not_decrease",
+          "base": 0.16,
+          "variant": 0.23,
+          "delta": 0.07,
+          "ok": true,
+          "note": "A huge incoming spike should not lower danger."
+        }
+      ]
     },
     {
       "id": "hostile_distance_20_vs_150",
       "title": "Hostile distance 20 km -> 150 km",
       "changed_field": "all alive players' distance_from_boss_km",
-      "accounting_notes": "Every alive player is placed at 20 km or 150 km. Damage stays fixed so the only tactical change is range (and toward/away on the far side, because 150 km hostiles are not approaching)."
+      "accounting_notes": "Every alive player is placed at 20 km or 150 km. Damage stays fixed so the only tactical change is range (and toward/away on the far side, because 150 km hostiles are not approaching).",
+      "passed": false,
+      "expectations": [
+        {
+          "id": "pursuit_warranted",
+          "kind": "noul",
+          "direction": "not_increase",
+          "base": 0.13,
+          "variant": 0.12,
+          "delta": -0.010000000000000009,
+          "ok": true,
+          "note": "150 km hostiles should not make pursuit more warranted."
+        },
+        {
+          "id": "distant_bait_should_be_ignored",
+          "kind": "noul",
+          "direction": "not_decrease",
+          "base": 0.07,
+          "variant": 0.09,
+          "delta": 0.01999999999999999,
+          "ok": true,
+          "note": "Far hostiles should not make ignore-distant less likely."
+        },
+        {
+          "id": "boss_in_critical_danger",
+          "kind": "noul",
+          "direction": "not_increase",
+          "base": 0.22,
+          "variant": 0.23,
+          "delta": 0.010000000000000009,
+          "ok": false,
+          "note": "The same damage at much greater range should not raise immediate danger."
+        }
+      ]
     }
   ],
-  "stability": [],
-  "cadence": [],
-  "controller_corpus": [
+  "stability": [
     {
-      "id": "initial_encounter",
-      "title": "Initial encounter",
-      "command": {
-        "tactical_posture": "press_attack",
-        "formation_intent": "wide_pressure",
-        "reinforcement_action": "hold",
-        "primary_target": "none"
+      "scenario_id": "initial_encounter",
+      "repeats_ok": 8,
+      "repeats_attempted": 8,
+      "choice_questions": 4,
+      "choice_agreement_rate": 1.0,
+      "all_choices_stable": true,
+      "choices": [
+        {
+          "id": "tactical_posture",
+          "values": [
+            "press_attack",
+            "press_attack",
+            "press_attack",
+            "press_attack",
+            "press_attack",
+            "press_attack",
+            "press_attack",
+            "press_attack"
+          ],
+          "unique": [
+            "press_attack"
+          ],
+          "agreement": true
+        },
+        {
+          "id": "formation_intent",
+          "values": [
+            "tight_screen",
+            "tight_screen",
+            "tight_screen",
+            "tight_screen",
+            "tight_screen",
+            "tight_screen",
+            "tight_screen",
+            "tight_screen"
+          ],
+          "unique": [
+            "tight_screen"
+          ],
+          "agreement": true
+        },
+        {
+          "id": "reinforcement_action",
+          "values": [
+            "spawn_now",
+            "spawn_now",
+            "spawn_now",
+            "spawn_now",
+            "spawn_now",
+            "spawn_now",
+            "spawn_now",
+            "spawn_now"
+          ],
+          "unique": [
+            "spawn_now"
+          ],
+          "agreement": true
+        },
+        {
+          "id": "primary_target",
+          "values": [
+            "P1",
+            "P1",
+            "P1",
+            "P1",
+            "P1",
+            "P1",
+            "P1",
+            "P1"
+          ],
+          "unique": [
+            "P1"
+          ],
+          "agreement": true
+        }
+      ],
+      "nouls": [
+        {
+          "id": "boss_in_critical_danger",
+          "n": 8,
+          "min": 0.1,
+          "max": 0.12,
+          "mean": 0.11375,
+          "stdev": 0.006959705453537524,
+          "range": 0.01999999999999999
+        },
+        {
+          "id": "swarm_overextended",
+          "n": 8,
+          "min": 0.08,
+          "max": 0.08,
+          "mean": 0.08,
+          "stdev": 0.0,
+          "range": 0.0
+        },
+        {
+          "id": "regroup_warranted",
+          "n": 8,
+          "min": 0.14,
+          "max": 0.16,
+          "mean": 0.14875,
+          "stdev": 0.007806247497997993,
+          "range": 0.01999999999999999
+        },
+        {
+          "id": "recall_detached_units",
+          "n": 8,
+          "min": 0.14,
+          "max": 0.16,
+          "mean": 0.15,
+          "stdev": 0.007071067811865472,
+          "range": 0.01999999999999999
+        },
+        {
+          "id": "reinforcement_wave_warranted",
+          "n": 8,
+          "min": 0.31,
+          "max": 0.39,
+          "mean": 0.35875,
+          "stdev": 0.023684119151870523,
+          "range": 0.08000000000000002
+        },
+        {
+          "id": "focus_fire_warranted",
+          "n": 8,
+          "min": 0.36,
+          "max": 0.4,
+          "mean": 0.37625,
+          "stdev": 0.014086784586980818,
+          "range": 0.040000000000000036
+        },
+        {
+          "id": "pursuit_warranted",
+          "n": 8,
+          "min": 0.11,
+          "max": 0.11,
+          "mean": 0.11,
+          "stdev": 0.0,
+          "range": 0.0
+        },
+        {
+          "id": "preserve_swarm_priority",
+          "n": 8,
+          "min": 0.11,
+          "max": 0.12,
+          "mean": 0.1125,
+          "stdev": 0.004330127018922191,
+          "range": 0.009999999999999995
+        },
+        {
+          "id": "protect_boss_priority",
+          "n": 8,
+          "min": 0.26,
+          "max": 0.29,
+          "mean": 0.2775,
+          "stdev": 0.008291561975888496,
+          "range": 0.02999999999999997
+        },
+        {
+          "id": "current_plan_still_sensible",
+          "n": 8,
+          "min": 0.72,
+          "max": 0.75,
+          "mean": 0.7375,
+          "stdev": 0.009682458365518551,
+          "range": 0.030000000000000027
+        },
+        {
+          "id": "distant_bait_should_be_ignored",
+          "n": 8,
+          "min": 0.08,
+          "max": 0.09,
+          "mean": 0.08125,
+          "stdev": 0.0033071891388307367,
+          "range": 0.009999999999999995
+        },
+        {
+          "id": "pressure_can_be_maintained",
+          "n": 8,
+          "min": 0.73,
+          "max": 0.77,
+          "mean": 0.74625,
+          "stdev": 0.012183492931011215,
+          "range": 0.040000000000000036
+        }
+      ],
+      "max_noul_range": 0.08000000000000002,
+      "incompatible_posture_switches": 0,
+      "incompatible_formation_switches": 0,
+      "reinforcement_switches": 0,
+      "primary_target_none_flips": 0,
+      "material_oscillation": false
+    },
+    {
+      "scenario_id": "contradictory_pressures",
+      "repeats_ok": 8,
+      "repeats_attempted": 8,
+      "choice_questions": 4,
+      "choice_agreement_rate": 1.0,
+      "all_choices_stable": true,
+      "choices": [
+        {
+          "id": "tactical_posture",
+          "values": [
+            "regroup",
+            "regroup",
+            "regroup",
+            "regroup",
+            "regroup",
+            "regroup",
+            "regroup",
+            "regroup"
+          ],
+          "unique": [
+            "regroup"
+          ],
+          "agreement": true
+        },
+        {
+          "id": "formation_intent",
+          "values": [
+            "recall_detached",
+            "recall_detached",
+            "recall_detached",
+            "recall_detached",
+            "recall_detached",
+            "recall_detached",
+            "recall_detached",
+            "recall_detached"
+          ],
+          "unique": [
+            "recall_detached"
+          ],
+          "agreement": true
+        },
+        {
+          "id": "reinforcement_action",
+          "values": [
+            "spawn_now",
+            "spawn_now",
+            "spawn_now",
+            "spawn_now",
+            "spawn_now",
+            "spawn_now",
+            "spawn_now",
+            "spawn_now"
+          ],
+          "unique": [
+            "spawn_now"
+          ],
+          "agreement": true
+        },
+        {
+          "id": "primary_target",
+          "values": [
+            "P1",
+            "P1",
+            "P1",
+            "P1",
+            "P1",
+            "P1",
+            "P1",
+            "P1"
+          ],
+          "unique": [
+            "P1"
+          ],
+          "agreement": true
+        }
+      ],
+      "nouls": [
+        {
+          "id": "boss_in_critical_danger",
+          "n": 8,
+          "min": 0.67,
+          "max": 0.71,
+          "mean": 0.6975,
+          "stdev": 0.011989578808281777,
+          "range": 0.039999999999999925
+        },
+        {
+          "id": "swarm_overextended",
+          "n": 8,
+          "min": 0.76,
+          "max": 0.79,
+          "mean": 0.7775000000000001,
+          "stdev": 0.008291561975888507,
+          "range": 0.030000000000000027
+        },
+        {
+          "id": "regroup_warranted",
+          "n": 8,
+          "min": 0.83,
+          "max": 0.84,
+          "mean": 0.8312499999999999,
+          "stdev": 0.003307189138830741,
+          "range": 0.010000000000000009
+        },
+        {
+          "id": "recall_detached_units",
+          "n": 8,
+          "min": 0.61,
+          "max": 0.65,
+          "mean": 0.625,
+          "stdev": 0.012247448713915901,
+          "range": 0.040000000000000036
+        },
+        {
+          "id": "reinforcement_wave_warranted",
+          "n": 8,
+          "min": 0.66,
+          "max": 0.69,
+          "mean": 0.6725,
+          "stdev": 0.010897247358851671,
+          "range": 0.029999999999999916
+        },
+        {
+          "id": "focus_fire_warranted",
+          "n": 8,
+          "min": 0.84,
+          "max": 0.87,
+          "mean": 0.855,
+          "stdev": 0.008660254037844393,
+          "range": 0.030000000000000027
+        },
+        {
+          "id": "pursuit_warranted",
+          "n": 8,
+          "min": 0.14,
+          "max": 0.15,
+          "mean": 0.14125000000000001,
+          "stdev": 0.003307189138830732,
+          "range": 0.009999999999999981
+        },
+        {
+          "id": "preserve_swarm_priority",
+          "n": 8,
+          "min": 0.6,
+          "max": 0.65,
+          "mean": 0.63375,
+          "stdev": 0.016535945694153707,
+          "range": 0.050000000000000044
+        },
+        {
+          "id": "protect_boss_priority",
+          "n": 8,
+          "min": 0.55,
+          "max": 0.59,
+          "mean": 0.5587500000000001,
+          "stdev": 0.013635890143294612,
+          "range": 0.039999999999999925
+        },
+        {
+          "id": "current_plan_still_sensible",
+          "n": 8,
+          "min": 0.43,
+          "max": 0.47,
+          "mean": 0.44375,
+          "stdev": 0.014086784586980806,
+          "range": 0.03999999999999998
+        },
+        {
+          "id": "distant_bait_should_be_ignored",
+          "n": 8,
+          "min": 0.44,
+          "max": 0.55,
+          "mean": 0.47875,
+          "stdev": 0.04106016926414212,
+          "range": 0.11000000000000004
+        },
+        {
+          "id": "pressure_can_be_maintained",
+          "n": 8,
+          "min": 0.18,
+          "max": 0.21,
+          "mean": 0.19625,
+          "stdev": 0.011110243021644487,
+          "range": 0.03
+        }
+      ],
+      "max_noul_range": 0.11000000000000004,
+      "incompatible_posture_switches": 0,
+      "incompatible_formation_switches": 0,
+      "reinforcement_switches": 0,
+      "primary_target_none_flips": 0,
+      "material_oscillation": false
+    },
+    {
+      "scenario_id": "boss_critical",
+      "repeats_ok": 8,
+      "repeats_attempted": 8,
+      "choice_questions": 4,
+      "choice_agreement_rate": 1.0,
+      "all_choices_stable": true,
+      "choices": [
+        {
+          "id": "tactical_posture",
+          "values": [
+            "hold_close",
+            "hold_close",
+            "hold_close",
+            "hold_close",
+            "hold_close",
+            "hold_close",
+            "hold_close",
+            "hold_close"
+          ],
+          "unique": [
+            "hold_close"
+          ],
+          "agreement": true
+        },
+        {
+          "id": "formation_intent",
+          "values": [
+            "tight_screen",
+            "tight_screen",
+            "tight_screen",
+            "tight_screen",
+            "tight_screen",
+            "tight_screen",
+            "tight_screen",
+            "tight_screen"
+          ],
+          "unique": [
+            "tight_screen"
+          ],
+          "agreement": true
+        },
+        {
+          "id": "reinforcement_action",
+          "values": [
+            "hold",
+            "hold",
+            "hold",
+            "hold",
+            "hold",
+            "hold",
+            "hold",
+            "hold"
+          ],
+          "unique": [
+            "hold"
+          ],
+          "agreement": true
+        },
+        {
+          "id": "primary_target",
+          "values": [
+            "P1",
+            "P1",
+            "P1",
+            "P1",
+            "P1",
+            "P1",
+            "P1",
+            "P1"
+          ],
+          "unique": [
+            "P1"
+          ],
+          "agreement": true
+        }
+      ],
+      "nouls": [
+        {
+          "id": "boss_in_critical_danger",
+          "n": 8,
+          "min": 0.85,
+          "max": 0.87,
+          "mean": 0.86,
+          "stdev": 0.007071067811865481,
+          "range": 0.020000000000000018
+        },
+        {
+          "id": "swarm_overextended",
+          "n": 8,
+          "min": 0.14,
+          "max": 0.15,
+          "mean": 0.1475,
+          "stdev": 0.0043301270189221855,
+          "range": 0.009999999999999981
+        },
+        {
+          "id": "regroup_warranted",
+          "n": 8,
+          "min": 0.62,
+          "max": 0.66,
+          "mean": 0.64,
+          "stdev": 0.011180339887498959,
+          "range": 0.040000000000000036
+        },
+        {
+          "id": "recall_detached_units",
+          "n": 8,
+          "min": 0.64,
+          "max": 0.69,
+          "mean": 0.665,
+          "stdev": 0.013228756555322938,
+          "range": 0.04999999999999993
+        },
+        {
+          "id": "reinforcement_wave_warranted",
+          "n": 8,
+          "min": 0.07,
+          "max": 0.09,
+          "mean": 0.0825,
+          "stdev": 0.006614378277661473,
+          "range": 0.01999999999999999
+        },
+        {
+          "id": "focus_fire_warranted",
+          "n": 8,
+          "min": 0.78,
+          "max": 0.81,
+          "mean": 0.7975000000000001,
+          "stdev": 0.008291561975888507,
+          "range": 0.030000000000000027
+        },
+        {
+          "id": "pursuit_warranted",
+          "n": 8,
+          "min": 0.09,
+          "max": 0.1,
+          "mean": 0.09625,
+          "stdev": 0.0048412291827592754,
+          "range": 0.010000000000000009
+        },
+        {
+          "id": "preserve_swarm_priority",
+          "n": 8,
+          "min": 0.39,
+          "max": 0.44,
+          "mean": 0.4075,
+          "stdev": 0.013919410907075047,
+          "range": 0.04999999999999999
+        },
+        {
+          "id": "protect_boss_priority",
+          "n": 8,
+          "min": 0.59,
+          "max": 0.66,
+          "mean": 0.62,
+          "stdev": 0.018708286933869722,
+          "range": 0.07000000000000006
+        },
+        {
+          "id": "current_plan_still_sensible",
+          "n": 8,
+          "min": 0.51,
+          "max": 0.55,
+          "mean": 0.53625,
+          "stdev": 0.012183492931011215,
+          "range": 0.040000000000000036
+        },
+        {
+          "id": "distant_bait_should_be_ignored",
+          "n": 8,
+          "min": 0.13,
+          "max": 0.15,
+          "mean": 0.13625,
+          "stdev": 0.006959705453537527,
+          "range": 0.01999999999999999
+        },
+        {
+          "id": "pressure_can_be_maintained",
+          "n": 8,
+          "min": 0.31,
+          "max": 0.36,
+          "mean": 0.3375,
+          "stdev": 0.016393596310754998,
+          "range": 0.04999999999999999
+        }
+      ],
+      "max_noul_range": 0.07000000000000006,
+      "incompatible_posture_switches": 0,
+      "incompatible_formation_switches": 0,
+      "reinforcement_switches": 0,
+      "primary_target_none_flips": 0,
+      "material_oscillation": false
+    }
+  ],
+  "cadence": [
+    {
+      "target_hz": 1,
+      "requested_interval_s": 1.0,
+      "sample_count": 40,
+      "ok_count": 40,
+      "p50_s": 0.24185844993917271,
+      "p95_s": 0.2988313899491913,
+      "max_s": 0.6461336000356823,
+      "min_s": 0.21977590001188219,
+      "mean_s": 0.2567754374962533,
+      "deadline_misses": 0,
+      "deadline_miss_pct": 0.0,
+      "wall_s": 40.01273110008333,
+      "achieved_hz": 0.9996818237662537,
+      "sustainable": true,
+      "api_failures": 0,
+      "rate_limits": 0,
+      "timeouts": 0,
+      "malformed": 0,
+      "error_classes": {}
+    },
+    {
+      "target_hz": 2,
+      "requested_interval_s": 0.5,
+      "sample_count": 40,
+      "ok_count": 40,
+      "p50_s": 0.2402243500109762,
+      "p95_s": 0.2699693199945613,
+      "max_s": 0.29141569999046624,
+      "min_s": 0.21696919994428754,
+      "mean_s": 0.24178619499725756,
+      "deadline_misses": 0,
+      "deadline_miss_pct": 0.0,
+      "wall_s": 20.01212770002894,
+      "achieved_hz": 1.9987879649569773,
+      "sustainable": true,
+      "api_failures": 0,
+      "rate_limits": 0,
+      "timeouts": 0,
+      "malformed": 0,
+      "error_classes": {}
+    },
+    {
+      "target_hz": 5,
+      "requested_interval_s": 0.2,
+      "sample_count": 40,
+      "ok_count": 40,
+      "p50_s": 0.23959209996974096,
+      "p95_s": 0.26399910002364774,
+      "max_s": 0.7164445000234991,
+      "min_s": 0.22050349996425211,
+      "mean_s": 0.25380299750249835,
+      "deadline_misses": 40,
+      "deadline_miss_pct": 1.0,
+      "wall_s": 10.195845899987034,
+      "achieved_hz": 3.9231663946638173,
+      "sustainable": false,
+      "api_failures": 0,
+      "rate_limits": 0,
+      "timeouts": 0,
+      "malformed": 0,
+      "error_classes": {}
+    },
+    {
+      "target_hz": 10,
+      "requested_interval_s": 0.1,
+      "sample_count": 40,
+      "ok_count": 40,
+      "p50_s": 0.23757634998764843,
+      "p95_s": 0.2764817749673966,
+      "max_s": 0.4083752000005916,
+      "min_s": 0.21605649997945875,
+      "mean_s": 0.2458973375003552,
+      "deadline_misses": 40,
+      "deadline_miss_pct": 1.0,
+      "wall_s": 9.87997950008139,
+      "achieved_hz": 4.0485913963354365,
+      "sustainable": false,
+      "api_failures": 0,
+      "rate_limits": 0,
+      "timeouts": 0,
+      "malformed": 0,
+      "error_classes": {}
+    }
+  ],
+  "questionable": [
+    {
+      "scenario_id": "initial_encounter",
+      "id": "reinforcement_action",
+      "kind": "choice_not",
+      "note": "No attrition yet.",
+      "observed": "spawn_now",
+      "check": {
+        "kind": "choice_not",
+        "id": "reinforcement_action",
+        "value": "spawn_now"
       }
     },
     {
-      "id": "normal_engagement",
-      "title": "Normal engagement",
-      "command": {
-        "tactical_posture": "press_attack",
-        "formation_intent": "wide_pressure",
-        "reinforcement_action": "hold",
-        "primary_target": "none"
+      "scenario_id": "heavy_attrition",
+      "id": "preserve_swarm_priority",
+      "kind": "noul_above",
+      "note": "Remaining swarm is already halved.",
+      "observed": 0.49,
+      "check": {
+        "kind": "noul_above",
+        "id": "preserve_swarm_priority",
+        "threshold": 0.5
       }
     },
     {
-      "id": "boss_focused",
-      "title": "Boss being focused",
-      "command": {
-        "tactical_posture": "press_attack",
-        "formation_intent": "wide_pressure",
-        "reinforcement_action": "hold",
-        "primary_target": "P3"
+      "scenario_id": "heavy_attrition",
+      "id": "tactical_posture",
+      "kind": "choice_not",
+      "note": "Continuing a full press after a wipe pulse is questionable.",
+      "observed": "press_attack",
+      "check": {
+        "kind": "choice_not",
+        "id": "tactical_posture",
+        "value": "press_attack"
       }
     },
     {
-      "id": "swarm_dispersed",
-      "title": "Swarm becoming dispersed",
-      "command": {
-        "tactical_posture": "press_attack",
-        "formation_intent": "recall_detached",
-        "reinforcement_action": "hold",
-        "primary_target": "none"
+      "scenario_id": "reinforce_while_stable",
+      "id": "reinforcement_wave_warranted",
+      "kind": "noul_below",
+      "note": "No meaningful depletion.",
+      "observed": 0.58,
+      "check": {
+        "kind": "noul_below",
+        "id": "reinforcement_wave_warranted",
+        "threshold": 0.5
       }
     },
     {
-      "id": "heavy_attrition",
-      "title": "Heavy recent attrition",
-      "command": {
-        "tactical_posture": "regroup",
-        "formation_intent": "balanced",
-        "reinforcement_action": "hold",
-        "primary_target": "none"
+      "scenario_id": "reinforce_while_stable",
+      "id": "reinforcement_action",
+      "kind": "choice_is",
+      "note": "Spawning into a stable fight wastes the wave.",
+      "observed": "spawn_now",
+      "check": {
+        "kind": "choice_is",
+        "id": "reinforcement_action",
+        "value": "hold"
       }
     },
     {
-      "id": "boss_critical",
-      "title": "Boss critically damaged",
-      "command": {
-        "tactical_posture": "desperate_defence",
-        "formation_intent": "tight_screen",
-        "reinforcement_action": "hold",
-        "primary_target": "P1"
-      }
-    },
-    {
-      "id": "reinforce_under_pressure",
-      "title": "Reinforcements available under pressure",
-      "command": {
-        "tactical_posture": "regroup",
-        "formation_intent": "balanced",
-        "reinforcement_action": "spawn_now",
-        "primary_target": "P1"
-      }
-    },
-    {
-      "id": "reinforce_while_stable",
-      "title": "Reinforcements available while stable",
-      "command": {
-        "tactical_posture": "press_attack",
-        "formation_intent": "wide_pressure",
-        "reinforcement_action": "hold",
-        "primary_target": "none"
-      }
-    },
-    {
-      "id": "distant_bait",
-      "title": "Distant bait while others stay on the boss",
-      "command": {
-        "tactical_posture": "press_attack",
-        "formation_intent": "wide_pressure",
-        "reinforcement_action": "hold",
-        "primary_target": "P1"
-      }
-    },
-    {
-      "id": "few_players_boss_damaged",
-      "title": "Few players remain but the boss is badly damaged",
-      "command": {
-        "tactical_posture": "desperate_defence",
-        "formation_intent": "tight_screen",
-        "reinforcement_action": "hold",
-        "primary_target": "P1"
-      }
-    },
-    {
-      "id": "no_pressure",
-      "title": "No meaningful hostile pressure",
-      "command": {
-        "tactical_posture": "press_attack",
-        "formation_intent": "wide_pressure",
-        "reinforcement_action": "hold",
-        "primary_target": "none"
-      }
-    },
-    {
-      "id": "contradictory_pressures",
-      "title": "Contradictory pressures",
-      "command": {
-        "tactical_posture": "regroup",
-        "formation_intent": "recall_detached",
-        "reinforcement_action": "spawn_now",
-        "primary_target": "P1"
-      }
-    },
-    {
-      "id": "healthy_boss_thin_swarm",
-      "title": "Healthy boss, thin swarm",
-      "command": {
-        "tactical_posture": "press_attack",
-        "formation_intent": "balanced",
-        "reinforcement_action": "hold",
-        "primary_target": "none"
-      }
-    },
-    {
-      "id": "collapsing_no_reinforce",
-      "title": "Collapsing without reinforcement capacity",
-      "command": {
-        "tactical_posture": "regroup",
-        "formation_intent": "balanced",
-        "reinforcement_action": "hold",
-        "primary_target": "P1"
-      }
-    },
-    {
-      "id": "last_player_fleeing",
-      "title": "Last player fleeing far away",
-      "command": {
-        "tactical_posture": "hold_close",
-        "formation_intent": "balanced",
-        "reinforcement_action": "hold",
-        "primary_target": "none"
+      "scenario_id": "no_pressure",
+      "id": "reinforcement_action",
+      "kind": "choice_is",
+      "note": "Nothing to reinforce against.",
+      "observed": "spawn_now",
+      "check": {
+        "kind": "choice_is",
+        "id": "reinforcement_action",
+        "value": "hold"
       }
     }
   ],
+  "failures": [],
+  "token_stats": {
+    "input": {
+      "n": 220,
+      "min": 2703,
+      "median": 3448,
+      "max": 3463,
+      "mean": 3425.7909090909093
+    },
+    "output": {
+      "n": 220,
+      "min": 424,
+      "median": 479,
+      "max": 483,
+      "mean": 477.6727272727273
+    }
+  },
+  "representative_input_tokens": 3448,
+  "scale": {
+    "input_tokens_per_inference": 3448,
+    "price_usd_per_million_input": 0.042,
+    "price_usd_per_billion_input": 42.0,
+    "price_usd_per_million_output": 0.0,
+    "price_retrieved_utc_date": "2026-09-16",
+    "price_sources": [
+      "https://typesafe.ai/",
+      "https://typesafe.ai/blog/introducing-system-one-models-and-jev"
+    ],
+    "formula": "usd = input_tokens * inferences * (42 / 1e9); output treated as $0 per published pricing",
+    "per_commander_hour_continuous": {
+      "1": {
+        "inferences": 3600,
+        "input_tokens": 12412800,
+        "usd_if_published_price": 0.5213376
+      },
+      "2": {
+        "inferences": 7200,
+        "input_tokens": 24825600,
+        "usd_if_published_price": 1.0426752
+      },
+      "5": {
+        "inferences": 18000,
+        "input_tokens": 62064000,
+        "usd_if_published_price": 2.606688
+      },
+      "10": {
+        "inferences": 36000,
+        "input_tokens": 124128000,
+        "usd_if_published_price": 5.213376
+      }
+    },
+    "concurrent_commanders_continuous": {
+      "1": {
+        "1": {
+          "inferences": 3600,
+          "input_tokens": 12412800,
+          "usd_if_published_price": 0.5213376
+        },
+        "2": {
+          "inferences": 7200,
+          "input_tokens": 24825600,
+          "usd_if_published_price": 1.0426752
+        },
+        "5": {
+          "inferences": 18000,
+          "input_tokens": 62064000,
+          "usd_if_published_price": 2.606688
+        },
+        "10": {
+          "inferences": 36000,
+          "input_tokens": 124128000,
+          "usd_if_published_price": 5.213376
+        }
+      },
+      "10": {
+        "1": {
+          "inferences": 36000,
+          "input_tokens": 124128000,
+          "usd_if_published_price": 5.213375999999999
+        },
+        "2": {
+          "inferences": 72000,
+          "input_tokens": 248256000,
+          "usd_if_published_price": 10.426751999999999
+        },
+        "5": {
+          "inferences": 180000,
+          "input_tokens": 620640000,
+          "usd_if_published_price": 26.06688
+        },
+        "10": {
+          "inferences": 360000,
+          "input_tokens": 1241280000,
+          "usd_if_published_price": 52.13376
+        }
+      },
+      "100": {
+        "1": {
+          "inferences": 360000,
+          "input_tokens": 1241280000,
+          "usd_if_published_price": 52.133759999999995
+        },
+        "2": {
+          "inferences": 720000,
+          "input_tokens": 2482560000,
+          "usd_if_published_price": 104.26751999999999
+        },
+        "5": {
+          "inferences": 1800000,
+          "input_tokens": 6206400000,
+          "usd_if_published_price": 260.66880000000003
+        },
+        "10": {
+          "inferences": 3600000,
+          "input_tokens": 12412800000,
+          "usd_if_published_price": 521.3376000000001
+        }
+      },
+      "1000": {
+        "1": {
+          "inferences": 3600000,
+          "input_tokens": 12412800000,
+          "usd_if_published_price": 521.3376
+        },
+        "2": {
+          "inferences": 7200000,
+          "input_tokens": 24825600000,
+          "usd_if_published_price": 1042.6752
+        },
+        "5": {
+          "inferences": 18000000,
+          "input_tokens": 62064000000,
+          "usd_if_published_price": 2606.688
+        },
+        "10": {
+          "inferences": 36000000,
+          "input_tokens": 124128000000,
+          "usd_if_published_price": 5213.376
+        }
+      }
+    },
+    "event_driven_illustration": {
+      "30": {
+        "inferences_per_commander_hour": 30,
+        "input_tokens": 103440,
+        "usd_if_published_price": 0.0043444799999999995,
+        "vs_5hz_token_ratio": 600.0
+      },
+      "60": {
+        "inferences_per_commander_hour": 60,
+        "input_tokens": 206880,
+        "usd_if_published_price": 0.008688959999999999,
+        "vs_5hz_token_ratio": 300.0
+      },
+      "120": {
+        "inferences_per_commander_hour": 120,
+        "input_tokens": 413760,
+        "usd_if_published_price": 0.017377919999999998,
+        "vs_5hz_token_ratio": 150.0
+      }
+    }
+  },
+  "deterministic_notes": {
+    "n": 15,
+    "posture_agree": 11,
+    "formation_agree": 13,
+    "reinforce_agree": 14,
+    "target_agree": 7,
+    "disagreements": [
+      {
+        "id": "initial_encounter",
+        "field": "formation_intent",
+        "det": "wide_pressure",
+        "jev": "tight_screen"
+      },
+      {
+        "id": "initial_encounter",
+        "field": "primary_target",
+        "det": "none",
+        "jev": "P1"
+      },
+      {
+        "id": "normal_engagement",
+        "field": "primary_target",
+        "det": "none",
+        "jev": "P3"
+      },
+      {
+        "id": "swarm_dispersed",
+        "field": "tactical_posture",
+        "det": "press_attack",
+        "jev": "regroup"
+      },
+      {
+        "id": "swarm_dispersed",
+        "field": "primary_target",
+        "det": "none",
+        "jev": "P1"
+      },
+      {
+        "id": "heavy_attrition",
+        "field": "primary_target",
+        "det": "none",
+        "jev": "P1"
+      },
+      {
+        "id": "boss_critical",
+        "field": "tactical_posture",
+        "det": "desperate_defence",
+        "jev": "hold_close"
+      },
+      {
+        "id": "reinforce_under_pressure",
+        "field": "tactical_posture",
+        "det": "regroup",
+        "jev": "hold_close"
+      },
+      {
+        "id": "reinforce_while_stable",
+        "field": "primary_target",
+        "det": "none",
+        "jev": "P1"
+      },
+      {
+        "id": "no_pressure",
+        "field": "formation_intent",
+        "det": "wide_pressure",
+        "jev": "tight_screen"
+      },
+      {
+        "id": "no_pressure",
+        "field": "reinforcement_action",
+        "det": "hold",
+        "jev": "spawn_now"
+      },
+      {
+        "id": "no_pressure",
+        "field": "primary_target",
+        "det": "none",
+        "jev": "P1"
+      },
+      {
+        "id": "healthy_boss_thin_swarm",
+        "field": "primary_target",
+        "det": "none",
+        "jev": "P1"
+      },
+      {
+        "id": "last_player_fleeing",
+        "field": "tactical_posture",
+        "det": "hold_close",
+        "jev": "press_attack"
+      },
+      {
+        "id": "last_player_fleeing",
+        "field": "primary_target",
+        "det": "none",
+        "jev": "P1"
+      }
+    ]
+  },
   "event_driven": {
     "pairs": 14,
     "material_pairs": 14,
@@ -617,152 +4202,159 @@
       }
     ]
   },
-  "scale": {
-    "input_tokens_per_inference": 2707,
-    "price_usd_per_million_input": 0.042,
-    "price_usd_per_billion_input": 42.0,
-    "price_usd_per_million_output": 0.0,
-    "price_retrieved_utc_date": "2026-09-16",
-    "price_sources": [
-      "https://typesafe.ai/",
-      "https://typesafe.ai/blog/introducing-system-one-models-and-jev"
-    ],
-    "formula": "usd = input_tokens * inferences * (42 / 1e9); output treated as $0 per published pricing",
-    "per_commander_hour_continuous": {
-      "1": {
-        "inferences": 3600,
-        "input_tokens": 9745200,
-        "usd_if_published_price": 0.4092984
-      },
-      "2": {
-        "inferences": 7200,
-        "input_tokens": 19490400,
-        "usd_if_published_price": 0.8185968
-      },
-      "5": {
-        "inferences": 18000,
-        "input_tokens": 48726000,
-        "usd_if_published_price": 2.0464919999999998
-      },
-      "10": {
-        "inferences": 36000,
-        "input_tokens": 97452000,
-        "usd_if_published_price": 4.0929839999999995
+  "controller_corpus": [
+    {
+      "id": "initial_encounter",
+      "title": "Initial encounter",
+      "command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
       }
     },
-    "concurrent_commanders_continuous": {
-      "1": {
-        "1": {
-          "inferences": 3600,
-          "input_tokens": 9745200,
-          "usd_if_published_price": 0.4092984
-        },
-        "2": {
-          "inferences": 7200,
-          "input_tokens": 19490400,
-          "usd_if_published_price": 0.8185968
-        },
-        "5": {
-          "inferences": 18000,
-          "input_tokens": 48726000,
-          "usd_if_published_price": 2.0464919999999998
-        },
-        "10": {
-          "inferences": 36000,
-          "input_tokens": 97452000,
-          "usd_if_published_price": 4.0929839999999995
-        }
-      },
-      "10": {
-        "1": {
-          "inferences": 36000,
-          "input_tokens": 97452000,
-          "usd_if_published_price": 4.092984
-        },
-        "2": {
-          "inferences": 72000,
-          "input_tokens": 194904000,
-          "usd_if_published_price": 8.185968
-        },
-        "5": {
-          "inferences": 180000,
-          "input_tokens": 487260000,
-          "usd_if_published_price": 20.46492
-        },
-        "10": {
-          "inferences": 360000,
-          "input_tokens": 974520000,
-          "usd_if_published_price": 40.92984
-        }
-      },
-      "100": {
-        "1": {
-          "inferences": 360000,
-          "input_tokens": 974520000,
-          "usd_if_published_price": 40.92984
-        },
-        "2": {
-          "inferences": 720000,
-          "input_tokens": 1949040000,
-          "usd_if_published_price": 81.85968
-        },
-        "5": {
-          "inferences": 1800000,
-          "input_tokens": 4872600000,
-          "usd_if_published_price": 204.64919999999998
-        },
-        "10": {
-          "inferences": 3600000,
-          "input_tokens": 9745200000,
-          "usd_if_published_price": 409.29839999999996
-        }
-      },
-      "1000": {
-        "1": {
-          "inferences": 3600000,
-          "input_tokens": 9745200000,
-          "usd_if_published_price": 409.2984
-        },
-        "2": {
-          "inferences": 7200000,
-          "input_tokens": 19490400000,
-          "usd_if_published_price": 818.5968
-        },
-        "5": {
-          "inferences": 18000000,
-          "input_tokens": 48726000000,
-          "usd_if_published_price": 2046.4919999999997
-        },
-        "10": {
-          "inferences": 36000000,
-          "input_tokens": 97452000000,
-          "usd_if_published_price": 4092.9839999999995
-        }
+    {
+      "id": "normal_engagement",
+      "title": "Normal engagement",
+      "command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
       }
     },
-    "event_driven_illustration": {
-      "30": {
-        "inferences_per_commander_hour": 30,
-        "input_tokens": 81210,
-        "usd_if_published_price": 0.00341082,
-        "vs_5hz_token_ratio": 600.0
-      },
-      "60": {
-        "inferences_per_commander_hour": 60,
-        "input_tokens": 162420,
-        "usd_if_published_price": 0.00682164,
-        "vs_5hz_token_ratio": 300.0
-      },
-      "120": {
-        "inferences_per_commander_hour": 120,
-        "input_tokens": 324840,
-        "usd_if_published_price": 0.01364328,
-        "vs_5hz_token_ratio": 150.0
+    {
+      "id": "boss_focused",
+      "title": "Boss being focused",
+      "command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "P3"
       }
     },
-    "estimate_only": true,
-    "estimate_note": "chars/4 of the serialized request; not API-reported input_tokens"
-  },
-  "live_calls": 0,
-  "generated_utc": "20260916T190514Z"
+    {
+      "id": "swarm_dispersed",
+      "title": "Swarm becoming dispersed",
+      "command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "recall_detached",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      }
+    },
+    {
+      "id": "heavy_attrition",
+      "title": "Heavy recent attrition",
+      "command": {
+        "tactical_posture": "regroup",
+        "formation_intent": "balanced",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      }
+    },
+    {
+      "id": "boss_critical",
+      "title": "Boss critically damaged",
+      "command": {
+        "tactical_posture": "desperate_defence",
+        "formation_intent": "tight_screen",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      }
+    },
+    {
+      "id": "reinforce_under_pressure",
+      "title": "Reinforcements available under pressure",
+      "command": {
+        "tactical_posture": "regroup",
+        "formation_intent": "balanced",
+        "reinforcement_action": "spawn_now",
+        "primary_target": "P1"
+      }
+    },
+    {
+      "id": "reinforce_while_stable",
+      "title": "Reinforcements available while stable",
+      "command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      }
+    },
+    {
+      "id": "distant_bait",
+      "title": "Distant bait while others stay on the boss",
+      "command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      }
+    },
+    {
+      "id": "few_players_boss_damaged",
+      "title": "Few players remain but the boss is badly damaged",
+      "command": {
+        "tactical_posture": "desperate_defence",
+        "formation_intent": "tight_screen",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      }
+    },
+    {
+      "id": "no_pressure",
+      "title": "No meaningful hostile pressure",
+      "command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      }
+    },
+    {
+      "id": "contradictory_pressures",
+      "title": "Contradictory pressures",
+      "command": {
+        "tactical_posture": "regroup",
+        "formation_intent": "recall_detached",
+        "reinforcement_action": "spawn_now",
+        "primary_target": "P1"
+      }
+    },
+    {
+      "id": "healthy_boss_thin_swarm",
+      "title": "Healthy boss, thin swarm",
+      "command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "balanced",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      }
+    },
+    {
+      "id": "collapsing_no_reinforce",
+      "title": "Collapsing without reinforcement capacity",
+      "command": {
+        "tactical_posture": "regroup",
+        "formation_intent": "balanced",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      }
+    },
+    {
+      "id": "last_player_fleeing",
+      "title": "Last player fleeing far away",
+      "command": {
+        "tactical_posture": "hold_close",
+        "formation_intent": "balanced",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      }
+    }
+  ],
+  "live_calls": 220,
+  "stop_reason": null,
+  "generated_utc": "20260916T191252Z"
 }
