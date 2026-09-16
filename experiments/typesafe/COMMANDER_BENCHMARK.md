@@ -1,8 +1,9 @@
 # Jev tactical-commander feasibility benchmark
 
-Isolated TypeSafe Jev / System One experiment on branch
-`experiment/typesafe-jev-feral-commander`. Not a Carbon renderer
-milestone, not an EO-Map change, and not a claim about Fenris Feral AI.
+Isolated TypeSafe Jev / System One experiment. Originally recorded on
+`experiment/typesafe-jev-feral-commander`; that work now lives on `main`.
+Not a Carbon renderer milestone, not an EO-Map change, and not a claim
+about Fenris Feral AI.
 
 This revision is the **live** run. It replaces the previous dry-run/offline
 writeup on `e8d7b09`, which existed only because `TYPESAFE_API_KEY` was
