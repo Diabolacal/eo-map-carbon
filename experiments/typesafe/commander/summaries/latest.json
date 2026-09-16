@@ -1,0 +1,768 @@
+{
+  "live": false,
+  "reason": "TYPESAFE_API_KEY was not set; dry-run only. No live answers, latencies, or API tokens.",
+  "model": "jev-latest",
+  "measure": {
+    "payload_chars": 10831,
+    "payload_bytes_utf8": 10831,
+    "state_chars": 3209,
+    "question_count": 16,
+    "token_estimates": {
+      "chars": 10831,
+      "est_chars_div_4": 2707,
+      "est_chars_div_35": 3094,
+      "est_chars_div_3": 3610
+    },
+    "request_token_budget_docs": 32000,
+    "under_char_hint_150k": true,
+    "under_est_32k_div4": true
+  },
+  "example_state": {
+    "note": "Synthetic commander observation snapshot. Every numeric field is an exact measured fact. Judge higher-level tactics from these facts; do not re-count alive units, re-measure distances, or re-sum recent damage.",
+    "scenario_id": "initial_encounter",
+    "tick_s": 20,
+    "boss": {
+      "health_pct": 100.0,
+      "damage_received_last_10s": 12.0,
+      "current_posture": "press_attack",
+      "reinforcement_capacity_available": true,
+      "reinforcement_cooldown_s": 0.0,
+      "id": "boss"
+    },
+    "swarm": {
+      "alive": 60,
+      "close_to_boss": 56,
+      "medium_range": 4,
+      "detached_far": 0,
+      "losses_last_10s": 0,
+      "losses_last_30s": 0,
+      "current_broad_order": "press_attack"
+    },
+    "players": [
+      {
+        "id": "P1",
+        "alive": true,
+        "distance_from_boss_km": 42.0,
+        "damage_to_boss_last_10s": 4.0,
+        "damage_to_subordinates_last_10s": 3.0,
+        "current_target": "none",
+        "moving_toward_boss": true,
+        "nearest_other_player_km": 18,
+        "isolated": false
+      },
+      {
+        "id": "P2",
+        "alive": true,
+        "distance_from_boss_km": 48.0,
+        "damage_to_boss_last_10s": 2.0,
+        "damage_to_subordinates_last_10s": 4.0,
+        "current_target": "none",
+        "moving_toward_boss": true,
+        "nearest_other_player_km": 16,
+        "isolated": false
+      },
+      {
+        "id": "P3",
+        "alive": true,
+        "distance_from_boss_km": 55.0,
+        "damage_to_boss_last_10s": 3.0,
+        "damage_to_subordinates_last_10s": 2.0,
+        "current_target": "none",
+        "moving_toward_boss": true,
+        "nearest_other_player_km": 20,
+        "isolated": false
+      },
+      {
+        "id": "P4",
+        "alive": true,
+        "distance_from_boss_km": 61.0,
+        "damage_to_boss_last_10s": 1.0,
+        "damage_to_subordinates_last_10s": 2.0,
+        "current_target": "none",
+        "moving_toward_boss": true,
+        "nearest_other_player_km": 22,
+        "isolated": false
+      },
+      {
+        "id": "P5",
+        "alive": true,
+        "distance_from_boss_km": 67.0,
+        "damage_to_boss_last_10s": 0.0,
+        "damage_to_subordinates_last_10s": 3.0,
+        "current_target": "none",
+        "moving_toward_boss": true,
+        "nearest_other_player_km": 19,
+        "isolated": false
+      },
+      {
+        "id": "P6",
+        "alive": true,
+        "distance_from_boss_km": 50.0,
+        "damage_to_boss_last_10s": 2.0,
+        "damage_to_subordinates_last_10s": 1.0,
+        "current_target": "none",
+        "moving_toward_boss": true,
+        "nearest_other_player_km": 15,
+        "isolated": false
+      },
+      {
+        "id": "P7",
+        "alive": true,
+        "distance_from_boss_km": 72.0,
+        "damage_to_boss_last_10s": 0.0,
+        "damage_to_subordinates_last_10s": 2.0,
+        "current_target": "none",
+        "moving_toward_boss": true,
+        "nearest_other_player_km": 25,
+        "isolated": false
+      },
+      {
+        "id": "P8",
+        "alive": true,
+        "distance_from_boss_km": 58.0,
+        "damage_to_boss_last_10s": 0.0,
+        "damage_to_subordinates_last_10s": 1.0,
+        "current_target": "none",
+        "moving_toward_boss": true,
+        "nearest_other_player_km": 17,
+        "isolated": false
+      }
+    ],
+    "derived": {
+      "players_alive": 8,
+      "players_dead": 0,
+      "alive_player_ids": [
+        "P1",
+        "P2",
+        "P3",
+        "P4",
+        "P5",
+        "P6",
+        "P7",
+        "P8"
+      ],
+      "dead_player_ids": [],
+      "isolated_alive_player_ids": [],
+      "total_boss_damage_last_10s": 12.0,
+      "total_subordinate_damage_last_10s": 18.0,
+      "nearest_alive_player_km": 42.0,
+      "farthest_alive_player_km": 72.0,
+      "top_boss_damager": {
+        "id": "P1",
+        "damage_to_boss_last_10s": 4.0
+      },
+      "top_subordinate_damager": {
+        "id": "P2",
+        "damage_to_subordinates_last_10s": 4.0
+      },
+      "top_boss_damage_share": 0.333,
+      "swarm_close_fraction": 0.933,
+      "swarm_detached_fraction": 0.0,
+      "boss_damage_matches_player_sum": true,
+      "range_bands_km": {
+        "close_lt": 30.0,
+        "far_gt": 80.0,
+        "isolated_gte": 60.0
+      }
+    }
+  },
+  "question_count": {
+    "noul": 12,
+    "choice": 4,
+    "total": 16
+  },
+  "scenarios": [
+    {
+      "id": "initial_encounter",
+      "title": "Initial encounter",
+      "why": "Boss healthy, full swarm, players approaching, little recent damage."
+    },
+    {
+      "id": "normal_engagement",
+      "title": "Normal engagement",
+      "why": "Moderate losses, several players damaging subordinates, boss still healthy."
+    },
+    {
+      "id": "boss_focused",
+      "title": "Boss being focused",
+      "why": "P3 accounts for most recent boss damage; boss health is falling."
+    },
+    {
+      "id": "swarm_dispersed",
+      "title": "Swarm becoming dispersed",
+      "why": "Substantial fraction of NPCs far from the boss; two distant players drawing them."
+    },
+    {
+      "id": "heavy_attrition",
+      "title": "Heavy recent attrition",
+      "why": "Many NPC losses over a short interval; players are chewing through subordinates."
+    },
+    {
+      "id": "boss_critical",
+      "title": "Boss critically damaged",
+      "why": "Very low boss health and a reduced swarm; remaining players are on the boss."
+    },
+    {
+      "id": "reinforce_under_pressure",
+      "title": "Reinforcements available under pressure",
+      "why": "Capacity is up, cooldown is zero, swarm is depleted, and players are still applying damage."
+    },
+    {
+      "id": "reinforce_while_stable",
+      "title": "Reinforcements available while stable",
+      "why": "Capacity is up, but the encounter is currently quiet and the swarm is nearly full."
+    },
+    {
+      "id": "distant_bait",
+      "title": "Distant bait while others stay on the boss",
+      "why": "P12 is 155 km away drawing subordinates; P1/P2 remain on the boss."
+    },
+    {
+      "id": "few_players_boss_damaged",
+      "title": "Few players remain but the boss is badly damaged",
+      "why": "Only two hostiles left, both on the boss, commander already at 18%."
+    },
+    {
+      "id": "no_pressure",
+      "title": "No meaningful hostile pressure",
+      "why": "Boss healthy, full swarm, players far and dealing almost no damage."
+    },
+    {
+      "id": "contradictory_pressures",
+      "title": "Contradictory pressures",
+      "why": "Dangerous boss attacker, dispersed swarm, heavy subordinate losses, reinforcement available."
+    },
+    {
+      "id": "healthy_boss_thin_swarm",
+      "title": "Healthy boss, thin swarm",
+      "why": "Boss is fine; subordinates have been eroded to 11. Preserve-vs-press trade-off."
+    },
+    {
+      "id": "collapsing_no_reinforce",
+      "title": "Collapsing without reinforcement capacity",
+      "why": "Same pressure as the spawn-now case, but capacity is down and cooldown is long."
+    },
+    {
+      "id": "last_player_fleeing",
+      "title": "Last player fleeing far away",
+      "why": "One surviving player at 160 km, low damage, moving away. Pursuit is the trap."
+    }
+  ],
+  "sensitivity": [
+    {
+      "id": "boss_health_80_vs_20",
+      "title": "Boss health 80% -> 20%",
+      "changed_field": "boss.health_pct",
+      "accounting_notes": "Only boss.health_pct changes. Damage, swarm, and players stay fixed."
+    },
+    {
+      "id": "recent_boss_damage_low_vs_severe",
+      "title": "Recent boss damage low -> severe",
+      "changed_field": "player boss-damage totals (and matching boss.damage_received_last_10s)",
+      "accounting_notes": "The intended variable is recent boss-damage intensity. Player shares keep their proportions; boss.damage_received_last_10s is rewritten to the player sum so the snapshot stays consistent."
+    },
+    {
+      "id": "sub_count_60_vs_15",
+      "title": "Subordinate count 60 -> 15",
+      "changed_field": "swarm.alive (close_to_boss is the remainder bucket)",
+      "accounting_notes": "alive must equal the range-bucket sum, so close_to_boss is the accounting remainder. medium_range and detached_far stay 8 and 5."
+    },
+    {
+      "id": "detached_5_vs_35",
+      "title": "Detached subordinates 5 -> 35",
+      "changed_field": "swarm.detached_far (close_to_boss is the remainder bucket)",
+      "accounting_notes": "alive stays 45 and medium_range stays 8. close_to_boss falls because buckets must sum to alive."
+    },
+    {
+      "id": "losses_2_vs_20",
+      "title": "Recent subordinate losses 2 -> 20",
+      "changed_field": "swarm.losses_last_10s (losses_last_30s stays >= 10s losses)",
+      "accounting_notes": "losses_last_30s cannot be smaller than losses_last_10s, so both rise together. alive is unchanged; this is a recent-loss pulse, not a new headcount."
+    },
+    {
+      "id": "reinforce_unavailable_vs_available",
+      "title": "Reinforcement unavailable -> available under pressure",
+      "changed_field": "boss.reinforcement_capacity_available",
+      "accounting_notes": "Both sides use the same pressured mid-fight snapshot. Only capacity and cooldown change."
+    },
+    {
+      "id": "p3_boss_damage_50_vs_800",
+      "title": "P3 recent boss damage 50 -> 800",
+      "changed_field": "players[P3].damage_to_boss_last_10s",
+      "accounting_notes": "Only P3's recent boss damage changes. boss.damage_received_last_10s and derived top-damager fields are recomputed from the player list so the snapshot stays consistent."
+    },
+    {
+      "id": "hostile_distance_20_vs_150",
+      "title": "Hostile distance 20 km -> 150 km",
+      "changed_field": "all alive players' distance_from_boss_km",
+      "accounting_notes": "Every alive player is placed at 20 km or 150 km. Damage stays fixed so the only tactical change is range (and toward/away on the far side, because 150 km hostiles are not approaching)."
+    }
+  ],
+  "stability": [],
+  "cadence": [],
+  "controller_corpus": [
+    {
+      "id": "initial_encounter",
+      "title": "Initial encounter",
+      "command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      }
+    },
+    {
+      "id": "normal_engagement",
+      "title": "Normal engagement",
+      "command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      }
+    },
+    {
+      "id": "boss_focused",
+      "title": "Boss being focused",
+      "command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "P3"
+      }
+    },
+    {
+      "id": "swarm_dispersed",
+      "title": "Swarm becoming dispersed",
+      "command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "recall_detached",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      }
+    },
+    {
+      "id": "heavy_attrition",
+      "title": "Heavy recent attrition",
+      "command": {
+        "tactical_posture": "regroup",
+        "formation_intent": "balanced",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      }
+    },
+    {
+      "id": "boss_critical",
+      "title": "Boss critically damaged",
+      "command": {
+        "tactical_posture": "desperate_defence",
+        "formation_intent": "tight_screen",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      }
+    },
+    {
+      "id": "reinforce_under_pressure",
+      "title": "Reinforcements available under pressure",
+      "command": {
+        "tactical_posture": "regroup",
+        "formation_intent": "balanced",
+        "reinforcement_action": "spawn_now",
+        "primary_target": "P1"
+      }
+    },
+    {
+      "id": "reinforce_while_stable",
+      "title": "Reinforcements available while stable",
+      "command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      }
+    },
+    {
+      "id": "distant_bait",
+      "title": "Distant bait while others stay on the boss",
+      "command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      }
+    },
+    {
+      "id": "few_players_boss_damaged",
+      "title": "Few players remain but the boss is badly damaged",
+      "command": {
+        "tactical_posture": "desperate_defence",
+        "formation_intent": "tight_screen",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      }
+    },
+    {
+      "id": "no_pressure",
+      "title": "No meaningful hostile pressure",
+      "command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "wide_pressure",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      }
+    },
+    {
+      "id": "contradictory_pressures",
+      "title": "Contradictory pressures",
+      "command": {
+        "tactical_posture": "regroup",
+        "formation_intent": "recall_detached",
+        "reinforcement_action": "spawn_now",
+        "primary_target": "P1"
+      }
+    },
+    {
+      "id": "healthy_boss_thin_swarm",
+      "title": "Healthy boss, thin swarm",
+      "command": {
+        "tactical_posture": "press_attack",
+        "formation_intent": "balanced",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      }
+    },
+    {
+      "id": "collapsing_no_reinforce",
+      "title": "Collapsing without reinforcement capacity",
+      "command": {
+        "tactical_posture": "regroup",
+        "formation_intent": "balanced",
+        "reinforcement_action": "hold",
+        "primary_target": "P1"
+      }
+    },
+    {
+      "id": "last_player_fleeing",
+      "title": "Last player fleeing far away",
+      "command": {
+        "tactical_posture": "hold_close",
+        "formation_intent": "balanced",
+        "reinforcement_action": "hold",
+        "primary_target": "none"
+      }
+    }
+  ],
+  "event_driven": {
+    "pairs": 14,
+    "material_pairs": 14,
+    "fraction": 1.0,
+    "details": [
+      {
+        "from": "initial_encounter",
+        "to": "normal_engagement",
+        "material": true,
+        "reasons": [
+          "boss_health_delta_ge_10",
+          "swarm_alive_delta_ge_8",
+          "top_boss_damager_changed",
+          "reinforcement_capacity_changed"
+        ]
+      },
+      {
+        "from": "normal_engagement",
+        "to": "boss_focused",
+        "material": true,
+        "reasons": [
+          "boss_health_delta_ge_10",
+          "posted_plan_changed"
+        ]
+      },
+      {
+        "from": "boss_focused",
+        "to": "swarm_dispersed",
+        "material": true,
+        "reasons": [
+          "boss_health_delta_ge_10",
+          "detached_delta_ge_10",
+          "top_boss_damager_changed",
+          "posted_plan_changed"
+        ]
+      },
+      {
+        "from": "swarm_dispersed",
+        "to": "heavy_attrition",
+        "material": true,
+        "reasons": [
+          "boss_health_delta_ge_10",
+          "swarm_alive_delta_ge_8",
+          "detached_delta_ge_10",
+          "losses10_delta_ge_5"
+        ]
+      },
+      {
+        "from": "heavy_attrition",
+        "to": "boss_critical",
+        "material": true,
+        "reasons": [
+          "boss_health_delta_ge_10",
+          "swarm_alive_delta_ge_8",
+          "losses10_delta_ge_5",
+          "player_alive_count_changed",
+          "posted_plan_changed"
+        ]
+      },
+      {
+        "from": "boss_critical",
+        "to": "reinforce_under_pressure",
+        "material": true,
+        "reasons": [
+          "boss_health_delta_ge_10",
+          "swarm_alive_delta_ge_8",
+          "losses10_delta_ge_5",
+          "player_alive_count_changed",
+          "reinforcement_capacity_changed"
+        ]
+      },
+      {
+        "from": "reinforce_under_pressure",
+        "to": "reinforce_while_stable",
+        "material": true,
+        "reasons": [
+          "boss_health_delta_ge_10",
+          "swarm_alive_delta_ge_8",
+          "losses10_delta_ge_5",
+          "posted_plan_changed"
+        ]
+      },
+      {
+        "from": "reinforce_while_stable",
+        "to": "distant_bait",
+        "material": true,
+        "reasons": [
+          "boss_health_delta_ge_10",
+          "swarm_alive_delta_ge_8",
+          "detached_delta_ge_10",
+          "reinforcement_capacity_changed"
+        ]
+      },
+      {
+        "from": "distant_bait",
+        "to": "few_players_boss_damaged",
+        "material": true,
+        "reasons": [
+          "boss_health_delta_ge_10",
+          "swarm_alive_delta_ge_8",
+          "detached_delta_ge_10",
+          "player_alive_count_changed",
+          "posted_plan_changed"
+        ]
+      },
+      {
+        "from": "few_players_boss_damaged",
+        "to": "no_pressure",
+        "material": true,
+        "reasons": [
+          "boss_health_delta_ge_10",
+          "swarm_alive_delta_ge_8",
+          "player_alive_count_changed",
+          "reinforcement_capacity_changed",
+          "posted_plan_changed"
+        ]
+      },
+      {
+        "from": "no_pressure",
+        "to": "contradictory_pressures",
+        "material": true,
+        "reasons": [
+          "boss_health_delta_ge_10",
+          "swarm_alive_delta_ge_8",
+          "detached_delta_ge_10",
+          "losses10_delta_ge_5"
+        ]
+      },
+      {
+        "from": "contradictory_pressures",
+        "to": "healthy_boss_thin_swarm",
+        "material": true,
+        "reasons": [
+          "boss_health_delta_ge_10",
+          "swarm_alive_delta_ge_8",
+          "detached_delta_ge_10",
+          "losses10_delta_ge_5",
+          "player_alive_count_changed",
+          "reinforcement_capacity_changed"
+        ]
+      },
+      {
+        "from": "healthy_boss_thin_swarm",
+        "to": "collapsing_no_reinforce",
+        "material": true,
+        "reasons": [
+          "boss_health_delta_ge_10",
+          "swarm_alive_delta_ge_8",
+          "losses10_delta_ge_5",
+          "player_alive_count_changed",
+          "posted_plan_changed"
+        ]
+      },
+      {
+        "from": "collapsing_no_reinforce",
+        "to": "last_player_fleeing",
+        "material": true,
+        "reasons": [
+          "losses10_delta_ge_5",
+          "player_alive_count_changed",
+          "posted_plan_changed"
+        ]
+      }
+    ]
+  },
+  "scale": {
+    "input_tokens_per_inference": 2707,
+    "price_usd_per_million_input": 0.042,
+    "price_usd_per_billion_input": 42.0,
+    "price_usd_per_million_output": 0.0,
+    "price_retrieved_utc_date": "2026-09-16",
+    "price_sources": [
+      "https://typesafe.ai/",
+      "https://typesafe.ai/blog/introducing-system-one-models-and-jev"
+    ],
+    "formula": "usd = input_tokens * inferences * (42 / 1e9); output treated as $0 per published pricing",
+    "per_commander_hour_continuous": {
+      "1": {
+        "inferences": 3600,
+        "input_tokens": 9745200,
+        "usd_if_published_price": 0.4092984
+      },
+      "2": {
+        "inferences": 7200,
+        "input_tokens": 19490400,
+        "usd_if_published_price": 0.8185968
+      },
+      "5": {
+        "inferences": 18000,
+        "input_tokens": 48726000,
+        "usd_if_published_price": 2.0464919999999998
+      },
+      "10": {
+        "inferences": 36000,
+        "input_tokens": 97452000,
+        "usd_if_published_price": 4.0929839999999995
+      }
+    },
+    "concurrent_commanders_continuous": {
+      "1": {
+        "1": {
+          "inferences": 3600,
+          "input_tokens": 9745200,
+          "usd_if_published_price": 0.4092984
+        },
+        "2": {
+          "inferences": 7200,
+          "input_tokens": 19490400,
+          "usd_if_published_price": 0.8185968
+        },
+        "5": {
+          "inferences": 18000,
+          "input_tokens": 48726000,
+          "usd_if_published_price": 2.0464919999999998
+        },
+        "10": {
+          "inferences": 36000,
+          "input_tokens": 97452000,
+          "usd_if_published_price": 4.0929839999999995
+        }
+      },
+      "10": {
+        "1": {
+          "inferences": 36000,
+          "input_tokens": 97452000,
+          "usd_if_published_price": 4.092984
+        },
+        "2": {
+          "inferences": 72000,
+          "input_tokens": 194904000,
+          "usd_if_published_price": 8.185968
+        },
+        "5": {
+          "inferences": 180000,
+          "input_tokens": 487260000,
+          "usd_if_published_price": 20.46492
+        },
+        "10": {
+          "inferences": 360000,
+          "input_tokens": 974520000,
+          "usd_if_published_price": 40.92984
+        }
+      },
+      "100": {
+        "1": {
+          "inferences": 360000,
+          "input_tokens": 974520000,
+          "usd_if_published_price": 40.92984
+        },
+        "2": {
+          "inferences": 720000,
+          "input_tokens": 1949040000,
+          "usd_if_published_price": 81.85968
+        },
+        "5": {
+          "inferences": 1800000,
+          "input_tokens": 4872600000,
+          "usd_if_published_price": 204.64919999999998
+        },
+        "10": {
+          "inferences": 3600000,
+          "input_tokens": 9745200000,
+          "usd_if_published_price": 409.29839999999996
+        }
+      },
+      "1000": {
+        "1": {
+          "inferences": 3600000,
+          "input_tokens": 9745200000,
+          "usd_if_published_price": 409.2984
+        },
+        "2": {
+          "inferences": 7200000,
+          "input_tokens": 19490400000,
+          "usd_if_published_price": 818.5968
+        },
+        "5": {
+          "inferences": 18000000,
+          "input_tokens": 48726000000,
+          "usd_if_published_price": 2046.4919999999997
+        },
+        "10": {
+          "inferences": 36000000,
+          "input_tokens": 97452000000,
+          "usd_if_published_price": 4092.9839999999995
+        }
+      }
+    },
+    "event_driven_illustration": {
+      "30": {
+        "inferences_per_commander_hour": 30,
+        "input_tokens": 81210,
+        "usd_if_published_price": 0.00341082,
+        "vs_5hz_token_ratio": 600.0
+      },
+      "60": {
+        "inferences_per_commander_hour": 60,
+        "input_tokens": 162420,
+        "usd_if_published_price": 0.00682164,
+        "vs_5hz_token_ratio": 300.0
+      },
+      "120": {
+        "inferences_per_commander_hour": 120,
+        "input_tokens": 324840,
+        "usd_if_published_price": 0.01364328,
+        "vs_5hz_token_ratio": 150.0
+      }
+    },
+    "estimate_only": true,
+    "estimate_note": "chars/4 of the serialized request; not API-reported input_tokens"
+  },
+  "live_calls": 0,
+  "generated_utc": "20260916T190514Z"
+}

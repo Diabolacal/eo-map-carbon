@@ -46,6 +46,16 @@ Or from the repo root:
 `ask.py` sends one fan-out (preflight/postflight) over named files. The
 Jita-Amarr routing development-task writeup is `ROUTING_EXPERIMENT.md`.
 
+A later synthetic commander benchmark (one Jev request as a higher-level
+tactical layer over scripted battlefield snapshots) lives in `commander/`
+with results in `COMMANDER_BENCHMARK.md`. It is not Frontier NPC AI and is
+not wired into any Carbon host.
+
+```powershell
+.\experiments\typesafe\commander\run.ps1 -DryRun
+.\experiments\typesafe\commander\run.ps1
+```
+
 ## Scoring
 
 - Noul: `noul >= 0.5` is yes. Certainty is `abs(noul - 0.5) * 2` (Noul has no
